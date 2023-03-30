@@ -1,9 +1,0 @@
-Searching for peers:
-
-    You download someone else's copy of the device, and send your IP to the computer you downloaded it off. You then send
-that IP recursively to each of the IPs the other computer knows and the ones they know etc.
-    This is not secure, as each computer will know all the other computers IP addresses, Tom just suggested using a
-system where instead of keeping a list of IPs, you keep a list of a few IPs, and send a packet to each of them saying
-"Hi please forward this to all your friends! I want to download this, and I was wondering if any of you had this
-installed?" - I'm trying to work out hash algorithms/ work how magnet: URI schemes work to try and make this more
-secure - I don't know if it will though because I don't know how they work yet.
