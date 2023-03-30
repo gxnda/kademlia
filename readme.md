@@ -1,3 +1,6 @@
+**This is heavily in development, so this is just my brainstorming**
+
+
 # Searching for peers:
 
 You download someone else's copy of the device, and send your IP to the computer you downloaded it off. You then send that IP recursively to each of the IPs the other computer knows and the ones they know etc.
