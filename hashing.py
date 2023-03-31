@@ -1,11 +1,34 @@
 import hashlib
-h = hashlib.sha3_256()
-"""
-This appears to be the latest version, however, I am not sure what size messages I will be
-sending, if they are small messages, apparently KangarooTwelve is better for these
-size messages (see
-https://en.wikipedia.org/wiki/SHA-3 for details). If this is feasible I will see what is
-defined by a "small" message etc.
-"""
-h.update(b"HelloWorld.txt")
-print(h.hexdigest())
+
+
+class Hasher:
+    def __init__(self):
+        self.encrypted = False
+        self.hash = None
+
+    def sha_256(self, string: str = None, binary: bytes = None) -> None:
+        if string is None and binary is None:
+            raise ValueError("Function sha_256() in Hasher must take in either a string under string= or bytes under "
+                             "binary=, neither were provided.")
+        if string:
+            binary = string.encode('utf-8')
+        self.hash = hashlib.sha256(binary)
+        self.encrypted = True
+
+    def hex_digest(self) -> str:
+        if self.hash is None:
+            raise ValueError("You have not hashed anything yet! Use a function such as sha_256() to hash.")
+        return self.hash.hexdigest()
+
+    def __str__(self):
+        return self.hash.hexdigest()
+
+
+def xor_distance_function(hash1: Hasher, hash2: Hasher):
+    """Takes in 2 hexadecimal hashes and returns the 'exclusive or' between the 2.
+    This is used it Kademlia to calculate the 'distance' between 2 nodes."""
+
+
+a = Hasher()
+a.sha_256("hello")
+print(a)
