@@ -82,11 +82,11 @@ Also, I may use device and node interchangeably, I am sorry.*
     > This successor list holds the next *k* nodes (typically 3-4) in the ring after the device.
 > - This also does not support keyword search, similarly to Pastry.
 >
->   ![image](image_2.png)
+>   ![image](readmephotos/image_2.png)
 >
 >   *A 16-node Chord network. The "fingers" for one of the nodes are in black.*
 > - **Finger Tables**: Chord makes each device keep a finger table containing up to *m* entries. where *m* is the 
-    > number of bits in the hash key. The *i*th entry of node *n* will contain ![image](image.png)This seems 
+    > number of bits in the hash key. The *i*th entry of node *n* will contain ![image](readmephotos/image.png)This seems 
     > relatively similar to a systematic sample to me, but you start from *n* instead of a randomly generated number. 
     > The first entry of the finger table is the device's immediate successor, and every time a device wants to look 
     > up a key *k*, it will send the query to the closest successor or predecessor (depending on the finger table) in 
@@ -117,7 +117,7 @@ Based on the XOR Metric](http://www.scs.stanford.edu/~dm/home/papers/kpos.pdf)
 >
 > Also, a network with 2^n nodes will only take n steps (worst case). So it is incredibly efficient.
 >
-> ![image](image_3.png)
+> ![image](readmephotos/image_3.png)
 >
 > *Visual depiction of Kademlia's routing*
 > 
@@ -172,7 +172,7 @@ Make pseudocode for this??
 # Hashing Functions
 *Note: Chi-Squared tests are useful here.*
 
-![image](image_4.png)
+![image](readmephotos/image_4.png)
 
 ## SHA3-256
 
