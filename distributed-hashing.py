@@ -1,7 +1,7 @@
 import kademlia_protocol
 from time import time
 
-class KademliaBucket(object):
+class Bucket(object):
     """
     Based from Kademlia's "K-Buckets", which is essentially a queue with a maximum size k. As it is a queue, it relies on a last in last out system to ensure that all nodes get an even amount of traffic. 
 
