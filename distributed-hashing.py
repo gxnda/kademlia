@@ -1,5 +1,4 @@
 import kademlia_protocol
-from time import time
 
 class Bucket(object):
     """
