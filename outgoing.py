@@ -1,4 +1,9 @@
-import socket, networking
+import socket
+
+
+def send_data(IP: str, port: int, data: str) -> None:
+    with socket.create_connection(address=(IP, port)) as sock:
+        sock.send(data.encode())
 
 
 def ping(IP, port) -> bool:
@@ -16,15 +21,18 @@ def ping(IP, port) -> bool:
         except socket.error:
             return False
 
+
 def instruct_to_store(IP, port, data: str):
     to_send = "<STORE>" + data
-    networking.send_data(IP, port, to_send)
+    send_data(IP, port, to_send)
+
 
 def find_node():
     """
     find_node takes a node ID as an argument, the recipient returns the k node triples it knows about closest to the target ID.
     """
     pass
+
 
 def find_value():
     """

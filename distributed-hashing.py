@@ -32,3 +32,7 @@ class Bucket(object):
         popped = self.bucket[0]
         self.bucket.pop(0)
         return popped
+
+
+def node_look_up():
+    pass
