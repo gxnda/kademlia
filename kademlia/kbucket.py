@@ -1,4 +1,4 @@
-import kademlia.kademlia_protocol as kademlia_protocol
+import kademlia.protocol as protocol
 
 class Bucket(object):
     """
@@ -21,7 +21,7 @@ class Bucket(object):
             self.bucket.append([IP, port, NodeID])
         else:
             last_IP, last_port, _ = self.bucket[-1]
-            is_available = kademlia_protocol.ping(last_IP, last_port)
+            is_available = protocol.ping(last_IP, last_port)
             if not is_available:
                 self.bucket[-1] = [IP, port, NodeID]
 
