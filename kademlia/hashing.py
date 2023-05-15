@@ -1,7 +1,7 @@
 import hashlib
 
 
-class Hasher:
+class Hash:
     def __init__(self):
         self.encrypted = False
         self.hash = None
@@ -24,11 +24,11 @@ class Hasher:
         return self.hash.hexdigest()
 
 
-def xor_distance_function(hash1: Hasher, hash2: Hasher):
+def xor_distance_function(hash1: Hash, hash2: Hash):
     """Takes in 2 hexadecimal hashes and returns the 'exclusive or' between the 2.
     This is used it Kademlia to calculate the 'distance' between 2 nodes."""
 
 
-a = Hasher()
+a = Hash()
 a.sha_256("hello")
 print(a)
