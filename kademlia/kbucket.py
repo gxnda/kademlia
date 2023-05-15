@@ -31,12 +31,11 @@ class Bucket(object):
         return len(self.bucket) == 0
 
     def add(self, node: Node) -> None:
-        """Adds a list of IP, port, and nodeID to bucket"""
+        """Adds a node to bucket"""
         if len(self.bucket) <= self.k_size:
             self.bucket.append(node)
         else:
-            last_IP, last_port, _ = self.bucket[-1].ip, self.bucket[-1].port
-            is_available = protocol.ping(last_IP, last_port)
+            is_available = protocol.ping(self.bucket[-1].ip, self.bucket[-1].port)
             if not is_available:
                 self.bucket[-1] = node
 
@@ -60,17 +59,20 @@ class Bucket(object):
             index = self.bucket.index(node)
             #don't need to check if empty because something is in there
             removed_node = self.bucket.pop(index)
-            self.bucket.append(removed_node)
+            self.add(removed_node)
             #done
             return
         
         if self.isFull():
-            last_seen = self.bucket[0]  # last seen are first in queue (queuing for the longest)
-            if protocol.ping(last_seen.ip, last_seen.port):
+            oldest = self.bucket[0]  # last seen are first in queue (queuing for the longest)
+            if protocol.ping(oldest.ip, oldest.port):
+                # if the oldest (longest time since last seen) node responds
                 self.move_front_to_tail()
                 return
             else:
-                pass
+                # evict oldest
+                self.pop()
+                self.add(node)
+                return
         else:
-            pass
-        
+            self.add(node)
