@@ -11,14 +11,14 @@ class Hash:
             raise ValueError("Function sha_256() in Hasher must take in either a string under string= or bytes under "
                              "binary=, neither were provided.")
         if string:
-            binary = string.encode('utf-8')
+            self.__binary = string.encode('utf-8')
         self.hash = hashlib.sha256(binary)
         self.encrypted = True
 
     def hex_digest(self) -> str:
         if self.hash is None:
             raise ValueError("You have not hashed anything yet! Use a function such as sha_256() to hash.")
-        return self.hash.hexdigest()
+        return self.__binary
 
     def __str__(self):
         return self.hash.hexdigest()
