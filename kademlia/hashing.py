@@ -28,7 +28,7 @@ def xor_distance_function(hash1: Hash, hash2: Hash):
     """Takes in 2 hexadecimal hashes and returns the 'exclusive or' between the 2.
     This is used it Kademlia to calculate the 'distance' between 2 nodes."""
 
-
-a = Hash()
-a.sha_256("hello")
-print(a)
+if __name__ == "__main__":
+    a = Hash()
+    a.sha_256("hello")
+    print(a)
