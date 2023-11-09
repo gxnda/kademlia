@@ -27,6 +27,8 @@ class Hash:
 def xor_distance_function(hash1: Hash, hash2: Hash):
     """Takes in 2 hexadecimal hashes and returns the 'exclusive or' between the 2.
     This is used it Kademlia to calculate the 'distance' between 2 nodes."""
+    # probably should move this to protocol.py
+    pass
 
 if __name__ == "__main__":
     a = Hash()
