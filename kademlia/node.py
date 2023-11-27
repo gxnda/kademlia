@@ -1,3 +1,6 @@
+from network import Contact, BucketList, Router
+from abc import abstractmethod
+from datetime import datetime
 
 
 class ID:
@@ -30,49 +33,81 @@ class ID:
         return str(self.value)
 
 
-class Node:
-    """Node for K-Bucket"""
-    def __init__(self, id: ID, IP: str, port: int) -> None:
-        self.ip = IP
-        self.port = port
-        self.id = id
+class IStorage:
+    """Interface which 'abstracts the storage mechanism for key-value pairs.''"""
+    
+    @abstractmethod
+    def contains(self, key: ID) -> bool:
+        pass
+
+    @abstractmethod
+    def try_get_value(self, key: ID, out: (int or str)) -> bool:
+        pass
+
+    @abstractmethod
+    def get(self, key: (ID or int)) -> str:
+        pass
+
+    @abstractmethod
+    def get_timestamp(self, key: int) -> datetime:
+        pass
+
+    @abstractmethod
+    def set(self, key: ID, value: str, expiration_time_sec: int=0) -> None:
+        pass
+
+    @abstractmethod
+    def get_expiration_time_sec(self, key: int) -> int:
+        pass
+
+    @abstractmethod
+    def remove(self, key: int) -> None:
+        pass
+
+    @abstractmethod
+    def get_keys(self) -> list[int]:
+        pass
+
+    @abstractmethod
+    def touch(self, key: int) -> None:
+        pass
     
 
-    def distance(self, id: int):
-        return self.id.value ^ id
 
+class Node:
+    def __init__(self, contact: Contact, storage: IStorage, cache_storage=None):
+        self._ourContact: Contact = contact
+        self._bucket_list = BucketList(contact.id)
+        self._storage: IStorage = storage
+
+    def ping(self, sender: Contact) -> Contact:
+        # !!! TO BE IMPLEMENTED
+        pass
+
+    def store(self, sender: Contact, key: ID, value: str) -> None:
+        # !!! TO BE IMPLEMENTED
+        pass
+
+    def find_node(self, sender: Contact, key: ID): # -> (list[Contact], str)
+        # !!! TO BE IMPLEMENTED
+        pass
+
+    def find_value(self, sender: Contact, key: ID): # -> (list[Contact], str)
+        # !!! TO BE IMPLEMENTED
+        pass
+
+
+class DHT:
+    def __init__(self):
+        self._base_router = None
+
+    def router(self):
+        return self._base_router
+
+
+    
+        
 
 if __name__ == "__main__":
-    id = ID(234525)
-    print(id.hex())
-    print(id.denary())
-    print(id.bin())
-    print(type(id.bin()))
-    print(id.__str__())
-
-    try:
-        id = ID(2**160)
-        print(id.hex())
-    except ValueError as e:
-        print(e)
-
-    try:
-        id = ID(2**160 - 2)
-        print(id.hex())
-        print(id.bin())
-    except ValueError as e:
-        print(e)
-
-    node_1 = Node(id=ID(5), port=1234, IP="127.0.0.1")
-    node_2 = Node(id=ID(7), IP="192.168.1.1", port=2346)
-    print(node_1.distance(node_2.id.denary()))
-
-    node_1 = Node(id=ID(5), port=1234, IP="127.0.0.1")
-    node_2 = Node(id=ID(8), IP="192.168.1.1", port=2346)
-    print(node_1.distance(node_2.id.denary()))
-
-    node_1 = Node(id=ID(50), port=1234, IP="127.0.0.1")
-    node_2 = Node(id=ID(700), IP="192.168.1.1", port=2346)
-    print(node_1.distance(node_2.id.denary()))
-    
+    pass
     
