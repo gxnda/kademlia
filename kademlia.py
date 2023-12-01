@@ -2,6 +2,23 @@ from datetime import datetime
 from abc import abstractmethod
 
 
+class TooManyContactsError(Exception):
+    """Raised when a contact is added to a full k-bucket."""
+    pass
+
+
+class OutOfRangeError(Exception):
+    """Raised when a contact is added to a k-bucket that is out of range."""
+    pass
+
+
+class Constants:
+
+    def __init__(self):
+        self.K = 20  # Maximum K-Bucket size
+        self.B = 5  # something to do with splitting buckets
+
+
 class ID:
 
     def __init__(self, value: int):
@@ -15,9 +32,11 @@ class ID:
         two_160 = 1461501637330902918203684832716283019655932542976
         self.MAX_ID = two_160  # 2^160
         self.MIN_ID = 0
-        if not (value < self.MAX_ID and value > self.MIN_ID):
-            raise ValueError("ID out of range - must a positive integer less "\
-            "than 2^160.")
+        if not (value < self.MAX_ID and value >= self.MIN_ID):
+            # TODO: check if value >= self.MIN_ID is valid.
+            raise ValueError(
+                f"ID {value} is out of range - must a positive integer less than 2^160."
+            )
         self.value = value
 
     def hex(self) -> str:
@@ -103,7 +122,7 @@ class Node:
         # !!! TO BE IMPLEMENTED
         pass
 
-    def find_node(self, sender: Contact, key: ID):  # -> (list[Contact], str)
+    def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact], str]:
         # !!! TO BE IMPLEMENTED
         pass
 
@@ -127,16 +146,6 @@ class Router:
         self.node = node
 
 
-class TooManyContactsError(Exception):
-    """Raised when a contact is added to a full k-bucket."""
-    pass
-
-
-class OutOfRangeError(Exception):
-    """Raised when a contact is added to a k-bucket that is out of range."""
-    pass
-
-
 class KBucket:
 
     def __init__(self, k=20):
@@ -157,6 +166,7 @@ class KBucket:
         return self._low <= contact.id.value <= self._high
 
     def add_contact(self, contact: Contact):
+        # TODO: Check if this is meant to check if it exists in the bucket.
         if self.bucket_full():
             raise TooManyContactsError("KBucket is full.")
         elif not self.is_in_range(contact):
@@ -165,23 +175,31 @@ class KBucket:
             # !!! should this check whether or not the contact is already in the bucket?
             self.contacts.append(contact)
 
-    def split(self):
+    def can_split(self) -> bool:
         # !!! TO BE IMPLEMENTED
         # kbucket.HasInRange(ourID) || ((kbucket.Depth() % Constants.B) != 0)
         """
-        The depth to which the bucket has split is based on the number of bits shared in
-        the prefix of the contacts in the bucket. With random IDs, this number will 
-        initially be small, but as bucket ranges become more narrow from subsequent 
-        splits, more contacts will begin the share the same prefix and the bucket 
-        when split, will result in less “room” for new contacts. Eventually, 
-        when the bucket range becomes narrow enough, the number of bits shared in the 
-        prefix of the contacts in the bucket reaches the threshold b, which the spec 
-        says should be 5.
+        The depth to which the bucket has split is based on the number of bits 
+        shared in the prefix of the contacts in the bucket. With random IDs,    
+        this number will initially be small, but as bucket ranges become more 
+        narrow from subsequent splits, more contacts will begin the share the 
+        same prefix and the bucket when split, will result in less “room” for 
+        new contacts. Eventually, when the bucket range becomes narrow enough, 
+        the number of bits shared in the prefix of the contacts in the bucket 
+        reaches the threshold b, which the spec says should be 5.
         """
-        if self.is_in_range
-        pass
+        # not taken from book, made myself
+        return (self.is_in_range(self.node.id)
+                or self.depth() % Constants().B != 0)
 
     def depth(self):
+        """
+        "The depth is just the length of the prefix shared by all nodes in 
+        the k-bucket’s range.” Do not confuse that with this statement in the 
+        spec: “Define the depth, h, of a node to be 160 - i, where i is the 
+        smallest index of a nonempty bucket.” The former is referring to the 
+        depth of a k-bucket, the latter the depth of the node.
+        """
 
         def longest_shared_prefix_str(a: str, b: str) -> str:
             """Returns the longest common prefix between two strings."""
