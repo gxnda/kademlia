@@ -1,7 +1,6 @@
 from datetime import datetime
 from abc import abstractmethod
 import random
-from re import L
 from threading import Lock
 
 # Errors
@@ -150,15 +149,15 @@ class Node:
         # !!! TO BE IMPLEMENTED
         pass
 
-    def store(self, sender: Contact, key: ID, value: str) -> None:
+    def store(self, key: ID, sender: Contact, value: str) -> None:
         # !!! TO BE IMPLEMENTED
         pass
 
-    def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact], str]:
+    def find_node(self, key: ID, sender: Contact) -> tuple[list[Contact], str]:
         # !!! TO BE IMPLEMENTED
         pass
 
-    def find_value(self, sender: Contact, key: ID):  # -> (list[Contact], str)
+    def find_value(self, key: ID, sender: Contact):  # -> (list[Contact], str)
         # !!! TO BE IMPLEMENTED
         pass
 
@@ -381,6 +380,21 @@ def find_closest_nonempty_kbucket(key: ID) -> KBucket:
 
 def get_closest_nodes(key: ID, bucket: KBucket) -> list[Contact]:
     return sorted(bucket.contacts, key=lambda c: c.id.value ^ key.value)
+
+
+def get_closer_nodes(key: ID, 
+                     node_to_query: Contact, 
+                     rpc_call: object, 
+                     closer_contacts: list[Contact],
+                     farther_contacts: list[Contact],
+                     val: str,
+                     found_by: Contact) -> bool:
+
+    contacts, c_found_by, found_val = rpc_call(key, node_to_query)
+    val = found_val
+    found_by = c_found_by
+    peers_nodes: list[Contact] = contacts
+    
 
 
 if __name__ == "__main__":
