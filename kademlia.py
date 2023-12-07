@@ -70,14 +70,14 @@ class ID:
         """
         Returns the ID in big-endian binary - largest bit is at index 0.
         """
-        big_endian = [x for x in id.bin()[2:]]
+        big_endian = [x for x in self.bin()[2:]]
         return big_endian
 
     def little_endian_bytes(self) -> list:
         """
         Returns the ID in little-endian binary - smallest bit is at index 0.
         """
-        big_endian = [x for x in id.bin()[2:]][::-1]
+        big_endian = [x for x in self.bin()[2:]][::-1]
         return big_endian
 
     def __str__(self) -> str:
@@ -143,7 +143,7 @@ class Node:
                  storage: IStorage,
                  cache_storage=None):
 
-        self._ourContact: Contact = contact
+        self._our_contact: Contact = contact
         self._bucket_list = BucketList(contact.id)
         self._storage: IStorage = storage
 
@@ -164,7 +164,6 @@ class Node:
         pass
 
 
-
 class DHT:
 
     def __init__(self):
@@ -172,12 +171,6 @@ class DHT:
 
     def router(self):
         return self._base_router
-
-
-class Router:
-
-    def __init__(self, node: Node) -> None:
-        self.node = node
 
 
 class KBucket:
@@ -190,25 +183,25 @@ class KBucket:
         self.contacts: list[Contact] = []
         self._low = low
         self._high = high
-        self.time_stamp: datetime
+        self.time_stamp: datetime = datetime.now()
         self._k = k
         self.lock = Lock()
 
-    def is_full(self):
+    def is_full(self) -> bool:
         return len(self.contacts) >= self._k
 
     def contains(self, id: ID) -> bool:
         """
-        Returns boolean determining whether a given contact ID is in the kbucket.
+        Returns boolean determining whether a given contact ID is in the k-bucket.
         """
 
-        # replacable
+        # replaceable
         return any(id == contact.id for contact in self.contacts)
 
-    def touch(self):
+    def touch(self) -> None:
         self.time_stamp = datetime.now()
 
-    def has_in_range(self, id: ID):
+    def has_in_range(self, id: ID) -> bool:
         return self._low <= id.value <= self._high
 
     def add_contact(self, contact: Contact):
@@ -218,7 +211,7 @@ class KBucket:
         elif not self.has_in_range(contact.id):
             raise OutOfRangeError("Contact ID is out of range.")
         else:
-            # !!! should this check whether or not the contact is already in the bucket?
+            # !!! should this check if the contact is already in the bucket?
             self.contacts.append(contact)
 
     def can_split(self) -> bool:
@@ -286,12 +279,12 @@ class KBucket:
         k2: KBucket = KBucket(low=midpoint, high=self._high)
 
         for c in self.contacts:
-            if c.id < midpoint:
+            if c.id.value < midpoint:
                 k1.add_contact(c)
             else:
                 k2.add_contact(c)
 
-        return (k1, k2)
+        return k1, k2
 
 
 class BucketList:
@@ -306,7 +299,7 @@ class BucketList:
 
     def _get_kbucket_index(self, other_id: ID) -> int:
         """
-        Returns the first kbuckets index in the bucket list 
+        Returns the first k-buckets index in the bucket list
         which has a given ID in range. Returns -1 if not found.
         """
 
@@ -316,6 +309,9 @@ class BucketList:
                     return i
             return -1
 
+    def get_kbucket(self, other_id: ID) -> KBucket:
+        return self.buckets[self._get_kbucket_index(other_id)]
+
     def add_contact(self, contact: Contact) -> None:
         if self.our_id == contact.id:
             raise OurNodeCannotBeAContactError(
@@ -324,7 +320,7 @@ class BucketList:
         contact.touch()  # Update the time last seen to now
 
         with self.lock:
-            kbucket: KBucket = get_kbucket(contact.id)
+            kbucket: KBucket = self.get_kbucket(contact.id)
             if kbucket.contains(contact.id):
                 # replace contact, then touch it
                 kbucket.replace_contact(contact)
@@ -349,6 +345,88 @@ class BucketList:
                 kbucket.add_contact(contact)
 
 
+class Router:
+
+    def __init__(self, node: Node) -> None:
+        self.node = node
+
+    def lookup(self, key: ID, rpc_call, give_me_all: bool = False) -> tuple:
+        have_work = True
+        ret = []
+        contacted_nodes = []
+        closer_contacts = []
+        further_contacts = []
+        closer_uncontacted_nodes = []
+        further_uncontacted_nodes = []
+
+
+
+        # if debugging
+        all_nodes = self.node._bucket_list.get_kbucket(key).contacts[0:Constants().K]
+
+    def find_closest_nonempty_kbucket(self, key: ID) -> KBucket:
+        """
+        Helper method.
+        Code listing 34.
+        """
+        # gets all non-empty buckets from bucket list
+        non_empty_buckets: list[KBucket] = [
+            b for b in self.node._bucket_list.buckets if (len(b.contacts) != 0)
+        ]
+        if len(non_empty_buckets) == 0:
+            raise AllKBucketsAreEmptyError("No non-empty buckets can be found.")
+
+        def sort_key(bucket):
+            return bucket.id ^ key
+
+        return sorted(non_empty_buckets, key=(lambda b: b.id.value ^ key.value))[0]
+
+    @staticmethod
+    def get_closest_nodes(key: ID, bucket: KBucket) -> list[Contact]:
+        return sorted(bucket.contacts, key=lambda c: c.id.value ^ key.value)
+
+    def rpc_find_nodes(self, key: ID, contact: Contact):
+        # what is node??
+        new_contacts, timeout_error = contact.protocol.find_node(self.node._our_contact, key)
+
+        # dht?.handle_error(timeoutError, contact)
+
+        return new_contacts, None, None
+
+    def get_closer_nodes(self, key: ID, node_to_query: Contact, rpc_call,
+                         closer_contacts: list[Contact], farther_contacts: list[Contact]) -> bool:
+
+        # TODO: What is node? I don't think it has been created yet, but I could be wrong.
+
+        contacts: list[Contact]
+        found_by: Contact
+        val: str
+        contacts, found_by, val = rpc_call(key, node_to_query)
+        peers_nodes = []
+        for contact in contacts:
+            if contact.id.value not in [self.node._our_contact.id.value, node_to_query.id.value, closer_contacts,
+                                        farther_contacts]:
+                peers_nodes.append(contact)
+
+        nearest_node_distance = node_to_query.id.value ^ key.value
+
+        with LOCKER:
+            for p in peers_nodes:
+                # if given nodes are closer than our nearest node, and it hasn't already been added:
+                if p.id.value ^ key.value < nearest_node_distance \
+                        and p.id.value not in [i.id.value for i in closer_contacts]:
+                    closer_contacts.append(p)
+
+        with LOCKER:
+            for p in peers_nodes:
+                # if given nodes are further than or equal to the nearest node, and it hasn't already been added:
+                if p.id.value ^ key.value >= nearest_node_distance \
+                        and p.id.value not in [i.id.value for i in farther_contacts]:
+                    farther_contacts.append(p)
+
+        return val is not None
+
+
 def random_id_in_space(low=0, high=2**160):
     """
     FOR TESTING PURPOSES.
@@ -361,65 +439,6 @@ def random_id_in_space(low=0, high=2**160):
     - Randomly generate each individual bit, then concatenate.
     """
     return ID(random.randint(low, high))
-
-
-def find_closest_nonempty_kbucket(key: ID) -> KBucket:
-    """
-    Helper method.
-    Code listing 34.
-    """
-    # gets all non empty buckets from bucket list
-    non_empty_buckets: list[KBucket] = [
-        b for b in node.bucket_list.buckets if (len(b.contacts) != 0)
-    ]
-    if len(non_empty_buckets) == 0:
-        raise AllKBucketsAreEmptyError("No non-empty buckets can be found.")
-
-    def sort_key(bucket):
-        return bucket.id ^ key
-
-    return sorted(non_empty_buckets, key=(lambda b: b.id.value ^ key.value))[0]
-
-
-def get_closest_nodes(key: ID, bucket: KBucket) -> list[Contact]:
-    return sorted(bucket.contacts, key=lambda c: c.id.value ^ key.value)
-
-
-def rpc_find_nodes(key: ID, contact: Contact):
-    # what is node??
-    new_contacts, timeout_error = contact.protocol.find_node(node.our_contact, key)
-
-    # dht?.handle_error(timeoutError, contact)
-
-    return new_contacts, None, None
-
-
-def get_closer_nodes(key: ID, 
-                     node_to_query: Contact, 
-                     rpc_call,
-                     closer_contacts: list[Contact],
-                     farther_contacts: list[Contact]) -> bool:
-
-    # TODO: fix whatever node is here
-
-    contacts: list[Contact]
-    found_by: Contact
-    val: str
-    contacts, found_by, val = rpc_call(key, node_to_query)
-    peers_nodes = []
-    for contact in contacts:
-        if contact.id.value not in [node.our_contact.id.value, node_to_query.id.value, closer_contacts, farther_contacts]:
-            peers_nodes.append(contact)
-
-    nearest_node_distance = node_to_query.id.value ^ key.value
-
-    with LOCKER:
-        for p in peers_nodes:
-            if p.id.value ^ key.value < nearest_node_distance:
-                pass
-
-
-
 
 
 if __name__ == "__main__":
