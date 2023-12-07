@@ -3,6 +3,8 @@ from abc import abstractmethod
 import random
 from threading import Lock
 
+LOCKER = Lock()
+
 # Errors
 
 
@@ -44,7 +46,7 @@ class ID:
         two_160 = 1461501637330902918203684832716283019655932542976
         self.MAX_ID = two_160  # 2^160
         self.MIN_ID = 0
-        if not (value < self.MAX_ID and value >= self.MIN_ID):
+        if not (self.MAX_ID > value >= self.MIN_ID):
             # TODO: check if value >= self.MIN_ID is valid.
             raise ValueError(
                 f"ID {value} is out of range - must a positive integer less than 2^160."
@@ -160,6 +162,7 @@ class Node:
     def find_value(self, key: ID, sender: Contact):  # -> (list[Contact], str)
         # !!! TO BE IMPLEMENTED
         pass
+
 
 
 class DHT:
@@ -382,19 +385,41 @@ def get_closest_nodes(key: ID, bucket: KBucket) -> list[Contact]:
     return sorted(bucket.contacts, key=lambda c: c.id.value ^ key.value)
 
 
+def rpc_find_nodes(key: ID, contact: Contact):
+    # what is node??
+    new_contacts, timeout_error = contact.protocol.find_node(node.our_contact, key)
+
+    # dht?.handle_error(timeoutError, contact)
+
+    return new_contacts, None, None
+
+
 def get_closer_nodes(key: ID, 
                      node_to_query: Contact, 
-                     rpc_call: object, 
+                     rpc_call,
                      closer_contacts: list[Contact],
-                     farther_contacts: list[Contact],
-                     val: str,
-                     found_by: Contact) -> bool:
+                     farther_contacts: list[Contact]) -> bool:
 
-    contacts, c_found_by, found_val = rpc_call(key, node_to_query)
-    val = found_val
-    found_by = c_found_by
-    peers_nodes: list[Contact] = contacts
-    
+    # TODO: fix whatever node is here
+
+    contacts: list[Contact]
+    found_by: Contact
+    val: str
+    contacts, found_by, val = rpc_call(key, node_to_query)
+    peers_nodes = []
+    for contact in contacts:
+        if contact.id.value not in [node.our_contact.id.value, node_to_query.id.value, closer_contacts, farther_contacts]:
+            peers_nodes.append(contact)
+
+    nearest_node_distance = node_to_query.id.value ^ key.value
+
+    with LOCKER:
+        for p in peers_nodes:
+            if p.id.value ^ key.value < nearest_node_distance:
+                pass
+
+
+
 
 
 if __name__ == "__main__":
