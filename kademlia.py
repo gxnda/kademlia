@@ -4,6 +4,8 @@ import random
 from threading import Lock
 
 LOCKER = Lock()
+DEBUG = True
+
 
 # Errors
 
@@ -29,8 +31,29 @@ class AllKBucketsAreEmptyError(Exception):
 class Constants:
 
     def __init__(self):
-        self.K = 20  # Maximum K-Bucket size
-        self.B = 5  # something to do with splitting buckets
+        """
+        https://xlattice.sourceforge.net/components/protocol/kademlia/specs.html
+
+        A Kademlia network is characterized by three constants, which we call alpha, B, and k.
+        The first and last are standard terms. The second is introduced because some Kademlia implementations use a
+        different key length.
+
+        alpha is a small number representing the degree of parallelism in network calls, usually 3
+        B is the size in bits of the keys used to identify nodes and store and retrieve data; in basic Kademlia
+        this is 160, the length of an SHA1 digest (hash)
+        k is the maximum number of contacts stored in a bucket; this is normally 20
+        It is also convenient to introduce several other constants not found in the original Kademlia papers.
+
+        tExpire = 86400s, the time after which a key/value pair expires; this is a time-to-live (TTL) from the
+        original publication date
+        tRefresh = 3600s, after which an otherwise unaccessed bucket must be refreshed
+        tReplicate = 3600s, the interval between Kademlia replication events, when a node is required to publish
+        its entire database
+        tRepublish = 86400s, the time after which the original publisher must republish a key/value pair
+        """
+        self.K = 20
+        self.B = 160
+        self.ALPHA = 10
 
 
 class ID:
@@ -142,7 +165,6 @@ class Node:
                  contact: Contact,
                  storage: IStorage,
                  cache_storage=None):
-
         self._our_contact: Contact = contact
         self._bucket_list = BucketList(contact.id)
         self._storage: IStorage = storage
@@ -175,7 +197,7 @@ class DHT:
 
 class KBucket:
 
-    def __init__(self, k=Constants().K, low=0, high=2**160):
+    def __init__(self, k=Constants().K, low=0, high=2 ** 160):
         """
         Initialises a k-bucket with a specific ID range, 
         initially from 0 to 2**160.
@@ -359,10 +381,30 @@ class Router:
         closer_uncontacted_nodes = []
         further_uncontacted_nodes = []
 
+        all_nodes = self.node._bucket_list.get_close_contacts(key, self.node._our_contact.id)[0:Constants().K]
 
+        nodes_to_query: list[Contact] = all_nodes[0:Constants().ALPHA]
 
-        # if debugging
-        all_nodes = self.node._bucket_list.get_kbucket(key).contacts[0:Constants().K]
+        closer_contacts.append(i for i in nodes_to_query if
+                               (i.id.value ^ key.value < self.node._our_contact.id.value ^ key.value))
+
+        further_contacts.append(i for i in nodes_to_query if
+                                (i.id.value ^ key.value >= self.node._our_contact.id.value ^ key.value))
+
+        # all untested contacts just get dumped here.
+        further_contacts.append(all_nodes[Constants().ALPHA + 1:])
+
+        contacted_nodes.append(i for i in nodes_to_query if i not in contacted_nodes)
+
+        # In the spec they then send parallel async find_node RPC commands
+
+        query_result = query(key, nodes_to_query, rpc_call, closer_contacts, further_contacts)
+
+        if query_result.found:  # if a node responded
+            return query_result
+
+        ret.append(i for i in closer_contacts if i.id not )
+
 
     def find_closest_nonempty_kbucket(self, key: ID) -> KBucket:
         """
@@ -375,9 +417,6 @@ class Router:
         ]
         if len(non_empty_buckets) == 0:
             raise AllKBucketsAreEmptyError("No non-empty buckets can be found.")
-
-        def sort_key(bucket):
-            return bucket.id ^ key
 
         return sorted(non_empty_buckets, key=(lambda b: b.id.value ^ key.value))[0]
 
@@ -427,7 +466,7 @@ class Router:
         return val is not None
 
 
-def random_id_in_space(low=0, high=2**160):
+def random_id_in_space(low=0, high=2 ** 160):
     """
     FOR TESTING PURPOSES.
     TODO: Remove.
