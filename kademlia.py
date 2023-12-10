@@ -222,14 +222,19 @@ class KBucket:
     def touch(self) -> None:
         self.time_stamp = datetime.now()
 
-    def has_in_range(self, other_id: ID) -> bool:
+    def is_in_range(self, other_id: ID) -> bool:
+        """
+        Determines if a given ID is within the range of the k-bucket.
+        :param other_id: The ID to be checked.
+        :return: Boolean saying if it's in the range of the k-bucket.
+        """
         return self._low <= other_id.value <= self._high
 
     def add_contact(self, contact: Contact):
         # TODO: Check if this is meant to check if it exists in the bucket.
         if self.is_full():
             raise TooManyContactsError("KBucket is full.")
-        elif not self.has_in_range(contact.id):
+        elif not self.is_in_range(contact.id):
             raise OutOfRangeError("Contact ID is out of range.")
         else:
             # !!! should this check if the contact is already in the bucket?
@@ -249,7 +254,8 @@ class KBucket:
         """
         with self.lock:
             # TODO: What is self.node?
-            return (self.has_in_range(self.node.id)
+
+            return (self.is_in_range(self.node.id)
                     or (self.depth() % Constants().B != 0))
 
     def depth(self) -> int:
@@ -329,7 +335,7 @@ class BucketList:
 
         with self.lock:
             for i in range(len(self.buckets)):
-                if self.buckets[i].has_in_range(other_id):
+                if self.buckets[i].is_in_range(other_id):
                     return i
             return -1
 
@@ -442,7 +448,7 @@ class Router:
                 contacted_nodes.append(i)
 
         # In the spec they then send parallel async find_node RPC commands
-        query_result = query(key, nodes_to_query, rpc_call, closer_contacts, further_contacts)
+        query_result = Query(key, nodes_to_query, rpc_call, closer_contacts, further_contacts)
 
         if query_result.found:  # if a node responded
             return query_result
@@ -467,7 +473,31 @@ class Router:
             to them.
             """
             if have_closer:
-                new_nodes_to_query = closer_uncontacted_nodes[:Constants.ALPHA()]
+                new_nodes_to_query = closer_uncontacted_nodes[:Constants().ALPHA]
+                for i in new_nodes_to_query:
+                    if i not in contacted_nodes:
+                        contacted_nodes.append(i)
+
+                query_result = Query(key, new_nodes_to_query, rpc_call, closer_contacts, further_contacts)
+
+                if query_result.found:
+                    return query_result
+
+            elif have_further:
+                new_nodes_to_query = further_uncontacted_nodes[:Constants().ALPHA]
+                for i in new_nodes_to_query:
+                    if i not in contacted_nodes:
+                        contacted_nodes.append(i)
+
+                query_result = Query(key, new_nodes_to_query, rpc_call, closer_contacts, further_contacts)
+
+                if query_result.found:
+                    return query_result
+
+        # return k closer nodes sorted by distance,
+
+        contacts = sorted(ret[:Constants().K], key=(lambda x: x.id ^ key))
+        return False, contacts, None, None
 
     def find_closest_nonempty_kbucket(self, key: ID) -> KBucket:
         """
@@ -527,6 +557,10 @@ class Router:
                     farther_contacts.append(p)
 
         return val is not None
+
+
+class VirtualProtocol:  # TODO: what is IProtocol in code listing 40?
+    pass
 
 
 def random_id_in_space(low=0, high=2 ** 160):
