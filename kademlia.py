@@ -28,6 +28,10 @@ class AllKBucketsAreEmptyError(Exception):
     """Raised when no KBuckets can be iterated through."""
 
 
+class SendingQueryToSelfError(Exception):
+    pass
+
+
 class Constants:
 
     def __init__(self):
@@ -169,19 +173,25 @@ class Node:
         self._storage: IStorage = storage
 
     def ping(self, sender: Contact) -> Contact:
-        # !!! TO BE IMPLEMENTED
+        # TODO: Complete.
         pass
 
     def store(self, key: ID, sender: Contact, value: str) -> None:
-        # !!! TO BE IMPLEMENTED
+        # TODO: Complete.
         pass
 
     def find_node(self, key: ID, sender: Contact) -> tuple[list[Contact], str]:
-        # !!! TO BE IMPLEMENTED
-        pass
+        if sender.id == self.our_contact.id:
+            raise SendingQueryToSelfError("Sender cannot be ourselves.")
 
+        self.send_key_values_if_new_contact(sender)
+        self.bucket_list.add_contact(sender)
+        contacts = self.bucket_list.get_close_contacts(key=key, id=sender.id)
+
+        return contacts, None
+    
     def find_value(self, key: ID, sender: Contact):  # -> (list[Contact], str)
-        # !!! TO BE IMPLEMENTED
+        # TODO: Complete.
         pass
 
 
@@ -536,7 +546,9 @@ class Router:
         contacts, found_by, val = rpc_call(key, node_to_query)
         peers_nodes = []
         for contact in contacts:
-            if contact.id.value not in [self.node.our_contact.id.value, node_to_query.id.value, closer_contacts,
+            if contact.id.value not in [self.node.our_contact.id.value, 
+                                        node_to_query.id.value, 
+                                        closer_contacts,
                                         farther_contacts]:
                 peers_nodes.append(contact)
 
@@ -544,14 +556,16 @@ class Router:
 
         with LOCKER:
             for p in peers_nodes:
-                # if given nodes are closer than our nearest node, and it hasn't already been added:
+                # if given nodes are closer than our nearest node
+                # , and it hasn't already been added:
                 if p.id.value ^ key.value < nearest_node_distance \
                         and p.id.value not in [i.id.value for i in closer_contacts]:
                     closer_contacts.append(p)
 
         with LOCKER:
             for p in peers_nodes:
-                # if given nodes are further than or equal to the nearest node, and it hasn't already been added:
+                # if given nodes are further than or equal to the nearest node
+                # , and it hasn't already been added:
                 if p.id.value ^ key.value >= nearest_node_distance \
                         and p.id.value not in [i.id.value for i in farther_contacts]:
                     farther_contacts.append(p)
@@ -559,8 +573,66 @@ class Router:
         return val is not None
 
 
-class VirtualProtocol:  # TODO: what is IProtocol in code listing 40?
+class IProtocol:
     pass
+
+
+class RPCError(Exception):
+    """
+    Errors for RPC commands.
+    """
+    def no_error():
+        pass
+
+
+class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
+    """
+    For unit testing
+    """
+    
+    def __init__(self, node: Node, responds=True) -> None:
+        self.responds = responds
+        self.node = node
+
+    @staticmethod
+    def _no_error() -> RPCError:
+        return RPCError()
+    
+    def ping(self, sender: Contact) -> RPCError:
+        return RPCError()
+
+    
+    def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact], RPCError]:
+        """
+        Get the list of contacts for this node closest to the key.
+        """
+        return self.node.find_node(sender=sender, key=key)[0], self._no_error()
+
+    def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact], str, RPCError]:
+        """
+        Returns either contacts or None if the value is found.
+        """
+        contacts, val = self.node.find_value(sender, key)
+        return contacts, val, self._no_error()
+
+    def store(self,
+              sender: Contact, 
+              key: ID, 
+              val: str, 
+              is_cached=False, 
+              exp_time: int=0) -> RPCError:
+
+        """
+        Stores the key-value on the remote peer.
+        """
+        self.node.store(sender=sender, 
+                        key=key,
+                        value=val, 
+                        is_cached=is_cached,
+                        exp_time=exp_time)
+
+        return self._no_error()
+
 
 
 def random_id_in_space(low=0, high=2 ** 160):
