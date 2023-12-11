@@ -30,13 +30,12 @@ class GUI(ctk.CTk):
         # self.set_appearance_mode("dark")
 
     def clear_screen(self):
-        for widget in self.winfo_children():
-            widget.destroy()
+        for child in self.winfo_children():
+            child.destroy()
 
     def load_bootstrap_window(self):
         bootstrap = BootstrapFrame(self)
         bootstrap.pack(padx=20, pady=20)
-        
 
 
 class BootstrapFrame(ctk.CTkFrame):
