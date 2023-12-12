@@ -1,6 +1,6 @@
 import unittest
 
-from ..kademlia import ID, BucketList, Constants, Contact, random_id_in_space, Constants, Contact, ID, KBucket, TooManyContactsError, Node
+from ..kademlia import ID, BucketList, Constants, Contact, VirtualProtocol, random_id_in_space, Constants, Contact, ID, KBucket, TooManyContactsError, Node, Router
 
 
 class add_contact_test(unittest.TestCase):
@@ -99,39 +99,102 @@ class KBucketTests(unittest.TestCase):
             contact = Contact(ID(K + 1))
             k_bucket.add_contact(contact)
 
-
-def get_close_contacts_ordered_test():
-    sender: Contact = Contact(contact_ID=random_id_in_space(), protocol=None)
-    node: Node = Node(Contact(contact_ID=random_id_in_space(), protocol=None), VirtualStorage())
+class NodeLookupTests(unittest.TestCase):
     
-    contacts: list[Contact] = []
-    for _ in range(100):
-        contacts.append(Contact(contact_ID=random_id_in_space(), protocol=None))
+    def get_close_contacts_ordered_test(self):
+        sender: Contact = Contact(contact_ID=random_id_in_space(), protocol=None)
+        node: Node = Node(Contact(contact_ID=random_id_in_space(), protocol=None), VirtualStorage())
+        
+        contacts: list[Contact] = []
+        for _ in range(100):
+            contacts.append(Contact(contact_ID=random_id_in_space(), protocol=None))
+        
+        key: ID = random_id_in_space()
     
-    key: ID = random_id_in_space()
+        closest: list[Contact] = node.find_node(sender=sender, key=key)[0]
+    
+        assert(len(closest) == Constants().K, "Expected K contacts to be returned.")
+    
+        # the contacts should be in ascending order with respect to the key.
+        distances: list[int] = [c.id ^ key for c in closest]
+        distance: int = distances[0]
+    
+        for i in distances[1:]:
+            assert(distance < i, "Expected contacts to be ordered by distance.")
+            distance = i
+    
+        # Verify the contacts with the smallest distances have been returned from all possible distances.
+        last_distance = distances[-1]
+        others = []
+        for b in node.bucket_list.buckets:
+            for c in b.contacts:
+                if c not in closest and (c.id ^ key) < last_distance:
+                    others.append(c)
+    
+        assert(len(others) == 0, 
+               "Expected no other contacts with a smaller distance than the greatest distance to exist.");
 
-    closest: list[Contact] = node.find_node(sender=sender, key=key)[0]
+    def no_nodes_to_query_test(self):
+        router_node_contact = Contact(contact_ID=random_id_in_space(), protocol=None)
+        router = Router(node=Node(contact=router_node_contact, storage=VirtualStorage()))
 
-    assert(len(closest) == Constants().K, "Expected K contacts to be returned.")
+        nodes: list[Node] = []
 
-    # the contacts should be in ascending order with respect to the key.
-    distances: list[int] = [c.id ^ key for c in closest]
-    distance: int = distances[0]
+        for i in range(Constants().K):
+            nodes.append(Node(Contact(contact_ID=ID(2**i)), storage=VirtualStorage()))
 
-    for i in distances[1:]:
-        assert(distance < i, "Expected contacts to be ordered by distance.")
-        distance = i
+        for n in nodes:
+            # fixup protocols
+            n.our_contact.protocol = VirtualProtocol(n)
 
-    # Verify the contacts with the smallest distances have been returned from all possible distances.
-    last_distance = distances[-1]
-    others = []
-    for b in node.bucket_list.buckets:
-        for c in b.contacts:
-            if c not in closest and (c.id ^ key) < last_distance:
-                others.append(c)
+            # our contacts:
+            router.node.bucket_list.add_contact(n.our_contact)
 
-    assert(len(others) == 0, "Expected no other contacts with a smaller distance than the greatest distance to exist.");
+            # each peer needs to know about the other peers
+            n_other = [i for i in nodes if i is not n] # MIGHT ERROR
+            # n_other = [i for i in nodes if i != n]
+
+            # From book:
+            # nodes.ForEach(n => nodes.Where(nOther => nOther != n).ForEach(nOther => n.BucketList.AddContact(nOther.OurContact)));
+            for other_node in n_other:
+                n.bucket_list.add_contact(other_node.our_contact)
                 
+            
+        # select the key such that n^0==n
+        key = ID(0)
+        # all contacts are in one bucket (?)
+        contacts_to_query = router.node.bucket_list.buckets[0].contacts
+        closer_contacts: list[Contact] = []
+        further_contacts: list[Contact] = []
+
+        for c in contacts_to_query:
+            # should I read the output?
+            router.get_closer_nodes(key=key, 
+                                    node_to_query=c,
+                                    rpc_call=router.rpc_find_nodes,
+                                    closer_contacts=closer_contacts,
+                                    further_contacts=further_contacts)
+
+            closer_compare_arr = []
+            for contact in further_contacts:
+                if contact.id not in [i.id for i in contacts_to_query]:
+                    closer_compare_arr.append(contact)
+
+            assert(len(compare_arr) == 0, "No new nodes expected.")
+            
+            further_compare_arr = []
+            for contact in further_contacts:
+                if contact.id not in [i.id for i in contacts_to_query]:
+                    further_compare_arr.append(contact)
+
+            assert(len(compare_arr) == 0, "No new nodes expected.")
+
+    def lookup_test(self):
+        for i in range(100):
+            random_id_in_space(seed=i)
+            
+            
+    
             
 if __name__ == '__main__':
      unittest.main()
