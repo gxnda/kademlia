@@ -6,6 +6,8 @@ from threading import Lock
 LOCKER = Lock()
 DEBUG = True
 
+if DEBUG:
+    random.seed(1) # For consistent testing
 
 # Errors
 
@@ -57,7 +59,7 @@ class Constants:
         """
         self.K = 20
         self.B = 160
-        self.ALPHA = 10
+        self.A = 10
 
 
 class ID:
@@ -106,8 +108,44 @@ class ID:
         big_endian = [x for x in self.bin()[2:]][::-1]
         return big_endian
 
+    def __xor__(self, val) -> int:
+        if type(val) == ID:
+            return self.value ^ val.value
+        else:
+            return self.value ^ val
+
+    def __eq__(self, val) -> bool:
+        if type(val) == ID:
+            return self.value == val.value
+        else:
+            return self.value == val
+
+    def __ge__(self, val):
+        if type(val) == ID:
+            return self.value >= val.value
+        else:
+            return self.value >= val
+
+    def __le__(self, val):
+        if type(val) == ID:
+            return self.value <= val.value
+        else:
+            return self.value <= val
+
+    def __lt__(self, val):
+        if type(val) == ID:
+            return self.value < val.value
+        else:
+            return self.value < val
+
+    def __gt__(self, val):
+        if type(val) == ID:
+            return self.value > val.value
+        else:
+            return self.value > val
+    
     def __str__(self) -> str:
-        return str(self.value)
+        return str(self.denary())
 
 
 class IStorage:
@@ -206,7 +244,7 @@ class DHT:
 
 class KBucket:
 
-    def __init__(self, k=Constants().K, low=0, high=2 ** 160):
+    def __init__(self, k=Constants().K, low: int = 0, high: int = 2 ** 160):
         """
         Initialises a k-bucket with a specific ID range, 
         initially from 0 to 2**160.
@@ -409,14 +447,36 @@ class BucketList:
                 # Bucket is not full, nothing special happens.
                 kbucket.add_contact(contact)
 
-    def get_close_contacts(self, key, id):
+    def get_close_contacts(self, key: ID, exclude: ID) -> list[Contact]:
         """
-        TODO: Create this.
-        :param key:
-        :param id:
-        :return:
+        TODO: Is this in the right class (Code listing 42)
+        Brute force distance lookup of all known contacts, sorted by distance.
+        Then we take K of the closeset.
+        :param key: The ID for which we want to find close contacts.
+        :param exclude: The ID to exclude (the requestor's ID).
+        :return: List of K contacts sorted by distance.
         """
-        pass
+
+        def get_distance(contact: Contact):
+            return contact.id.value ^ key.value
+        
+        with self.lock:
+            contacts = []
+            count = 0
+            for bucket in self.buckets:
+                for contact in bucket.contacts:
+                    if count < Constants().K: # Should get K items
+                        if contact.id != exclude:
+                            count += 1
+                            contacts.append(contact)
+                    else:
+                        break  
+                        # More efficient that comparing count tons.
+            if len(contacts) > Constants().K and DEBUG:
+                raise ValueError(f"Contacts should be smaller than or equal to K. Has length {len.contacts}, which is {Constants().K - len.contacts} too big.")
+            return sorted(contacts, key=get_distance)
+                    
+            
 
 
 class Router:
@@ -442,7 +502,7 @@ class Router:
 
         all_nodes = self.node.bucket_list.get_close_contacts(key, self.node.our_contact.id)[0:Constants().K]
 
-        nodes_to_query: list[Contact] = all_nodes[0:Constants().ALPHA]
+        nodes_to_query: list[Contact] = all_nodes[0:Constants().A]
 
         for i in nodes_to_query:
             if i.id.value ^ key.value < self.node.our_contact.id.value ^ key.value:
@@ -451,7 +511,7 @@ class Router:
                 further_contacts.append(i)
 
         # all untested contacts just get dumped here.
-        further_contacts.append(all_nodes[Constants().ALPHA + 1:])
+        further_contacts.append(all_nodes[Constants().A + 1:])
 
         for i in nodes_to_query:
             if i not in contacted_nodes:
@@ -483,7 +543,7 @@ class Router:
             to them.
             """
             if have_closer:
-                new_nodes_to_query = closer_uncontacted_nodes[:Constants().ALPHA]
+                new_nodes_to_query = closer_uncontacted_nodes[:Constants().A]
                 for i in new_nodes_to_query:
                     if i not in contacted_nodes:
                         contacted_nodes.append(i)
@@ -494,7 +554,7 @@ class Router:
                     return query_result
 
             elif have_further:
-                new_nodes_to_query = further_uncontacted_nodes[:Constants().ALPHA]
+                new_nodes_to_query = further_uncontacted_nodes[:Constants().A]
                 for i in new_nodes_to_query:
                     if i not in contacted_nodes:
                         contacted_nodes.append(i)
@@ -581,6 +641,7 @@ class RPCError(Exception):
     """
     Errors for RPC commands.
     """
+    @staticmethod
     def no_error():
         pass
 
@@ -595,7 +656,7 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
         self.node = node
 
     @staticmethod
-    def _no_error() -> RPCError:
+    def _NoError() -> RPCError:
         return RPCError()
     
     def ping(self, sender: Contact) -> RPCError:
@@ -606,14 +667,14 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
         """
         Get the list of contacts for this node closest to the key.
         """
-        return self.node.find_node(sender=sender, key=key)[0], self._no_error()
+        return self.node.find_node(sender=sender, key=key)[0], self._NoError()
 
     def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact], str, RPCError]:
         """
         Returns either contacts or None if the value is found.
         """
         contacts, val = self.node.find_value(sender, key)
-        return contacts, val, self._no_error()
+        return contacts, val, self._NoError()
 
     def store(self,
               sender: Contact, 
@@ -631,7 +692,7 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
                         is_cached=is_cached,
                         exp_time=exp_time)
 
-        return self._no_error()
+        return self._NoError()
 
 
 
