@@ -596,7 +596,7 @@ class Router:
         return new_contacts, None, None
 
     def get_closer_nodes(self, key: ID, node_to_query: Contact, rpc_call,
-                         closer_contacts: list[Contact], farther_contacts: list[Contact]) -> bool:
+                         closer_contacts: list[Contact], further_contacts: list[Contact]) -> bool:
 
         # TODO: What is node? I don't think it has been created yet, but I could be wrong.
 
@@ -609,7 +609,7 @@ class Router:
             if contact.id.value not in [self.node.our_contact.id.value, 
                                         node_to_query.id.value, 
                                         closer_contacts,
-                                        farther_contacts]:
+                                        further_contacts]:
                 peers_nodes.append(contact)
 
         nearest_node_distance = node_to_query.id.value ^ key.value
@@ -627,8 +627,8 @@ class Router:
                 # if given nodes are further than or equal to the nearest node
                 # , and it hasn't already been added:
                 if p.id.value ^ key.value >= nearest_node_distance \
-                        and p.id.value not in [i.id.value for i in farther_contacts]:
-                    farther_contacts.append(p)
+                        and p.id.value not in [i.id.value for i in further_contacts]:
+                    further_contacts.append(p)
 
         return val is not None
 
@@ -696,7 +696,7 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
 
 
 
-def random_id_in_space(low=0, high=2 ** 160):
+def random_id_in_space(low=0, high=2 ** 160, seed=None):
     """
     FOR TESTING PURPOSES.
     TODO: Remove.
@@ -707,6 +707,8 @@ def random_id_in_space(low=0, high=2 ** 160):
     If I do though, here's how it would be done:
     - Randomly generate each individual bit, then concatenate.
     """
+    if seed:
+        random.seed(seed)
     return ID(random.randint(low, high))
 
 
