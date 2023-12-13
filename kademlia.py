@@ -511,7 +511,8 @@ class Router:
                 further_contacts.append(i)
 
         # all untested contacts just get dumped here.
-        further_contacts.append(all_nodes[Constants().A + 1:])
+        for i in all_nodes[Constants().A + 1:]:
+            further_contacts.append(i)
 
         for i in nodes_to_query:
             if i not in contacted_nodes:
@@ -648,7 +649,7 @@ class RPCError(Exception):
 
 class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
     """
-    For unit testing
+    For unit testing, doesn't really do much
     """
     
     def __init__(self, node: Node, responds=True) -> None:
@@ -694,6 +695,9 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
 
         return self._NoError()
 
+
+class VirtualStorage:
+    pass
 
 
 def random_id_in_space(low=0, high=2 ** 160, seed=None):
