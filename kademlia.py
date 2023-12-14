@@ -31,6 +31,7 @@ class AllKBucketsAreEmptyError(Exception):
 
 
 class SendingQueryToSelfError(Exception):
+    """Raised when a Query (RPC Call) is sent to ourselves."""
     pass
 
 
@@ -224,7 +225,7 @@ class Node:
 
         self.send_key_values_if_new_contact(sender)
         self.bucket_list.add_contact(sender)
-        contacts = self.bucket_list.get_close_contacts(key=key, id=sender.id)
+        contacts = self.bucket_list.get_close_contacts(key=key, exclude=sender.id)
 
         return contacts, None
     
@@ -244,20 +245,19 @@ class DHT:
 
 class KBucket:
 
-    def __init__(self, k=Constants().K, low: int = 0, high: int = 2 ** 160):
+    def __init__(self, intitial_contacts: list[Contact] = [], low: int = 0, high: int = 2 ** 160):
         """
         Initialises a k-bucket with a specific ID range, 
         initially from 0 to 2**160.
         """
-        self.contacts: list[Contact] = []
+        self.contacts: list[Contact] = initial_contacts
         self._low = low
         self._high = high
         self.time_stamp: datetime = datetime.now()
-        self._k = k
         self.lock = Lock()
 
     def is_full(self) -> bool:
-        return len(self.contacts) >= self._k
+        return len(self.contacts) >= Constants().K
 
     def contains(self, id: ID) -> bool:
         """
@@ -696,8 +696,10 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
         return self._NoError()
 
 
-class VirtualStorage:
-    pass
+class VirtualStorage(IStorage):
+    def __init__(self):
+        # TODO: Create.
+        pass
 
 
 def random_id_in_space(low=0, high=2 ** 160, seed=None):
@@ -716,11 +718,18 @@ def random_id_in_space(low=0, high=2 ** 160, seed=None):
     return ID(random.randint(low, high))
 
 
+def empty_node():
+    """
+    For testing.
+    :return:
+    """
+    return Node(Contact(contact_ID=ID(0)), storage=VirtualStorage())
+
+
+def random_node():
+    return Node(Contact(contact_ID=random_id_in_space()), storage=VirtualStorage())
+
+
 def select_random(arr: list, freq: int) -> list:
     return random.sample(arr, freq)
 
-
-if __name__ == "__main__":
-    id = ID(1234)
-    print(id.big_endian_bytes())
-    print(id.little_endian_bytes())
