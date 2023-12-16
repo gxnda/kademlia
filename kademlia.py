@@ -652,7 +652,7 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
     For unit testing, doesn't really do much
     """
     
-    def __init__(self, node: Node, responds=True) -> None:
+    def __init__(self, node: Node | None = None, responds=True) -> None:
         self.responds = responds
         self.node = node
 
