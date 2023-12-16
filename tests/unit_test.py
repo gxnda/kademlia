@@ -63,7 +63,7 @@ class test_force_failed_add_test(unittest.TestCase):
         dummy_contact = Contact(contact_ID=ID(0))
         node = Node(contact=dummy_contact, storage=VirtualStorage())
 
-        bucket_list: BucketList = setup_split_failure()
+        bucket_list: BucketList = setup_split_failure() # TODO: THIS FUNCTION DOES NOT EXIST.
 
         assert (len(bucket_list.buckets) == 2,
                 "Bucket split should have occured.")
@@ -75,7 +75,7 @@ class test_force_failed_add_test(unittest.TestCase):
                 "Expected 20 contacts in bucket 1.")
 
         # This next contact should not split the bucket as
-        # depth == 5 and therfore adding the contact will fail.
+        # depth = 5 and therfore adding the contact will fail.
 
         # Any unique ID >= 2^159 will do.
 
