@@ -23,8 +23,13 @@ class test_add_contact(unittest.TestCase):
             len(bucket_list.buckets[0].contacts) == Constants().K,
             "K contacts should have been added.")
 
+<<<<<<< HEAD
     def test_duplicate_id_test(self):
         # dummy_contact = Contact(VirtualProtocol(), ID(0))
+=======
+    def duplicate_id_test(self):
+        dummy_contact = Contact(ID(0), VirtualProtocol())
+>>>>>>> 1b7a43dd478470ea9c409096cc23485b967f37b3
         #  ((VirtualProtocol)dummyContact.Protocol).Node = new Node(dummyContact, new VirtualStorage());
         bucket_list: BucketList = BucketList(random_id_in_space()) 
         # !!! ^ There is a 2nd param "dummy_contact" in book here, 
@@ -267,14 +272,47 @@ class NodeLookupTests(unittest.TestCase):
     def get_alt_close_and_far(self, contacts_to_query: list[Contact], 
                               closer: list[Contact], 
                               further: list[Contact],
-                              nodes: list[Node]):
+                              nodes: list[Node],
+                              key: ID, # I think this is needed.
+                              distance
+                              ):
         """
         Alternate implementation for getting closer and further contacts.
         """
         # for each node in our bucket (nodes_to_query) we're going
         # to get k nodes closest to the key
         for contact in contacts_to_query:
+            # very inefficient - TODO: Make more efficient.
             contact_node: Node = [i for i in nodes if i.our_contact == contact][0]
+            # close contacts do not contain ourselves or the nodes we're contacting.
+            # note that of all the contacts in the bucket list, many of the k returned
+            # by the get_close_contacts call are contacts we're querying, so they are
+            # being excluded.
+
+            our_id = router.node.our_contact.id # our nodes ID
+
+            # all close contacts to us, excluding ourselves
+            temp_list = contact_node.bucket_list.get_close_contacts(key, our_id)
+            close_contacts_of_contacted_node: list[Contact] = []
+
+            # if we don't have to query the contact at some point, we can add it.
+            for c in temp_list:
+                if c.id not in [i.id for i in contacts_to_query]:
+                    close_contacts_of_contacted_node.append(c)
+
+            for close_contact in close_contacts_of_contacted_node:
+                # work out which is closer, if it is closer, and we haven't already added it:
+                if close_contact.id ^ key < distance and close_contact not in closer:
+                    closer.append(close_contact)
+                elif close_contact ^ key >= distance and close_contact not in further:
+                    further.append(close_contact)
+
+
+
+
+
+
+
     
     def lookup_test(self):
 
