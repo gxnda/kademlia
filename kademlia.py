@@ -1,16 +1,15 @@
-from datetime import datetime
-from abc import abstractmethod
 import random
+from abc import abstractmethod
+from datetime import datetime
 from threading import Lock
 
-LOCKER = Lock()
-DEBUG = True
+DEBUG: bool = True
 
 if DEBUG:
     random.seed(1) # For consistent testing
 
-# Errors
 
+# Errors
 
 class TooManyContactsError(Exception):
     """Raised when a contact is added to a full k-bucket."""
@@ -32,6 +31,10 @@ class AllKBucketsAreEmptyError(Exception):
 
 class SendingQueryToSelfError(Exception):
     """Raised when a Query (RPC Call) is sent to ourselves."""
+    pass
+
+class SenderIsSelfError(Exception):
+    """Raised when trying to send certain RPC commands, if sender is us."""
     pass
 
 
@@ -100,6 +103,7 @@ class Constants:
         self.K = 20
         self.B = 160
         self.A = 10
+        self.EXPIRATION_TIME_SEC = 86400  # TODO: Give this a proper number.
 
 
 class ID:
@@ -246,45 +250,107 @@ class Node:
                  contact: Contact,
                  storage: IStorage,
                  cache_storage=None):
+        
         self.our_contact: Contact = contact
-        self.bucket_list = BucketList(contact.id)
         self._storage: IStorage = storage
+        self.cache_storage = cache_storage
+        self.DHT: DHT
+        self.bucket_list = BucketList(contact.id)
+
 
     def ping(self, sender: Contact) -> Contact:
         # TODO: Complete.
         pass
 
-    def store(self, key: ID, sender: Contact, value: str) -> None:
-        # TODO: Complete.
-        pass
+    def store(self, 
+              key: ID, 
+              sender: Contact, 
+              value: str, 
+              is_cached: bool = False, 
+              expiration_time_sec: int = 0) -> None:
 
-    def find_node(self, key: ID, sender: Contact) -> tuple[list[Contact], str]:
+            if sender.id == self.our_contact.id:
+                raise SenderIsSelfError("Sender should not be ourself.")
+
+            # add sender to bucket_list (updating bucket list like is in spec.)
+            self.bucket_list.add_contact(sender)
+
+            if is_cached:
+                self.cache_storage.set(key, val, expiration_time_sec)
+            else:
+                self.send_key_values_if_new_contact(sender)
+                self._storage.set(key, val, Constants().EXPIRATION_TIME_SEC)
+        
+
+    def find_node(self, key: ID, sender: Contact) -> tuple[list[Contact], str | None]:
         if sender.id == self.our_contact.id:
             raise SendingQueryToSelfError("Sender cannot be ourselves.")
 
         self.send_key_values_if_new_contact(sender)
+
         self.bucket_list.add_contact(sender)
         contacts = self.bucket_list.get_close_contacts(key=key, exclude=sender.id)
 
         return contacts, None
     
-    def find_value(self, key: ID, sender: Contact):  # -> (list[Contact], str)
-        # TODO: Complete.
-        pass
+    def find_value(self, key: ID, sender: Contact) \
+            -> tuple[list[Contact] | None, str | None]:
+        if sender.id == self.our_contact.id:
+            raise SendingQueryToSelfError("Sender cannot be ourselves.")
+
+        self.send_key_values_if_new_contact(sender)
+        if self._storage.contains(key):
+            return None, self._storage.get(key)
+        elif self.cache_storage.contains(key):
+            return None, self.cache_storage.get(key)
+        else:
+            return self.bucket_list.get_close_contacts(key, sender.id), None
 
 
 class DHT:
 
-    def __init__(self):
-        self._base_router = None
+    def __init__(self, 
+                 id: ID, 
+                 protocol: IProtocol, 
+                 router: BaseRouter):
+        
+        self._router = None
+        self._originator_storage = self.storage_factory()
+        self.our_id = id
+        self.our_contact = Contact(contact_ID=id, protocol=protocol)
+        self._node = Node(self.our_contact, storage=VirtualStorage())
+        self._node.DHT = self
+        self._node.bucket_list.DHT = self
+        self._protocol = protocol
+        self._router = router
+        self._router.node = self._node
+        self._router.DHT = self
 
     def router(self):
-        return self._base_router
+        return self._router
+
+    def protocol(self):
+        return self._protocol
+
+    def originator_storage(self):
+        return self._originator_storage
+
+    def store(self, key: ID, val: str) -> None:
+        self.touch_bucket_with_key(key)
+        # We're storing to K closer contacts
+        self._originator_storage.set(key, val)
+        self.store_on_closer_contacts(key, val)
+
+    def find_value(key: id) -> Tuple[bool, List[Contact], str]:
+        self.touch_bucket_with_key(key)
+        our_val: str
+        
+    
 
 
 class KBucket:
 
-    def __init__(self, intitial_contacts: list[Contact] = [], low: int = 0, high: int = 2 ** 160):
+    def __init__(self, initial_contacts: list[Contact] = [], low: int = 0, high: int = 2 ** 160):
         """
         Initialises a k-bucket with a specific ID range, 
         initially from 0 to 2**160.
@@ -413,6 +479,9 @@ class BucketList:
 
         # create locking object
         self.lock = Lock()
+
+        # DHT object?
+        self.DHT: DHT
 
     def _get_kbucket_index(self, other_id: ID) -> int:
         """
@@ -736,9 +805,27 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
 
 
 class VirtualStorage(IStorage):
+    """
+    Simple storage mechanism that stores things in memory.
+    """
     def __init__(self):
-        # TODO: Create.
-        pass
+        _store: dict = {}
+
+    def contains(self, key: ID) -> bool:
+        """
+        Returns a boolean stating whether or not a key is storing something.
+        """
+        return key.value in list(self._store.keys())
+
+    def get(self, key):
+        if type(key) == ID:
+            return self._store[key.value]
+        elif type(key) == int:
+            return self._store[key]
+        else:
+            raise TypeError("'get()' parameter 'key' must be type ID or int.")
+    
+        
 
 
 def random_id_in_space(low=0, high=2 ** 160, seed=None):

@@ -304,7 +304,7 @@ class NodeLookupTests(unittest.TestCase):
                 # work out which is closer, if it is closer, and we haven't already added it:
                 if close_contact.id ^ key < distance and close_contact not in closer:
                     closer.append(close_contact)
-                elif close_contact ^ key >= distance and close_contact not in further:
+                elif close_contact.id ^ key >= distance and close_contact not in further:
                     further.append(close_contact)
 
 
@@ -331,14 +331,122 @@ class NodeLookupTests(unittest.TestCase):
             contacted_nodes: list[Contact] = close_contacts
 
             self.get_alt_close_and_far(contacts_to_query,
-                                  closer_contacts_alt_computation,
-                                  further_contacts_alt_computation, nodes)
+                                       closer_contacts_alt_computation,
+                                       further_contacts_alt_computation, 
+                                       nodes, 
+                                       key=id, 
+                                       distance=distance)
 
             self.assertTrue(len(close_contacts) >=
                     len(closer_contacts_alt_computation),
                     "Expected at least as many contacts.")
             for c in closer_contacts_alt_computation:
-                assert(c in close_contacts)
+                self.assertTrue(c in close_contacts, 
+                                "somehow a close contact in the computation is not in the originals?")
+
+    def simple_all_closer_contacts_test(self):
+        # setup
+        # by selecting our node ID to zero, we ensure that all distances of other nodes 
+        # are greater than the distance to our node.
+
+        # Create a router with the largest ID possible.
+        router = Router(Node(Contact(contact_ID=ID(2**160 - 1), protocol=None), VirtualStorage()))
+        nodes: list[Node] = []
+
+        for n in range(Constants().K):
+            # Create a node with id of a power of 2, up to 2**20.
+            node = Node(Contact(contact_ID=ID(2**n), protocol=None), storage=VirtualStorage())
+            nodes.append(node)
+
+        # Fixup protocols
+        for n in nodes:
+            n.our_contact.protocol = VirtualProtocol(n)
+
+        # add all contacts in our node list to the router.
+        for n in nodes:
+            router.node.bucket_list.add_contact(n.our_contact)
+
+        # let all of them know where the others are:
+        # (add each nodes contact to each nodes bucket_list)
+        for n in nodes:
+            for n_other in nodes:
+                if n != n_other:
+                    n.bucket_list.add_contact(n_other.our_contact)
+
+        # select the key such that n ^ 0 == n (TODO: Why?)
+        # this ensures the distance metric uses only the node ID,
+        # which makes for an integer difference for distance, not an XOR distance.
+        key = ID(0)
+        # all contacts are in one bucket
+        # This is because we added K node's contacts to router,
+        # so it shouldn't have split.
+        contacts_to_query = router.node.bucket_list.buckets[0].contacts
+        
+        contacts = router.lookup(key=key, 
+                                 rpc_call=router.rpc_find_nodes, 
+                                 give_me_all=True)
+
+        # Make sure lookup returns K contacts.
+        self.assertTrue(len(contacts) == Constants().K, "Expected K closer contacts.")
+
+        # Make sure it realises all contacts should be closer than 2**160 - 1.
+        self.assertTrue(len(router.closer_contacts) == Constants().K,
+                        "All contacts should be closer than the ID 2**160 - 1.")
+
+        self.assertTrue(len(router.further_contacts) == 0, "Expected no further contacts.")
+
+    def simple_all_closer_contacts_test(self):
+        # setup
+        # by selecting our node ID to zero, we ensure that all distances of other nodes 
+        # are greater than the distance to our node.
+    
+        # Create a router with the largest ID possible.
+        router = Router(Node(Contact(contact_ID=ID(0), protocol=None), VirtualStorage()))
+        nodes: list[Node] = []
+    
+        for n in range(Constants().K):
+            # Create a node with id of a power of 2, up to 2**20.
+            node = Node(Contact(contact_ID=ID(2**n), protocol=None), storage=VirtualStorage())
+            nodes.append(node)
+    
+        # Fixup protocols
+        for n in nodes:
+            n.our_contact.protocol = VirtualProtocol(n)
+    
+        # add all contacts in our node list to the router.
+        for n in nodes:
+            router.node.bucket_list.add_contact(n.our_contact)
+    
+        # let all of them know where the others are:
+        # (add each nodes contact to each nodes bucket_list)
+        for n in nodes:
+            for n_other in nodes:
+                if n != n_other:
+                    n.bucket_list.add_contact(n_other.our_contact)
+    
+        # select the key such that n ^ 0 == n (TODO: Why?)
+        # this ensures the distance metric uses only the node ID,
+        # which makes for an integer difference for distance, not an XOR distance.
+        key = ID(0)
+        # all contacts are in one bucket
+        # This is because we added K node's contacts to router,
+        # so it shouldn't have split.
+        contacts_to_query = router.node.bucket_list.buckets[0].contacts
+    
+        contacts = router.lookup(key=key, 
+                                 rpc_call=router.rpc_find_nodes, 
+                                 give_me_all=True)
+    
+        # Make sure lookup returns K contacts.
+        self.assertTrue(len(contacts) == Constants().K, "Expected K closer contacts.")
+    
+        # Make sure it realises all contacts should be further than the ID 0.
+        self.assertTrue(len(router.further_contacts) == Constants().K,
+                        "All contacts should be further than the ID 0.")
+    
+        self.assertTrue(len(router.closer_contacts) == 0, "Expected no closer contacts.")
+    
+        
 
 
 if __name__ == '__main__':
