@@ -273,7 +273,7 @@ class Node:
         if sender.id == self.our_contact.id:
             raise SenderIsSelfError("Sender should not be ourself.")
 
-        # add sender to bucket_list (updating bucket list like is in spec.)
+        # add sender to bucket_list (updating bucket list like how it is in spec.)
         self.bucket_list.add_contact(sender)
 
         if is_cached:
