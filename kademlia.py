@@ -665,8 +665,6 @@ class Router:
     def get_closer_nodes(self, key: ID, node_to_query: Contact, rpc_call,
                          closer_contacts: list[Contact], further_contacts: list[Contact]) -> bool:
 
-        # TODO: What is node? I don't think it has been created yet, but I could be wrong.
-
         contacts: list[Contact]
         found_by: Contact
         val: str
