@@ -779,6 +779,11 @@ class VirtualStorage(IStorage):
         return key.value in list(self._store.keys())
 
     def get(self, key):
+        """
+        Returns stored value, associated with given key value.
+        :param key: Type ID or Integer, key value to be searched.
+        :return:
+        """
         if type(key) == ID:
             return self._store[key.value]
         elif type(key) == int:
