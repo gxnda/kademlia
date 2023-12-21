@@ -306,6 +306,9 @@ class Node:
         else:
             return self.bucket_list.get_close_contacts(key, sender.id), None
 
+    def send_key_values_if_new_contact(self, sender: Contact):
+        pass
+
 
 class KBucket:
 
