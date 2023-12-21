@@ -299,6 +299,7 @@ class Node:
             raise SendingQueryToSelfError("Sender cannot be ourselves.")
 
         self.send_key_values_if_new_contact(sender)
+
         if self._storage.contains(key):
             return None, self._storage.get(key)
         elif self.cache_storage.contains(key):
