@@ -257,7 +257,6 @@ class Node:
         self.DHT: DHT
         self.bucket_list = BucketList(contact.id)
 
-
     def ping(self, sender: Contact) -> Contact:
         # TODO: Complete.
         pass
@@ -265,7 +264,7 @@ class Node:
     def store(self, 
               key: ID, 
               sender: Contact, 
-              value: str, 
+              val: str,
               is_cached: bool = False, 
               expiration_time_sec: int = 0) -> None:
 
@@ -305,47 +304,6 @@ class Node:
             return None, self.cache_storage.get(key)
         else:
             return self.bucket_list.get_close_contacts(key, sender.id), None
-
-
-class DHT:
-
-    def __init__(self, 
-                 id: ID, 
-                 protocol: IProtocol, 
-                 router: BaseRouter):
-        
-        self._router = None
-        self._originator_storage = self.storage_factory()
-        self.our_id = id
-        self.our_contact = Contact(contact_ID=id, protocol=protocol)
-        self._node = Node(self.our_contact, storage=VirtualStorage())
-        self._node.DHT = self
-        self._node.bucket_list.DHT = self
-        self._protocol = protocol
-        self._router = router
-        self._router.node = self._node
-        self._router.DHT = self
-
-    def router(self):
-        return self._router
-
-    def protocol(self):
-        return self._protocol
-
-    def originator_storage(self):
-        return self._originator_storage
-
-    def store(self, key: ID, val: str) -> None:
-        self.touch_bucket_with_key(key)
-        # We're storing to K closer contacts
-        self._originator_storage.set(key, val)
-        self.store_on_closer_contacts(key, val)
-
-    def find_value(key: id) -> Tuple[bool, List[Contact], str]:
-        self.touch_bucket_with_key(key)
-        our_val: str
-        
-    
 
 
 class KBucket:
@@ -583,8 +541,6 @@ class BucketList:
             if len(contacts) > Constants().K and DEBUG:
                 raise ValueError(f"Contacts should be smaller than or equal to K. Has length {len.contacts}, which is {Constants().K - len.contacts} too big.")
             return sorted(contacts, key=get_distance)
-                    
-            
 
 
 class Router:
@@ -824,8 +780,44 @@ class VirtualStorage(IStorage):
             return self._store[key]
         else:
             raise TypeError("'get()' parameter 'key' must be type ID or int.")
-    
-        
+
+
+class DHT:
+
+    def __init__(self,
+                 id: ID,
+                 protocol: IProtocol,
+                 router: Router):
+        self._router = None
+        self._originator_storage = self.storage_factory()
+        self.our_id = id
+        self.our_contact = Contact(contact_ID=id, protocol=protocol)
+        self._node = Node(self.our_contact, storage=VirtualStorage())
+        self._node.DHT = self
+        self._node.bucket_list.DHT = self
+        self._protocol = protocol
+        self._router = router
+        self._router.node = self._node
+        self._router.DHT = self
+
+    def router(self):
+        return self._router
+
+    def protocol(self):
+        return self._protocol
+
+    def originator_storage(self):
+        return self._originator_storage
+
+    def store(self, key: ID, val: str) -> None:
+        self.touch_bucket_with_key(key)
+        # We're storing to K closer contacts
+        self._originator_storage.set(key, val)
+        self.store_on_closer_contacts(key, val)
+
+    def find_value(self, key: id) -> tuple[bool, list[Contact], str]:
+        self.touch_bucket_with_key(key)
+        our_val: str
 
 
 def random_id_in_space(low=0, high=2 ** 160, seed=None):
