@@ -6,7 +6,7 @@ from threading import Lock
 DEBUG: bool = True
 
 if DEBUG:
-    random.seed(1) # For consistent testing
+    random.seed(1)  # For consistent testing
 
 
 # Errors
@@ -59,6 +59,7 @@ class WithLock:
     https://www.geeksforgeeks.org/with-statement-in-python/
 
     """
+
     def __init__(self, lock: Lock) -> None:
         """
         Creates lock object to be used in __enter__ and __exit__.
@@ -188,7 +189,7 @@ class ID:
             return self.value > val.value
         else:
             return self.value > val
-    
+
     def __str__(self) -> str:
         return str(self.denary())
 
@@ -251,7 +252,7 @@ class Node:
                  contact: Contact,
                  storage: IStorage,
                  cache_storage=None):
-        
+
         self.our_contact: Contact = contact
         self._storage: IStorage = storage
         self.cache_storage = cache_storage
@@ -262,25 +263,24 @@ class Node:
         # TODO: Complete.
         pass
 
-    def store(self, 
-              key: ID, 
-              sender: Contact, 
+    def store(self,
+              key: ID,
+              sender: Contact,
               val: str,
-              is_cached: bool = False, 
+              is_cached: bool = False,
               expiration_time_sec: int = 0) -> None:
 
-            if sender.id == self.our_contact.id:
-                raise SenderIsSelfError("Sender should not be ourself.")
+        if sender.id == self.our_contact.id:
+            raise SenderIsSelfError("Sender should not be ourself.")
 
-            # add sender to bucket_list (updating bucket list like is in spec.)
-            self.bucket_list.add_contact(sender)
+        # add sender to bucket_list (updating bucket list like is in spec.)
+        self.bucket_list.add_contact(sender)
 
-            if is_cached:
-                self.cache_storage.set(key, val, expiration_time_sec)
-            else:
-                self.send_key_values_if_new_contact(sender)
-                self._storage.set(key, val, Constants().EXPIRATION_TIME_SEC)
-        
+        if is_cached:
+            self.cache_storage.set(key, val, expiration_time_sec)
+        else:
+            self.send_key_values_if_new_contact(sender)
+            self._storage.set(key, val, Constants().EXPIRATION_TIME_SEC)
 
     def find_node(self, key: ID, sender: Contact) -> tuple[list[Contact], str | None]:
         if sender.id == self.our_contact.id:
@@ -292,7 +292,7 @@ class Node:
         contacts = self.bucket_list.get_close_contacts(key=key, exclude=sender.id)
 
         return contacts, None
-    
+
     def find_value(self, key: ID, sender: Contact) \
             -> tuple[list[Contact] | None, str | None]:
         if sender.id == self.our_contact.id:
@@ -504,7 +504,7 @@ class BucketList:
                     # adds the two buckets to 2 separate buckets.
                     self.buckets[index] = k1
                     self.buckets.insert(index + 1, k2)
-                    self.add_contact(contact) # Unless k <= 0, This should never cause a recursive loop
+                    self.add_contact(contact)  # Unless k <= 0, This should never cause a recursive loop
 
                 else:
                     # TODO: Ping the oldest contact to see if it's still around and replace it if not.
@@ -526,21 +526,22 @@ class BucketList:
 
         def get_distance(contact: Contact):
             return contact.id.value ^ key.value
-        
+
         with self.lock:
             contacts = []
             count = 0
             for bucket in self.buckets:
                 for contact in bucket.contacts:
-                    if count < Constants().K: # Should get K items
+                    if count < Constants().K:  # Should get K items
                         if contact.id != exclude:
                             count += 1
                             contacts.append(contact)
                     else:
-                        break  
+                        break
                         # More efficient that comparing count tons.
             if len(contacts) > Constants().K and DEBUG:
-                raise ValueError(f"Contacts should be smaller than or equal to K. Has length {len.contacts}, which is {Constants().K - len.contacts} too big.")
+                raise ValueError(
+                    f"Contacts should be smaller than or equal to K. Has length {len.contacts}, which is {Constants().K - len.contacts} too big.")
             return sorted(contacts, key=get_distance)
 
 
@@ -671,8 +672,8 @@ class Router:
         contacts, found_by, val = rpc_call(key, node_to_query)
         peers_nodes = []
         for contact in contacts:
-            if contact.id.value not in [self.node.our_contact.id.value, 
-                                        node_to_query.id.value, 
+            if contact.id.value not in [self.node.our_contact.id.value,
+                                        node_to_query.id.value,
                                         closer_contacts,
                                         further_contacts]:
                 peers_nodes.append(contact)
@@ -706,6 +707,7 @@ class RPCError(Exception):
     """
     Errors for RPC commands.
     """
+
     @staticmethod
     def no_error():
         pass
@@ -715,7 +717,7 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
     """
     For unit testing, doesn't really do much
     """
-    
+
     def __init__(self, node: Node | None = None, responds=True) -> None:
         self.responds = responds
         self.node = node
@@ -723,7 +725,7 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
     @staticmethod
     def _NoError() -> RPCError:
         return RPCError()
-    
+
     def ping(self, sender: Contact) -> RPCError:
         return RPCError()
 
@@ -741,16 +743,15 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
         return contacts, val, self._NoError()
 
     def store(self,
-              sender: Contact, 
-              key: ID, 
-              val: str, 
-              is_cached=False, 
+              sender: Contact,
+              key: ID,
+              val: str,
+              is_cached=False,
               exp_time: int = 0) -> RPCError:
-
         """
         Stores the key-value on the remote peer.
         """
-        self.node.store(sender=sender, 
+        self.node.store(sender=sender,
                         key=key,
                         val=val,
                         is_cached=is_cached,
@@ -763,6 +764,7 @@ class VirtualStorage(IStorage):
     """
     Simple storage mechanism that stores things in memory.
     """
+
     def __init__(self):
         self._store: dict = {}
 
@@ -849,4 +851,3 @@ def random_node():
 
 def select_random(arr: list, freq: int) -> list:
     return random.sample(arr, freq)
-
