@@ -38,7 +38,7 @@ class SenderIsSelfError(Exception):
     pass
 
 
-class MyLock():
+class WithLock:
     """
     Lock object that can be used in "with" statements.
 
@@ -46,7 +46,7 @@ class MyLock():
 
         lock = threading.Lock()
 
-        with MyLock(lock):
+        with WithLock(lock):
             do_stuff()
 
         do_more_stuff()
