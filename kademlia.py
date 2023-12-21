@@ -33,6 +33,7 @@ class SendingQueryToSelfError(Exception):
     """Raised when a Query (RPC Call) is sent to ourselves."""
     pass
 
+
 class SenderIsSelfError(Exception):
     """Raised when trying to send certain RPC commands, if sender is us."""
     pass
@@ -554,6 +555,7 @@ class Router:
         :param node:
         """
         self.node = node
+        self.lock = WithLock(Lock())
 
     def lookup(self, key: ID, rpc_call, give_me_all: bool = False) -> tuple:
         have_work = True
@@ -679,7 +681,7 @@ class Router:
 
         nearest_node_distance = node_to_query.id.value ^ key.value
 
-        with LOCKER:
+        with self.lock:  # Lock thread while this is running.
             for p in peers_nodes:
                 # if given nodes are closer than our nearest node
                 # , and it hasn't already been added:
@@ -687,7 +689,7 @@ class Router:
                         and p.id.value not in [i.id.value for i in closer_contacts]:
                     closer_contacts.append(p)
 
-        with LOCKER:
+        with self.lock:  # Lock thread while this is running.
             for p in peers_nodes:
                 # if given nodes are further than or equal to the nearest node
                 # , and it hasn't already been added:
