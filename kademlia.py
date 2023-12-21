@@ -695,7 +695,7 @@ class Router:
                         and p.id.value not in [i.id.value for i in further_contacts]:
                     further_contacts.append(p)
 
-        return val is not None
+        return val is not None  # Can you use "is not" between empty strings and None?
 
 
 class IProtocol:
@@ -727,7 +727,6 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
     def ping(self, sender: Contact) -> RPCError:
         return RPCError()
 
-    
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact], RPCError]:
         """
         Get the list of contacts for this node closest to the key.
@@ -746,16 +745,16 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
               key: ID, 
               val: str, 
               is_cached=False, 
-              exp_time: int=0) -> RPCError:
+              exp_time: int = 0) -> RPCError:
 
         """
         Stores the key-value on the remote peer.
         """
         self.node.store(sender=sender, 
                         key=key,
-                        value=val, 
+                        val=val,
                         is_cached=is_cached,
-                        exp_time=exp_time)
+                        expiration_time_sec=exp_time)
 
         return self._NoError()
 
@@ -765,11 +764,11 @@ class VirtualStorage(IStorage):
     Simple storage mechanism that stores things in memory.
     """
     def __init__(self):
-        _store: dict = {}
+        self._store: dict = {}
 
     def contains(self, key: ID) -> bool:
         """
-        Returns a boolean stating whether or not a key is storing something.
+        Returns a boolean stating whether a key is storing something.
         """
         return key.value in list(self._store.keys())
 
