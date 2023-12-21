@@ -308,6 +308,7 @@ class Node:
             return self.bucket_list.get_close_contacts(key, sender.id), None
 
     def send_key_values_if_new_contact(self, sender: Contact):
+        # TODO: Complete this.
         pass
 
 
@@ -828,6 +829,12 @@ class DHT:
     def find_value(self, key: id) -> tuple[bool, list[Contact], str]:
         self.touch_bucket_with_key(key)
         our_val: str
+
+    def touch_bucket_with_key(self, key: ID):
+        pass
+
+    def store_on_closer_contacts(self, key: ID, val: str):
+        pass
 
 
 def random_id_in_space(low=0, high=2 ** 160, seed=None):
