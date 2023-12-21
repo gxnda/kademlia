@@ -828,7 +828,41 @@ class DHT:
 
     def find_value(self, key: id) -> tuple[bool, list[Contact], str]:
         self.touch_bucket_with_key(key)
-        our_val: str
+        contacts_queried: list[Contact] = []
+
+        # ret (found: False, contacts: None, val: None)
+        found: bool = False
+        contacts: list[Contact] | None = None
+        val: str | None = None
+
+        # TODO: Talk about what this does - I haven't made it yet so IDK.
+        our_val: str = self._originator_storage.try_get_value(key)
+        if our_val:
+            found = True
+            val = our_val
+        else:
+            lookup = self._router.lookup(key, self._router.rpc_find_value)
+            if lookup.found:
+                found = True
+                val = lookup.val
+                # Find the closest contact (other than the one the value was found by)
+                # in which to "cache" the key-value.
+                close_contacts: list[Contact] = [i for i in lookup.contacts if i != lookup.found_by]
+
+                if close_contacts:  # if a close contact exists.
+                    store_to: Contact = sorted(close_contacts, key=lambda i: i.id ^ key)[0]
+                    separating_nodes: int = self.get_separating_nodes_count(self.our_contact, store_to)
+                    error: RPCError = store_to.protocol.store(self._node.our_contact,
+                                                              key,
+                                                              lookup.val,
+                                                              True,
+                                                              Constants().EXPIRATION_TIME_SEC)
+                    handle_error(error, store_to) # TODO: is this needed?
+
+        return found, contacts, val
+
+
+
 
     def touch_bucket_with_key(self, key: ID):
         pass
