@@ -3,6 +3,21 @@ import unittest
 from kademlia import ID, BucketList, Constants, Contact, VirtualProtocol, random_id_in_space, Constants, Contact, ID, KBucket, TooManyContactsError, Node, Router, VirtualStorage
 
 
+class KBucketTests(unittest.TestCase):
+
+    def test_too_many_contacts(self):
+        with self.assertRaises(TooManyContactsError):
+            K = Constants().K
+            k_bucket = KBucket()
+            for i in range(K):
+                contact = Contact(ID(i))
+                k_bucket.add_contact(contact)
+
+            # Trying to add one more contact should raise the exception
+            contact = Contact(ID(K + 1))
+            k_bucket.add_contact(contact)
+
+
 class test_add_contact(unittest.TestCase):
 
     def test_unique_id_add_test(self):
@@ -99,20 +114,6 @@ class test_force_failed_add_test(unittest.TestCase):
                 "Expected new contact NOT to replace an older contact.")
     """
     pass
-
-class KBucketTests(unittest.TestCase):
-
-    def test_too_many_contacts(self):
-        with self.assertRaises(TooManyContactsError):
-            K = Constants().K
-            k_bucket = KBucket()
-            for i in range(K):
-                contact = Contact(ID(i))
-                k_bucket.add_contact(contact)
-
-            # Trying to add one more contact should raise the exception
-            contact = Contact(ID(K + 1))
-            k_bucket.add_contact(contact)
 
 
 class NodeLookupTests(unittest.TestCase):
