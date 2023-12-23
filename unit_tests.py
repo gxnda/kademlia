@@ -3,7 +3,7 @@ import unittest
 from kademlia import ID, BucketList, Constants, Contact, VirtualProtocol, random_id_in_space, Constants, Contact, ID, KBucket, TooManyContactsError, Node, Router, VirtualStorage
 
 
-class KBucketTests(unittest.TestCase):
+class test_KBucket(unittest.TestCase):
 
     def test_too_many_contacts(self):
         with self.assertRaises(TooManyContactsError):
@@ -66,12 +66,12 @@ class test_add_contact(unittest.TestCase):
                                              # dummy_contact)
         for i in range(Constants().K):
             bucket_list.add_contact(Contact(random_id_in_space()))
-
         bucket_list.add_contact(Contact(random_id_in_space()))
 
         self.assertTrue(
             len(bucket_list.buckets) > 1,
-            "Bucket should have split into two or more buckets.")
+            "Bucket should have split into two or more buckets. "
+            f"Length of first buckets contacts = {len(bucket_list.buckets[0].contacts)}")
 
 
 class test_force_failed_add_test(unittest.TestCase):

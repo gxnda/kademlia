@@ -1,7 +1,9 @@
 import random
 from abc import abstractmethod
 from datetime import datetime
-from threading import Lock
+from statistics import median_high
+# from threading import Lock
+
 
 DEBUG: bool = True
 
@@ -318,7 +320,11 @@ class KBucket:
         # self.lock = WithLock(Lock())
 
     def is_full(self) -> bool:
-        return len(self.contacts) > Constants().K
+        """
+        This INCLUDES K, so if there are 20 inside, no more can be added.
+        :return: Boolean saying if it's full.
+        """
+        return len(self.contacts) >= Constants().K
 
     def contains(self, id: ID) -> bool:
         """
@@ -392,10 +398,16 @@ class KBucket:
         """
         Splits KBucket in half, returns tuple of type (KBucket, KBucket).
         """
-        midpoint = (self._low + self._high) // 2
-        k1: KBucket = KBucket(low=self._low, high=midpoint)
-        k2: KBucket = KBucket(low=midpoint, high=self._high)
+        # This doesn't work when all contacts are bunched towards one side of the KBucket.
+        # midpoint = (self._low + self._high) // 2
 
+        # Gets the median of all contacts inside the KBucket (rounding up in even # of contacts)
+        contact_ids_asc = sorted([c.id.value for c in self.contacts])
+        median_of_contact_id: int = median_high(contact_ids_asc)
+        midpoint = median_of_contact_id
+
+        k1: KBucket = KBucket(low=self._low, high=midpoint, initial_contacts=[])
+        k2: KBucket = KBucket(low=midpoint, high=self._high, initial_contacts=[])
         for c in self.contacts:
             if c.id.value < midpoint:
                 k1.add_contact(c)
@@ -404,8 +416,12 @@ class KBucket:
 
         return k1, k2
 
-    def replace_contact(self, contact):
-        pass
+    def replace_contact(self, contact) -> None:
+        """replaces contact, then touches it"""
+        contact_ids = [c.id for c in self.contacts]
+        index = contact_ids.index(contact.id)
+        self.contacts[index] = contact
+        contact.touch()
 
 
 class BucketList:
@@ -474,8 +490,6 @@ class BucketList:
 
         This raises an error if we try to add ourselves to the k-bucket.
 
-        TODO: Talk about locking.
-
         :param contact: Contact to be added, this is touched in the process.
         :return: None
         """
@@ -492,15 +506,15 @@ class BucketList:
             kbucket.replace_contact(contact)
 
         elif kbucket.is_full():
-
             if self.can_split(kbucket):
+                print("Splitting!")
                 # Split then try again
                 k1, k2 = kbucket.split()
                 index: int = self._get_kbucket_index(contact.id)
 
                 # adds the two buckets to 2 separate buckets.
-                self.buckets[index] = k1
-                self.buckets.insert(index + 1, k2)
+                self.buckets[index] = k1  # Replaces original KBucket
+                self.buckets.insert(index + 1, k2)  # Adds a new one after it
                 self.add_contact(contact)  # Unless k <= 0, This should never cause a recursive loop
 
             else:
