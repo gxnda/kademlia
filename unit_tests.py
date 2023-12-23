@@ -139,9 +139,9 @@ class NodeLookupTests(unittest.TestCase):
         key: ID = random_id_in_space()
 
         closest: list[Contact] = node.find_node(sender=sender, key=key)[0]
-
+        print(closest)
         self.assertTrue(len(closest) == Constants().K,
-                "Expected K contacts to be returned.")
+                        "Expected K contacts to be returned.")
 
         # the contacts should be in ascending order with respect to the key.
         distances: list[int] = [c.id ^ key for c in closest]
