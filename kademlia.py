@@ -315,7 +315,7 @@ class KBucket:
         self._low = low
         self._high = high
         self.time_stamp: datetime = datetime.now()
-        self.lock = Lock()
+        self.lock = WithLock(Lock())
 
     def is_full(self) -> bool:
         return len(self.contacts) >= Constants().K
@@ -434,7 +434,7 @@ class BucketList:
         self.our_id: ID = our_id
 
         # create locking object
-        self.lock = Lock()
+        self.lock = WithLock(Lock())
 
         # DHT object?
         self.DHT: DHT
