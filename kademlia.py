@@ -39,36 +39,36 @@ class SenderIsSelfError(Exception):
     pass
 
 
-class WithLock:
-    """
-    Lock object that can be used in "with" statements.
-    Example usage:
-        lock = threading.Lock()
-        with WithLock(lock):
-            do_stuff()
-        do_more_stuff()
-    Based from the following code:
-    https://www.bogotobogo.com/python/Multithread/python_multithreading_Synchronization_Lock_Objects_Acquire_Release.php
-    https://www.geeksforgeeks.org/with-statement-in-python/
-    """
-
-    def __init__(self, lock: Lock) -> None:
-        """
-        Creates lock object to be used in __enter__ and __exit__.
-        """
-        self.lock = lock
-
-    def __enter__(self) -> None:
-        """
-        Change the state to locked and returns immediately.
-        """
-        self.lock.acquire()
-
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
-        """
-        Changes the state to unlocked; this is called from another thread.
-        """
-        self.lock.release()
+# class WithLock:
+#     """
+#     Lock object that can be used in "with" statements.
+#     Example usage:
+#         lock = threading.Lock()
+#         with WithLock(lock):
+#             do_stuff()
+#         do_more_stuff()
+#     Based from the following code:
+#     https://www.bogotobogo.com/python/Multithread/python_multithreading_Synchronization_Lock_Objects_Acquire_Release.php
+#     https://www.geeksforgeeks.org/with-statement-in-python/
+#     """
+#
+#     def __init__(self, lock: Lock) -> None:
+#         """
+#         Creates lock object to be used in __enter__ and __exit__.
+#         """
+#         self.lock = lock
+#
+#     def __enter__(self) -> None:
+#         """
+#         Change the state to locked and returns immediately.
+#         """
+#         self.lock.acquire()
+#
+#     def __exit__(self, exc_type, exc_value, traceback) -> None:
+#         """
+#         Changes the state to unlocked; this is called from another thread.
+#         """
+#         self.lock.release()
 
 
 class Constants:
@@ -315,7 +315,7 @@ class KBucket:
         self._low = low
         self._high = high
         self.time_stamp: datetime = datetime.now()
-        self.lock = WithLock(Lock())
+        # self.lock = WithLock(Lock())
 
     def is_full(self) -> bool:
         return len(self.contacts) >= Constants().K
@@ -361,11 +361,11 @@ class KBucket:
         the number of bits shared in the prefix of the contacts in the bucket 
         reaches the threshold b, which the spec says should be 5.
         """
-        with self.lock:
-            # TODO: What is self.node?
+        # with self.lock:
+        # TODO: What is self.node?
 
-            return (self.is_in_range(self.node.id)
-                    or (self.depth() % Constants().B != 0))
+        return (self.is_in_range(self.node.id)
+                or (self.depth() % Constants().B != 0))
 
     def depth(self) -> int:
         """
@@ -434,7 +434,7 @@ class BucketList:
         self.our_id: ID = our_id
 
         # create locking object
-        self.lock = WithLock(Lock())
+        # self.lock = WithLock(Lock())
 
         # DHT object?
         self.DHT: DHT
@@ -445,11 +445,11 @@ class BucketList:
         which has a given ID in range. Returns -1 if not found.
         """
 
-        with self.lock:
-            for i in range(len(self.buckets)):
-                if self.buckets[i].is_in_range(other_id):
-                    return i
-            return -1
+        # with self.lock:
+        for i in range(len(self.buckets)):
+            if self.buckets[i].is_in_range(other_id):
+                return i
+        return -1
 
     def get_kbucket(self, other_id: ID) -> KBucket:
         """
@@ -485,31 +485,31 @@ class BucketList:
 
         contact.touch()  # Update the time last seen to now
 
-        with self.lock:
-            kbucket: KBucket = self.get_kbucket(contact.id)
-            if kbucket.contains(contact.id):
-                # replace contact, then touch it
-                kbucket.replace_contact(contact)
+        # with self.lock:
+        kbucket: KBucket = self.get_kbucket(contact.id)
+        if kbucket.contains(contact.id):
+            # replace contact, then touch it
+            kbucket.replace_contact(contact)
 
-            elif kbucket.is_full():
+        elif kbucket.is_full():
 
-                if kbucket.can_split():
-                    # Split then try again
-                    k1, k2 = kbucket.split()
-                    index: int = self._get_kbucket_index(contact.id)
+            if kbucket.can_split():
+                # Split then try again
+                k1, k2 = kbucket.split()
+                index: int = self._get_kbucket_index(contact.id)
 
-                    # adds the two buckets to 2 separate buckets.
-                    self.buckets[index] = k1
-                    self.buckets.insert(index + 1, k2)
-                    self.add_contact(contact)  # Unless k <= 0, This should never cause a recursive loop
-
-                else:
-                    # TODO: Ping the oldest contact to see if it's still around and replace it if not.
-                    pass
+                # adds the two buckets to 2 separate buckets.
+                self.buckets[index] = k1
+                self.buckets.insert(index + 1, k2)
+                self.add_contact(contact)  # Unless k <= 0, This should never cause a recursive loop
 
             else:
-                # Bucket is not full, nothing special happens.
-                kbucket.add_contact(contact)
+                # TODO: Ping the oldest contact to see if it's still around and replace it if not.
+                pass
+
+        else:
+            # Bucket is not full, nothing special happens.
+            kbucket.add_contact(contact)
 
     def get_close_contacts(self, key: ID, exclude: ID) -> list[Contact]:
         """
@@ -524,22 +524,22 @@ class BucketList:
         def get_distance(contact: Contact):
             return contact.id.value ^ key.value
 
-        with self.lock:
-            contacts = []
-            count = 0
-            for bucket in self.buckets:
-                for contact in bucket.contacts:
-                    if count < Constants().K:  # Should get K items
-                        if contact.id != exclude:
-                            count += 1
-                            contacts.append(contact)
-                    else:
-                        break
-                        # More efficient that comparing count tons.
-            if len(contacts) > Constants().K and DEBUG:
-                raise ValueError(
-                    f"Contacts should be smaller than or equal to K. Has length {len.contacts}, which is {Constants().K - len.contacts} too big.")
-            return sorted(contacts, key=get_distance)
+        # with self.lock:
+        contacts = []
+        count = 0
+        for bucket in self.buckets:
+            for contact in bucket.contacts:
+                if count < Constants().K:  # Should get K items
+                    if contact.id != exclude:
+                        count += 1
+                        contacts.append(contact)
+                else:
+                    break
+                    # More efficient that comparing count tons.
+        if len(contacts) > Constants().K and DEBUG:
+            raise ValueError(
+                f"Contacts should be smaller than or equal to K. Has length {len.contacts}, which is {Constants().K - len.contacts} too big.")
+        return sorted(contacts, key=get_distance)
 
 
 class Router:
@@ -553,7 +553,7 @@ class Router:
         :param node:
         """
         self.node = node
-        self.lock = WithLock(Lock())
+        # self.lock = WithLock(Lock())
 
     def lookup(self, key: ID, rpc_call, give_me_all: bool = False) -> tuple:
         have_work = True
@@ -677,21 +677,21 @@ class Router:
 
         nearest_node_distance = node_to_query.id.value ^ key.value
 
-        with self.lock:  # Lock thread while this is running.
-            for p in peers_nodes:
-                # if given nodes are closer than our nearest node
-                # , and it hasn't already been added:
-                if p.id.value ^ key.value < nearest_node_distance \
-                        and p.id.value not in [i.id.value for i in closer_contacts]:
-                    closer_contacts.append(p)
+        # with self.lock:  # Lock thread while this is running.
+        for p in peers_nodes:
+            # if given nodes are closer than our nearest node
+            # , and it hasn't already been added:
+            if p.id.value ^ key.value < nearest_node_distance \
+                    and p.id.value not in [i.id.value for i in closer_contacts]:
+                closer_contacts.append(p)
 
-        with self.lock:  # Lock thread while this is running.
-            for p in peers_nodes:
-                # if given nodes are further than or equal to the nearest node
-                # , and it hasn't already been added:
-                if p.id.value ^ key.value >= nearest_node_distance \
-                        and p.id.value not in [i.id.value for i in further_contacts]:
-                    further_contacts.append(p)
+        # with self.lock:  # Lock thread while this is running.
+        for p in peers_nodes:
+            # if given nodes are further than or equal to the nearest node
+            # , and it hasn't already been added:
+            if p.id.value ^ key.value >= nearest_node_distance \
+                    and p.id.value not in [i.id.value for i in further_contacts]:
+                further_contacts.append(p)
 
         return val is not None  # Can you use "is not" between empty strings and None?
 
