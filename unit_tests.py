@@ -136,6 +136,9 @@ class NodeLookupTests(unittest.TestCase):
             contacts.append(
                 Contact(contact_ID=random_id_in_space(), protocol=None))
 
+        for contact in contacts:
+            node.bucket_list.add_contact(contact)
+
         key: ID = random_id_in_space()
 
         closest: list[Contact] = node.find_node(sender=sender, key=key)[0]
