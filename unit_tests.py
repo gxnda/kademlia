@@ -23,7 +23,8 @@ class test_add_contact(unittest.TestCase):
     def test_unique_id_add_test(self):
         dummy_contact: Contact = Contact(contact_ID=ID(0),
                                          protocol=VirtualProtocol())
-        #  ((VirtualProtocol)dummyContact.Protocol).Node = new Node(dummyContact, new VirtualStorage());
+
+        dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
 
         bucket_list: BucketList = BucketList(random_id_in_space())  # ,
                                              # dummy_contact)
