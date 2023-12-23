@@ -284,7 +284,7 @@ class Node:
 
         self.bucket_list.add_contact(sender)
         contacts = self.bucket_list.get_close_contacts(key=key, exclude=sender.id)
-        print(f"contacts: {contacts}")
+        # print(f"contacts: {contacts}")
         return contacts, None
 
     def find_value(self, key: ID, sender: Contact) \
