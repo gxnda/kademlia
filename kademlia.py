@@ -534,9 +534,9 @@ class BucketList:
         """
         TODO: Is this in the right class (Code listing 42)
         Brute force distance lookup of all known contacts, sorted by distance.
-        Then we take K of the closeset.
+        Then we take K of the closest.
         :param key: The ID for which we want to find close contacts.
-        :param exclude: The ID to exclude (the requestor's ID).
+        :param exclude: The ID to exclude (the requester's ID).
         :return: List of K contacts sorted by distance.
         """
 
