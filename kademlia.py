@@ -308,11 +308,14 @@ class Node:
 
 class KBucket:
 
-    def __init__(self, initial_contacts: list[Contact] = [], low: int = 0, high: int = 2 ** 160):
+    def __init__(self, initial_contacts: list[Contact] = None, low: int = 0, high: int = 2 ** 160):
         """
         Initialises a k-bucket with a specific ID range, 
         initially from 0 to 2**160.
         """
+        if initial_contacts is None:  # Fix for instead of setting initial_contacts = []
+            initial_contacts = []
+
         self.contacts: list[Contact] = initial_contacts
         self._low = low
         self._high = high
@@ -406,8 +409,10 @@ class KBucket:
         median_of_contact_id: int = median_high(contact_ids_asc)
         midpoint = median_of_contact_id
 
-        k1: KBucket = KBucket(low=self._low, high=midpoint, initial_contacts=[])
-        k2: KBucket = KBucket(low=midpoint, high=self._high, initial_contacts=[])
+        k1: KBucket = KBucket(low=self._low, high=midpoint)
+        k2: KBucket = KBucket(low=midpoint, high=self._high)
+        assert(len(k1.contacts) == 0)
+        assert(len(k2.contacts) == 0)
         for c in self.contacts:
             if c.id.value < midpoint:
                 k1.add_contact(c)
