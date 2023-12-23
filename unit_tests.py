@@ -17,6 +17,11 @@ class test_KBucket(unittest.TestCase):
             contact = Contact(ID(K + 1))
             k_bucket.add_contact(contact)
 
+    def test_no_funny_business(self):
+        k1: KBucket = KBucket(low=0, high=100)
+        k2: KBucket = KBucket(low=10, high=200, initial_contacts=[])
+        self.assertTrue(k1.contacts == k2.contacts)
+
 
 class test_add_contact(unittest.TestCase):
 
@@ -39,7 +44,7 @@ class test_add_contact(unittest.TestCase):
             len(bucket_list.buckets[0].contacts) == Constants().K,
             "K contacts should have been added.")
 
-    def duplicate_id_test(self):
+    def test_duplicate_id(self):
         dummy_contact = Contact(ID(0), VirtualProtocol())
         #  ((VirtualProtocol)dummyContact.Protocol).Node = new Node(dummyContact, new VirtualStorage());
         bucket_list: BucketList = BucketList(random_id_in_space()) 
@@ -58,7 +63,7 @@ class test_add_contact(unittest.TestCase):
             len(bucket_list.buckets[0].contacts) == 1,
             "Bucket should have one contact.")
 
-    def test_bucket_split_test(self):
+    def test_bucket_split(self):
 
         # dummy_contact = Contact(VirtualProtocol(), ID(0))
         #  ((VirtualProtocol)dummyContact.Protocol).Node = new Node(dummyContact, new VirtualStorage());
@@ -119,7 +124,7 @@ class test_force_failed_add_test(unittest.TestCase):
 
 class NodeLookupTests(unittest.TestCase):
 
-    def get_close_contacts_ordered_test(self):
+    def test_get_close_contacts_ordered(self):
         sender: Contact = Contact(contact_ID=random_id_in_space(),
                                   protocol=None)
         node: Node = Node(
@@ -160,7 +165,7 @@ class NodeLookupTests(unittest.TestCase):
             "Expected no other contacts with a smaller distance than the greatest distance to exist."
         )
 
-    def no_nodes_to_query_test(self):
+    def test_no_nodes_to_query(self):
         router_node_contact = Contact(contact_ID=random_id_in_space(),
                                       protocol=None)
         router = Router(
@@ -311,7 +316,7 @@ class NodeLookupTests(unittest.TestCase):
 
 
     
-    def lookup_test(self):
+    def test_lookup(self):
 
 
         for i in range(100):
@@ -341,7 +346,7 @@ class NodeLookupTests(unittest.TestCase):
                 self.assertTrue(c in close_contacts, 
                                 "somehow a close contact in the computation is not in the originals?")
 
-    def simple_all_closer_contacts_test(self):
+    def test_simple_all_closer_contacts(self):
         # setup
         # by selecting our node ID to zero, we ensure that all distances of other nodes 
         # are greater than the distance to our node.
@@ -392,7 +397,7 @@ class NodeLookupTests(unittest.TestCase):
 
         self.assertTrue(len(router.further_contacts) == 0, "Expected no further contacts.")
 
-    def simple_all_closer_contacts_test(self):
+    def test_simple_all_closer_contacts(self):
         # setup
         # by selecting our node ID to zero, we ensure that all distances of other nodes 
         # are greater than the distance to our node.
