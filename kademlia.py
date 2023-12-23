@@ -512,7 +512,7 @@ class BucketList:
 
         elif kbucket.is_full():
             if self.can_split(kbucket):
-                print("Splitting!")
+                # print("Splitting!")
                 # Split then try again
                 k1, k2 = kbucket.split()
                 index: int = self._get_kbucket_index(contact.id)
