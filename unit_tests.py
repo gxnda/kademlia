@@ -23,13 +23,8 @@ class test_add_contact(unittest.TestCase):
             len(bucket_list.buckets[0].contacts) == Constants().K,
             "K contacts should have been added.")
 
-<<<<<<< HEAD
-    def test_duplicate_id_test(self):
-        # dummy_contact = Contact(VirtualProtocol(), ID(0))
-=======
     def duplicate_id_test(self):
         dummy_contact = Contact(ID(0), VirtualProtocol())
->>>>>>> 1b7a43dd478470ea9c409096cc23485b967f37b3
         #  ((VirtualProtocol)dummyContact.Protocol).Node = new Node(dummyContact, new VirtualStorage());
         bucket_list: BucketList = BucketList(random_id_in_space()) 
         # !!! ^ There is a 2nd param "dummy_contact" in book here, 
@@ -110,7 +105,7 @@ class KBucketTests(unittest.TestCase):
     def test_too_many_contacts(self):
         with self.assertRaises(TooManyContactsError):
             K = Constants().K
-            k_bucket = KBucket(k=K)
+            k_bucket = KBucket()
             for i in range(K):
                 contact = Contact(ID(i))
                 k_bucket.add_contact(contact)
