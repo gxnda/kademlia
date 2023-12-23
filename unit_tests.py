@@ -25,7 +25,7 @@ class test_KBucket(unittest.TestCase):
 
 class test_add_contact(unittest.TestCase):
 
-    def test_unique_id_add_test(self):
+    def test_unique_id_add(self):
         dummy_contact: Contact = Contact(contact_ID=ID(0),
                                          protocol=VirtualProtocol())
 
