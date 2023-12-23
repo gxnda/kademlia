@@ -223,30 +223,30 @@ class NodeLookupTests(unittest.TestCase):
             self.assertTrue(len(further_compare_arr) == 0, "No new nodes expected.")
 
     def __setup(self):
-        router = Router(
+        self.router = Router(
             Node(Contact(contact_ID=random_id_in_space(), protocol=None),
                  storage=VirtualStorage()))
 
-        nodes: list[Node] = []
+        self.nodes: list[Node] = []
         for _ in range(100):
             contact: Contact = Contact(contact_ID=random_id_in_space(), protocol=VirtualProtocol())
             node: Node = Node(contact, VirtualStorage())
             contact.protocol.node = node
-            nodes.append(node)
+            self.nodes.append(node)
 
         # TODO: Remove shell loops, just keeping them atm bc its how it is in book.
         
-        for n in nodes:
+        for n in self.nodes:
             # fix protocols
             n.our_contact.protocol = VirtualProtocol(n)
 
-        for n in nodes:
+        for n in self.nodes:
             # our contacts
-            router.node.bucket_list.add_contact(n.our_contact)
+            self.router.node.bucket_list.add_contact(n.our_contact)
 
         # let each peer know about all that are not themselves
-        for n in nodes:
-            for other_n in nodes:
+        for n in self.nodes:
+            for other_n in self.nodes:
                 if other_n != n:
                     n.bucket_list.add_contact(other_n.our_contact)
 
@@ -254,22 +254,17 @@ class NodeLookupTests(unittest.TestCase):
         key = random_id_in_space()
         # take "A" contacts from a random KBucket
         # TODO: Check this returns A contacts - also it could error if len(contacts) < A
-        contacts_to_query: list[Contact] = \
-            router.node.bucket_list.get_kbucket(key).contacts[:Constants().A]
+        self.contacts_to_query: list[Contact] = \
+            self.router.node.bucket_list.get_kbucket(key).contacts[:Constants().A]
         
-        closer_contacts: list[Contact] = []
-        further_contacts: list[Contact] = []
+        self.closer_contacts: list[Contact] = []
+        self.further_contacts: list[Contact] = []
 
-        closer_contacts_alt_computation: list[Contact] = []
-        further_contacts_alt_computation: list[Contact] = []
+        self.closer_contacts_alt_computation: list[Contact] = []
+        self.further_contacts_alt_computation: list[Contact] = []
 
-        nearest_contact_node = sorted(contacts_to_query, key=lambda n: n.id ^ key)[0]
-        distance = nearest_contact_node.id ^ key
-
-        return router, nodes, contacts_to_query, closer_contacts, \
-                further_contacts, closer_contacts_alt_computation, \
-                further_contacts_alt_computation, nearest_contact_node, \
-                distance
+        self.nearest_contact_node = sorted(self.contacts_to_query, key=lambda n: n.id ^ key)[0]
+        self.distance = self.nearest_contact_node.id ^ key
         
     def get_alt_close_and_far(self, contacts_to_query: list[Contact], 
                               closer: list[Contact], 
@@ -291,7 +286,7 @@ class NodeLookupTests(unittest.TestCase):
             # by the get_close_contacts call are contacts we're querying, so they are
             # being excluded.
 
-            our_id = router.node.our_contact.id # our nodes ID
+            our_id = self.router.node.our_contact.id # our nodes ID
 
             # all close contacts to us, excluding ourselves
             temp_list = contact_node.bucket_list.get_close_contacts(key, our_id)
@@ -322,27 +317,23 @@ class NodeLookupTests(unittest.TestCase):
         for i in range(100):
             id = random_id_in_space(seed=i)
 
-            # I'm so sorry
-            # TODO: Make this bearable to look at
-            router, nodes, contacts_to_query, closer_contacts, further_contacts, \
-            closer_contacts_alt_computation, further_contacts_alt_computation, \
-            nearest_contact_node, distance = self.__setup()
-            
-            close_contacts: list[Contact] = router.lookup(
-                key=id, rpc_call=router.rpc_find_nodes, give_me_all=True)[1]
+            self.__setup()
+
+            close_contacts: list[Contact] = self.router.lookup(
+                key=id, rpc_call=self.router.rpc_find_nodes, give_me_all=True)[1]
             contacted_nodes: list[Contact] = close_contacts
 
-            self.get_alt_close_and_far(contacts_to_query,
-                                       closer_contacts_alt_computation,
-                                       further_contacts_alt_computation, 
-                                       nodes, 
+            self.get_alt_close_and_far(self.contacts_to_query,
+                                       self.closer_contacts_alt_computation,
+                                       self.further_contacts_alt_computation,
+                                       self.nodes,
                                        key=id, 
-                                       distance=distance)
+                                       distance=self.distance)
 
             self.assertTrue(len(close_contacts) >=
-                    len(closer_contacts_alt_computation),
+                    len(self.closer_contacts_alt_computation),
                     "Expected at least as many contacts.")
-            for c in closer_contacts_alt_computation:
+            for c in self.closer_contacts_alt_computation:
                 self.assertTrue(c in close_contacts, 
                                 "somehow a close contact in the computation is not in the originals?")
 
