@@ -318,7 +318,7 @@ class KBucket:
         # self.lock = WithLock(Lock())
 
     def is_full(self) -> bool:
-        return len(self.contacts) >= Constants().K
+        return len(self.contacts) > Constants().K
 
     def contains(self, id: ID) -> bool:
         """
@@ -342,7 +342,7 @@ class KBucket:
     def add_contact(self, contact: Contact):
         # TODO: Check if this is meant to check if it exists in the bucket.
         if self.is_full():
-            raise TooManyContactsError("KBucket is full.")
+            raise TooManyContactsError(f"KBucket is full - (length is {len(self.contacts)}).")
         elif not self.is_in_range(contact.id):
             raise OutOfRangeError("Contact ID is out of range.")
         else:
@@ -493,7 +493,7 @@ class BucketList:
 
         elif kbucket.is_full():
 
-            if kbucket.can_split():
+            if self.can_split(kbucket):
                 # Split then try again
                 k1, k2 = kbucket.split()
                 index: int = self._get_kbucket_index(contact.id)
