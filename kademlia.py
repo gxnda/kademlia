@@ -349,24 +349,6 @@ class KBucket:
             # !!! should this check if the contact is already in the bucket?
             self.contacts.append(contact)
 
-    def can_split(self) -> bool:
-        # kbucket.HasInRange(ourID) || ((kbucket.Depth() % Constants.B) != 0)
-        """
-        The depth to which the bucket has split is based on the number of bits 
-        shared in the prefix of the contacts in the bucket. With random IDs,    
-        this number will initially be small, but as bucket ranges become more 
-        narrow from subsequent splits, more contacts will begin the share the 
-        same prefix and the bucket when split, will result in less “room” for 
-        new contacts. Eventually, when the bucket range becomes narrow enough, 
-        the number of bits shared in the prefix of the contacts in the bucket 
-        reaches the threshold b, which the spec says should be 5.
-        """
-        # with self.lock:
-        # TODO: What is self.node?
-
-        return (self.is_in_range(self.node.id)
-                or (self.depth() % Constants().B != 0))
-
     def depth(self) -> int:
         """
         "The depth is just the length of the prefix shared by all nodes in 
@@ -438,6 +420,24 @@ class BucketList:
 
         # DHT object?
         self.DHT: DHT
+
+    def can_split(self, kbucket: KBucket) -> bool:
+        # kbucket.HasInRange(ourID) || ((kbucket.Depth() % Constants.B) != 0)
+        """
+        The depth to which the bucket has split is based on the number of bits
+        shared in the prefix of the contacts in the bucket. With random IDs,
+        this number will initially be small, but as bucket ranges become more
+        narrow from subsequent splits, more contacts will begin the share the
+        same prefix and the bucket when split, will result in less “room” for
+        new contacts. Eventually, when the bucket range becomes narrow enough,
+        the number of bits shared in the prefix of the contacts in the bucket
+        reaches the threshold b, which the spec says should be 5.
+        """
+        # with self.lock:
+        # TODO: What is self.node?
+
+        return (kbucket.is_in_range(self.our_id)
+                or (kbucket.depth() % Constants().B != 0))
 
     def _get_kbucket_index(self, other_id: ID) -> int:
         """
