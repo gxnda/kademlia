@@ -42,22 +42,14 @@ class SenderIsSelfError(Exception):
 class WithLock:
     """
     Lock object that can be used in "with" statements.
-
     Example usage:
-
         lock = threading.Lock()
-
         with WithLock(lock):
             do_stuff()
-
         do_more_stuff()
-
     Based from the following code:
-
     https://www.bogotobogo.com/python/Multithread/python_multithreading_Synchronization_Lock_Objects_Acquire_Release.php
-
     https://www.geeksforgeeks.org/with-statement-in-python/
-
     """
 
     def __init__(self, lock: Lock) -> None:
@@ -72,7 +64,7 @@ class WithLock:
         """
         self.lock.acquire()
 
-    def __exit__(self) -> None:
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
         """
         Changes the state to unlocked; this is called from another thread.
         """
