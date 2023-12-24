@@ -1,0 +1,497 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="chore: linting and renamed a copy-pasted function." />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="node-lookup-untested" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="UPDATE_TYPE" value="REBASE" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="2Nmg9QoCUYZPg1R6ypbzr2OgaNi" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;editor.preferences.gutterIcons&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RunManager" selected="Python tests.unit tests">
+    <configuration name="P2P-System" type="PythonConfigurationType" factoryName="Python">
+      <module name="P2P-System" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="C:\Users\gabri\PycharmProjects\p2p\venv\Scripts\python.exe" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Python tests for unit_tests.NodeLookupTests.test_no_nodes_to_query" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="P2P-System" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;unit_tests.NodeLookupTests.test_no_nodes_to_query&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Python tests for unit_tests.TestAddContact" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="P2P-System" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;unit_tests.TestAddContact&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Unittests for unit_tests" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+      <module name="P2P-System" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="C:\Users\gabri\PycharmProjects\p2p\venv\Scripts\python.exe" />
+      <option name="SDK_NAME" value="Python 3.11 (p2p)" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;unit_tests&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Unittests for unit_tests.NodeLookupTests.test_get_close_contacts_ordered" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+      <module name="P2P-System" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="C:\Users\gabri\PycharmProjects\p2p\venv\Scripts\python.exe" />
+      <option name="SDK_NAME" value="Python 3.11 (p2p)" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;unit_tests.NodeLookupTests.test_get_close_contacts_ordered&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="unit tests" type="tests" factoryName="Autodetect" temporary="true">
+      <module name="P2P-System" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;$PROJECT_DIR$/unit_tests.py&quot;" />
+      <option name="_new_targetType" value="&quot;PATH&quot;" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Python.P2P-System" />
+      <item itemvalue="Python tests.Python tests for unit_tests.NodeLookupTests.test_no_nodes_to_query" />
+      <item itemvalue="Python tests.Python tests for unit_tests.TestAddContact" />
+      <item itemvalue="Python tests.Unittests for unit_tests" />
+      <item itemvalue="Python tests.Unittests for unit_tests.NodeLookupTests.test_get_close_contacts_ordered" />
+      <item itemvalue="Python tests.unit tests" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python tests.unit tests" />
+        <item itemvalue="Python tests.Python tests for unit_tests.NodeLookupTests.test_no_nodes_to_query" />
+        <item itemvalue="Python tests.Unittests for unit_tests.NodeLookupTests.test_get_close_contacts_ordered" />
+        <item itemvalue="Python tests.Unittests for unit_tests" />
+        <item itemvalue="Python tests.Python tests for unit_tests.TestAddContact" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="" />
+      <created>1680274520751</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1680274520751</updated>
+      <workItem from="1701885327039" duration="1176000" />
+      <workItem from="1702128543216" duration="7794000" />
+      <workItem from="1703163809176" duration="5141000" />
+      <workItem from="1703341770032" duration="15354000" />
+    </task>
+    <task id="LOCAL-00001" summary="fixed some errors in append">
+      <created>1702162829971</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1702162829971</updated>
+    </task>
+    <task id="LOCAL-00002" summary="fixed some errors in append">
+      <created>1702173871661</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1702173871661</updated>
+    </task>
+    <task id="LOCAL-00003" summary="chore: Moved DHT object to allow for valid type annotations.">
+      <created>1703165409543</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1703165409543</updated>
+    </task>
+    <task id="LOCAL-00004" summary="feat: refactored MyLock() to WithLock()">
+      <created>1703165505567</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1703165505567</updated>
+    </task>
+    <task id="LOCAL-00005" summary="added WithLock to Router class">
+      <created>1703165615047</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1703165615047</updated>
+    </task>
+    <task id="LOCAL-00006" summary="something changed with misc.xml">
+      <created>1703165669632</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1703165669632</updated>
+    </task>
+    <task id="LOCAL-00007" summary="chore: Removed a silly TODO">
+      <created>1703165731434</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1703165731434</updated>
+    </task>
+    <task id="LOCAL-00008" summary="feat: replaced some incorrect function namings, and fixed some variables.">
+      <created>1703165930302</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1703165930302</updated>
+    </task>
+    <task id="LOCAL-00009" summary="chore: reformatted the file">
+      <created>1703166029987</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1703166029987</updated>
+    </task>
+    <task id="LOCAL-00010" summary="feat: added shell function to stop Pycharm shouting">
+      <created>1703166148956</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1703166148956</updated>
+    </task>
+    <task id="LOCAL-00011" summary="chore: formatting">
+      <created>1703166194807</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1703166194807</updated>
+    </task>
+    <task id="LOCAL-00012" summary="feat: added docstring to get() in VirtualStorage.">
+      <created>1703166533254</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1703166533254</updated>
+    </task>
+    <task id="LOCAL-00013" summary="chore: fixed grammar mistake.">
+      <created>1703166609613</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1703166609613</updated>
+    </task>
+    <task id="LOCAL-00014" summary="feat: added shell functions to DHT.">
+      <created>1703166963384</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1703166963384</updated>
+    </task>
+    <task id="LOCAL-00015" summary="feat: added a first draft for DHT.find_value() - still untested though.">
+      <created>1703168284852</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1703168284852</updated>
+    </task>
+    <task id="LOCAL-00016" summary="feat: renamed the unit test file.">
+      <created>1703168413290</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1703168413290</updated>
+    </task>
+    <task id="LOCAL-00017" summary="done smth">
+      <created>1703342554993</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1703342554993</updated>
+    </task>
+    <task id="LOCAL-00018" summary="Fixed WithLock()?">
+      <created>1703343536405</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1703343536405</updated>
+    </task>
+    <task id="LOCAL-00019" summary="chore: moved test order around">
+      <created>1703344654015</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1703344654015</updated>
+    </task>
+    <task id="LOCAL-00020" summary="feat: removed all locking - not working and I would want to use asyncio not threading anyway.">
+      <created>1703344694015</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1703344694015</updated>
+    </task>
+    <task id="LOCAL-00021" summary="feat: Added node declaration for dummy contacts protocol.">
+      <created>1703345195137</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1703345195137</updated>
+    </task>
+    <task id="LOCAL-00022" summary="feat: Moved can_split() function, it was not meant to be in KBucket object, because kbucket cannot view master bucket lists ID.">
+      <created>1703345584993</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1703345584993</updated>
+    </task>
+    <task id="LOCAL-00023" summary="fix: fixed is_full() returning true when contacts == K">
+      <created>1703345854081</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1703345854081</updated>
+    </task>
+    <task id="LOCAL-00024" summary="not really sure whats going on - tests are being buggy but replace_contact() has been created.">
+      <created>1703349123257</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1703349123257</updated>
+    </task>
+    <task id="LOCAL-00025" summary="fix: changed test naming, so they're recognised by unittest">
+      <created>1703349442734</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1703349442734</updated>
+    </task>
+    <task id="LOCAL-00026" summary="fix: changed test naming, so they're recognised by unittest">
+      <created>1703349492176</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1703349492176</updated>
+    </task>
+    <task id="LOCAL-00027" summary="fix: Fixed KBuckets inheriting self.contacts. I added a couple of assert statements incase it happens again.">
+      <created>1703350277714</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1703350277714</updated>
+    </task>
+    <task id="LOCAL-00028" summary="chore: typos">
+      <created>1703350318543</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1703350318543</updated>
+    </task>
+    <task id="LOCAL-00029" summary="fix: made some variables class-wide in testing.">
+      <created>1703351616174</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1703351616174</updated>
+    </task>
+    <task id="LOCAL-00030" summary="chore: commented out debug print statement">
+      <created>1703351644310</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1703351644310</updated>
+    </task>
+    <task id="LOCAL-00031" summary="chore: added a debug print statement, and fixed indentation.">
+      <created>1703352297619</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1703352297619</updated>
+    </task>
+    <task id="LOCAL-00032" summary="chore: added a few print debug statements (commented out), and removed a sorting function and replaced with a lambda.">
+      <created>1703353758150</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1703353758150</updated>
+    </task>
+    <task id="LOCAL-00033" summary="fix: forgot to add contacts to a bucket list :/">
+      <created>1703353780955</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1703353780955</updated>
+    </task>
+    <task id="LOCAL-00034" summary="chore: commented out another debug print statement.">
+      <created>1703354014612</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1703354014612</updated>
+    </task>
+    <task id="LOCAL-00035" summary="chore: commented out another debug print statement.">
+      <created>1703354051252</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1703354051252</updated>
+    </task>
+    <task id="LOCAL-00036" summary="chore: linting">
+      <created>1703376422851</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1703376422851</updated>
+    </task>
+    <task id="LOCAL-00037" summary="fix: get_close_contacts didn't sort to only get the close ones">
+      <created>1703377209312</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1703377209312</updated>
+    </task>
+    <task id="LOCAL-00038" summary="fix: get_close_contacts didn't sort to only get the close ones">
+      <created>1703377283484</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1703377283484</updated>
+    </task>
+    <task id="LOCAL-00039" summary="chore: linting and renamed a copy-pasted function.">
+      <created>1703377751136</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1703377751136</updated>
+    </task>
+    <option name="localTasksCounter" value="40" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="feat: added docstring to get() in VirtualStorage." />
+    <MESSAGE value="chore: fixed grammar mistake." />
+    <MESSAGE value="feat: added shell functions to DHT." />
+    <MESSAGE value="feat: added a first draft for DHT.find_value() - still untested though." />
+    <MESSAGE value="feat: renamed the unit test file." />
+    <MESSAGE value="done smth" />
+    <MESSAGE value="Fixed WithLock()?" />
+    <MESSAGE value="chore: moved test order around" />
+    <MESSAGE value="feat: removed all locking - not working and I would want to use asyncio not threading anyway." />
+    <MESSAGE value="feat: Added node declaration for dummy contacts protocol." />
+    <MESSAGE value="feat: Moved can_split() function, it was not meant to be in KBucket object, because kbucket cannot view master bucket lists ID." />
+    <MESSAGE value="fix: fixed is_full() returning true when contacts == K" />
+    <MESSAGE value="not really sure whats going on - tests are being buggy but replace_contact() has been created." />
+    <MESSAGE value="fix: changed test naming, so they're recognised by unittest" />
+    <MESSAGE value="fix: Fixed KBuckets inheriting self.contacts. I added a couple of assert statements incase it happens again." />
+    <MESSAGE value="chore: typos" />
+    <MESSAGE value="fix: made some variables class-wide in testing." />
+    <MESSAGE value="chore: commented out debug print statement" />
+    <MESSAGE value="chore: added a debug print statement, and fixed indentation." />
+    <MESSAGE value="chore: added a few print debug statements (commented out), and removed a sorting function and replaced with a lambda." />
+    <MESSAGE value="fix: forgot to add contacts to a bucket list :/" />
+    <MESSAGE value="chore: commented out another debug print statement." />
+    <MESSAGE value="chore: linting" />
+    <MESSAGE value="fix: get_close_contacts didn't sort to only get the close ones" />
+    <MESSAGE value="chore: linting and renamed a copy-pasted function." />
+    <option name="LAST_COMMIT_MESSAGE" value="chore: linting and renamed a copy-pasted function." />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/p2p$.coverage" NAME=" Coverage Results" MODIFIED="1703377782875" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests.coverage" NAME="Unittests for unit_tests Coverage Results" MODIFIED="1703352716012" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests_NodeLookupTests_test_get_close_contacts_ordered.coverage" NAME="Unittests for unit_tests.NodeLookupTests.test_get_close_contacts_ordered Coverage Results" MODIFIED="1703377308442" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+  </component>
+</project>
