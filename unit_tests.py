@@ -146,17 +146,19 @@ class NodeLookupTests(unittest.TestCase):
         self.assertTrue(len(closest) == Constants().K,
                         "Expected K contacts to be returned.")
 
-        # the contacts should be in ascending order with respect to the key.
+        # the contacts are already in ascending order with respect to the key.
         distances: list[int] = [c.id ^ key for c in closest]
         distance: int = distances[0]
 
+        # checking they're all in order (ascending)
         for i in distances[1:]:
             self.assertTrue(distance < i,
-                    "Expected contacts to be ordered by distance.")
+                            "Expected contacts to be ordered by distance.")
             distance = i
 
         # Verify the contacts with the smallest distances have been returned from all possible distances.
         last_distance = distances[-1]
+
         others = []
         for b in node.bucket_list.buckets:
             for c in b.contacts:
