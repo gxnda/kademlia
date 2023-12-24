@@ -1,9 +1,11 @@
 import unittest
 
-from kademlia import ID, BucketList, Constants, Contact, VirtualProtocol, random_id_in_space, Constants, Contact, ID, KBucket, TooManyContactsError, Node, Router, VirtualStorage
+from kademlia import ID, BucketList, Constants, Contact, VirtualProtocol, \
+    random_id_in_space, Constants, Contact, ID, KBucket, \
+    TooManyContactsError, Node, Router, VirtualStorage
 
 
-class test_KBucket(unittest.TestCase):
+class KBucketTest(unittest.TestCase):
 
     def test_too_many_contacts(self):
         with self.assertRaises(TooManyContactsError):
@@ -23,7 +25,7 @@ class test_KBucket(unittest.TestCase):
         self.assertTrue(k1.contacts == k2.contacts)
 
 
-class test_add_contact(unittest.TestCase):
+class AddContactTest(unittest.TestCase):
 
     def test_unique_id_add(self):
         dummy_contact: Contact = Contact(contact_ID=ID(0),
@@ -79,7 +81,7 @@ class test_add_contact(unittest.TestCase):
             f"Length of first buckets contacts = {len(bucket_list.buckets[0].contacts)}")
 
 
-class test_force_failed_add_test(unittest.TestCase):
+class ForceFailedAddTest(unittest.TestCase):
     """
     def test_force_failed_add(self):
         dummy_contact = Contact(contact_ID=ID(0))
@@ -159,6 +161,7 @@ class NodeLookupTests(unittest.TestCase):
         # Verify the contacts with the smallest distances have been returned from all possible distances.
         last_distance = distances[-1]
 
+        # This just makes sure it returned the K smallest contact ID's possible.
         others = []
         for b in node.bucket_list.buckets:
             for c in b.contacts:
@@ -393,11 +396,11 @@ class NodeLookupTests(unittest.TestCase):
 
         self.assertTrue(len(router.further_contacts) == 0, "Expected no further contacts.")
 
-    def test_simple_all_closer_contacts(self):
+    def test_simple_all_further_contacts(self):
         # setup
         # by selecting our node ID to zero, we ensure that all distances of other nodes 
         # are greater than the distance to our node.
-    
+
         # Create a router with the largest ID possible.
         router = Router(Node(Contact(contact_ID=ID(0), protocol=None), VirtualStorage()))
         nodes: list[Node] = []
