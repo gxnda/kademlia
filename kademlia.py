@@ -277,12 +277,14 @@ class Node:
             self._storage.set(key, val, Constants().EXPIRATION_TIME_SEC)
 
     def find_node(self, key: ID, sender: Contact) -> tuple[list[Contact], str | None]:
+
+        # managing sender
         if sender.id == self.our_contact.id:
             raise SendingQueryToSelfError("Sender cannot be ourselves.")
-
         self.send_key_values_if_new_contact(sender)
-
         self.bucket_list.add_contact(sender)
+
+        # actually finding nodes
         contacts = self.bucket_list.get_close_contacts(key=key, exclude=sender.id)
         # print(f"contacts: {contacts}")
         return contacts, None
@@ -542,28 +544,23 @@ class BucketList:
 
         # with self.lock:
         contacts = []
-        count = 0
         # print(self.buckets)
         for bucket in self.buckets:
             # print(bucket.contacts)
             for contact in bucket.contacts:
                 # print(contact.id.value)
                 # print(f"Exclude: {exclude}")
-                # print(count)
-                if count < Constants().K:  # Should get K items
 
-                    if contact.id != exclude:  # exclude is something like sender ID
-                        count += 1
-                        contacts.append(contact)
-                else:
-                    break
-                    # More efficient that comparing count tons.
+                if contact.id != exclude:
+                    contacts.append(contact)
+
+        contacts = contacts[:Constants().K]
+
         if len(contacts) > Constants().K and DEBUG:
             raise ValueError(
-                f"Contacts should be smaller than or equal to K. Has length {len.contacts}, "
-                f"which is {Constants().K - len.contacts} too big.")
-
-        return sorted(contacts, key=lambda contact: contact.id.value ^ key.value)
+                f"Contacts should be smaller than or equal to K. Has length {len(contacts)}, "
+                f"which is {Constants().K - len(contacts)} too big.")
+        return contacts
 
 
 class Router:
