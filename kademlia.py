@@ -554,7 +554,7 @@ class BucketList:
                 if contact.id != exclude:
                     contacts.append(contact)
 
-        contacts = contacts[:Constants().K]
+        contacts = sorted(contacts, key=lambda c: c.id ^ key)[:Constants().K]
 
         if len(contacts) > Constants().K and DEBUG:
             raise ValueError(
