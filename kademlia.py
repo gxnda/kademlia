@@ -2,6 +2,8 @@ import random
 from abc import abstractmethod
 from datetime import datetime
 from statistics import median_high
+from typing import Callable, Type
+
 # from threading import Lock
 
 
@@ -196,7 +198,7 @@ class IStorage:
         pass
 
     @abstractmethod
-    def try_get_value(self, key: ID, out: (int or str)) -> bool:
+    def try_get_value(self, key: ID) -> tuple[bool, int | str]:
         pass
 
     @abstractmethod
@@ -568,7 +570,7 @@ class Router:
     TODO: Talk about what this does.
     """
 
-    def __init__(self, node: Node) -> None:
+    def __init__(self, node: Node = None) -> None:
         """
         TODO: what is self.node?
         :param node:
@@ -811,9 +813,10 @@ class DHT:
     def __init__(self,
                  id: ID,
                  protocol: IProtocol,
+                 storage_factory: Type[IStorage],
                  router: Router):
         self._router = None
-        self._originator_storage = self.storage_factory()
+        self._originator_storage = storage_factory()
         self.our_id = id
         self.our_contact = Contact(contact_ID=id, protocol=protocol)
         self._node = Node(self.our_contact, storage=VirtualStorage())
