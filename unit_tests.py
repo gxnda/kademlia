@@ -440,6 +440,7 @@ class NodeLookupTests(unittest.TestCase):
     
         self.assertTrue(len(router.closer_contacts) == 0, "Expected no closer contacts.")
 
+
 class DHTTest(unittest.TestCase):
     def test_local_store_found_value(self):
         vp = VirtualProtocol()
@@ -455,6 +456,16 @@ class DHTTest(unittest.TestCase):
 
         self.assertTrue(return_val == "Test",
                         "Expected to get back what we stored.")
+
+    def test_value_stored_in_closer_node(self):
+        vp1 = VirtualProtocol()
+        vp2 = VirtualProtocol()
+        store1 = VirtualStorage()
+        store2 = VirtualStorage()
+
+        # Ensures that all nodes are closer, because id.max ^ n < id.max when n > 0.
+        # TODO: Why are there 6 arguments? im tired i sleep now
+        dht = DHT(ID(0).MAX_ID, Router(), store1, store2, VirtualStorage())
 
 
 
