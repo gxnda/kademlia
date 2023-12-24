@@ -757,7 +757,7 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
         """
         Returns either contacts or None if the value is found.
         """
-        contacts, val = self.node.find_value(sender, key)
+        contacts, val = self.node.find_value(sender=sender, key=key)
         return contacts, val, self._NoError()
 
     def store(self,
