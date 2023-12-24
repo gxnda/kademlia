@@ -363,7 +363,7 @@ class KBucket:
     def depth(self) -> int:
         """
         "The depth is just the length of the prefix shared by all nodes in 
-        the k-bucket’s range.” Do not confuse that with this statement in the 
+        the k-bucket’s range." Do not confuse that with this statement in the
         spec: “Define the depth, h, of a node to be 160 - i, where i is the 
         smallest index of a nonempty bucket.” The former is referring to the 
         depth of a k-bucket, the latter the depth of the node.
@@ -380,7 +380,7 @@ class KBucket:
         def longest_shared_prefix_str(a: str, b: str) -> str:
             """Returns the longest common prefix between two strings."""
 
-            if len(a) < len(b):  # swap a and b if a is shorter
+            if len(a) < len(b):  # swap "a" and "b" if "a" is shorter
                 a, b = b, a
 
             for i in range(len(b)):
@@ -538,7 +538,7 @@ class BucketList:
         Brute force distance lookup of all known contacts, sorted by distance.
         Then we take K of the closest.
         :param key: The ID for which we want to find close contacts.
-        :param exclude: The ID to exclude (the requester's ID).
+        :param exclude: The ID to exclude (the requesters ID).
         :return: List of K contacts sorted by distance.
         """
 
@@ -870,12 +870,9 @@ class DHT:
                                                               lookup.val,
                                                               True,
                                                               Constants().EXPIRATION_TIME_SEC)
-                    handle_error(error, store_to) # TODO: is this needed?
+                    handle_error(error, store_to)  # TODO: is this needed?
 
         return found, contacts, val
-
-
-
 
     def touch_bucket_with_key(self, key: ID):
         pass
