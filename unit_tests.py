@@ -2,7 +2,7 @@ import unittest
 
 from kademlia import ID, BucketList, Constants, Contact, VirtualProtocol, \
     random_id_in_space, Constants, Contact, ID, KBucket, \
-    TooManyContactsError, Node, Router, VirtualStorage
+    TooManyContactsError, Node, Router, VirtualStorage, DHT
 
 
 class KBucketTest(unittest.TestCase):
@@ -311,13 +311,6 @@ class NodeLookupTests(unittest.TestCase):
                     closer.append(close_contact)
                 elif close_contact.id ^ key >= distance and close_contact not in further:
                     further.append(close_contact)
-
-
-
-
-
-
-
     
     def dont_test_lookup(self):
 
@@ -446,8 +439,25 @@ class NodeLookupTests(unittest.TestCase):
                         "All contacts should be further than the ID 0.")
     
         self.assertTrue(len(router.closer_contacts) == 0, "Expected no closer contacts.")
-    
-        
+
+class DHTTest(unittest.TestCase):
+    def test_local_store_found_value(self):
+        vp = VirtualProtocol()
+        # Below line should contain VirtualStorage(), which I don't have?
+        dht = DHT(id=random_id_in_space(),
+                  protocol=vp,
+                  storage_factory=VirtualStorage,
+                  router=Router())
+        vp.node = dht._router.node
+        key = random_id_in_space()
+        dht.store(key, "Test")
+        return_val = dht.find_value(key)
+
+        self.assertTrue(return_val == "Test",
+                        "Expected to get back what we stored.")
+
+
+
 
 
 if __name__ == '__main__':
