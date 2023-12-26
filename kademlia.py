@@ -718,7 +718,7 @@ class Router:
 
         return val is not None  # Can you use "is not" between empty strings and None?
 
-    def query(self, key, new_nodes_to_query, rpc_call, closer_contacts, further_contacts):
+    def query(self, key, new_nodes_to_query, rpc_call, closer_contacts, further_contacts) -> dict:
         pass
 
 
