@@ -2,7 +2,7 @@ import random
 from abc import abstractmethod
 from datetime import datetime
 from statistics import median_high
-from typing import Callable, Type
+from typing import Callable, Type, TypedDict
 
 # from threading import Lock
 
@@ -41,6 +41,12 @@ class SendingQueryToSelfError(Exception):
 class SenderIsSelfError(Exception):
     """Raised when trying to send certain RPC commands, if sender is us."""
     pass
+
+
+class RPCReturn(TypedDict):
+    found: bool
+    contacts: list[Contact] | None
+    val: str | None
 
 
 # class WithLock:
