@@ -43,12 +43,6 @@ class SenderIsSelfError(Exception):
     pass
 
 
-class RPCReturn(TypedDict):
-    found: bool
-    contacts: list[Contact] | None
-    val: str | None
-
-
 # class WithLock:
 #     """
 #     Lock object that can be used in "with" statements.
@@ -246,6 +240,12 @@ class Contact:
     def touch(self):
         """Updates the last time the contact was seen."""
         self.last_seen = datetime.now()
+
+
+class FindValueReturn(TypedDict):
+    found: bool
+    contacts: list[Contact] | None
+    val: str | None
 
 
 class Node:
