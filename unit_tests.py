@@ -442,7 +442,7 @@ class NodeLookupTests(unittest.TestCase):
 
 
 class DHTTest(unittest.TestCase):
-    def test_local_store_found_value(self):
+    def test_local_store_find_value(self):
         vp = VirtualProtocol()
         # Below line should contain VirtualStorage(), which I don't have?
         dht = DHT(id=random_id_in_space(),
