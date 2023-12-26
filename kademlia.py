@@ -242,12 +242,6 @@ class Contact:
         self.last_seen = datetime.now()
 
 
-class FindValueReturn(TypedDict):
-    found: bool
-    contacts: list[Contact] | None
-    val: str | None
-
-
 class Node:
 
     def __init__(self,
