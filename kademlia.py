@@ -606,7 +606,7 @@ class Router:
                 contacted_nodes.append(i)
 
         # In the spec they then send parallel async find_node RPC commands
-        query_result = Query(key, nodes_to_query, rpc_call, closer_contacts, further_contacts)
+        query_result = self.query(key, nodes_to_query, rpc_call, closer_contacts, further_contacts)
 
         if query_result.found:  # if a node responded
             return query_result
@@ -636,7 +636,7 @@ class Router:
                     if i not in contacted_nodes:
                         contacted_nodes.append(i)
 
-                query_result = Query(key, new_nodes_to_query, rpc_call, closer_contacts, further_contacts)
+                query_result = self.query(key, new_nodes_to_query, rpc_call, closer_contacts, further_contacts)
 
                 if query_result.found:
                     return query_result
@@ -647,7 +647,7 @@ class Router:
                     if i not in contacted_nodes:
                         contacted_nodes.append(i)
 
-                query_result = Query(key, new_nodes_to_query, rpc_call, closer_contacts, further_contacts)
+                query_result = self.query(key, new_nodes_to_query, rpc_call, closer_contacts, further_contacts)
 
                 if query_result.found:
                     return query_result
@@ -717,6 +717,9 @@ class Router:
                 further_contacts.append(p)
 
         return val is not None  # Can you use "is not" between empty strings and None?
+
+    def query(self, key, new_nodes_to_query, rpc_call, closer_contacts, further_contacts):
+        pass
 
 
 class IProtocol:
