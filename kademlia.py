@@ -2,7 +2,7 @@ import random
 from abc import abstractmethod
 from datetime import datetime
 from statistics import median_high
-from typing import Callable, Type, TypedDict
+from typing import Type
 
 # from threading import Lock
 
