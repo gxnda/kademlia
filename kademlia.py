@@ -734,6 +734,10 @@ class Router:
 
         return new_contacts, None, None
 
+    def rpc_find_value(self, key, contact):
+        # TODO: Create.
+        pass
+
     def get_closer_nodes(self, key: ID, node_to_query: Contact, rpc_call,
                          closer_contacts: list[Contact], further_contacts: list[Contact]) -> bool:
 
