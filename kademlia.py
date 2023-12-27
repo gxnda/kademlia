@@ -223,7 +223,7 @@ class ID:
         return ID(bucket.low() + random.randint(0, bucket.high() - bucket.low()))
 
     @classmethod
-    def random_id_in_space(cls, low=0, high=2 ** 160, seed=None):
+    def random_id(cls, low=0, high=2 ** 160, seed=None):
         """
         FOR TESTING PURPOSES.
         Generating random ID's this way will not perfectly spread the prefixes,
@@ -1061,7 +1061,7 @@ def empty_node():
 
 
 def random_node():
-    return Node(Contact(id=ID.random_id_in_space()), storage=VirtualStorage())
+    return Node(Contact(id=ID.random_id()), storage=VirtualStorage())
 
 
 def select_random(arr: list, freq: int) -> list:

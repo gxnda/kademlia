@@ -32,11 +32,11 @@ class AddContactTest(unittest.TestCase):
 
         dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
 
-        bucket_list: BucketList = BucketList(ID.random_id_in_space())  # ,
+        bucket_list: BucketList = BucketList(ID.random_id())  # ,
                                              # dummy_contact)
 
         for i in range(Constants.K):
-            bucket_list.add_contact(Contact(ID.random_id_in_space()))
+            bucket_list.add_contact(Contact(ID.random_id()))
 
         self.assertTrue(
             len(bucket_list.buckets) == 1, "No split should have taken place.")
@@ -48,11 +48,11 @@ class AddContactTest(unittest.TestCase):
     def test_duplicate_id(self):
         dummy_contact = Contact(ID(0), VirtualProtocol())
         #  ((VirtualProtocol)dummyContact.Protocol).Node = new Node(dummyContact, new VirtualStorage());
-        bucket_list: BucketList = BucketList(ID.random_id_in_space())
+        bucket_list: BucketList = BucketList(ID.random_id())
         # !!! ^ There is a 2nd param "dummy_contact" in book here, 
         # book is rather silly sometimes imo.
 
-        id: ID = ID.random_id_in_space()
+        id: ID = ID.random_id()
 
         bucket_list.add_contact(Contact(id))
         bucket_list.add_contact(Contact(id))
@@ -68,11 +68,11 @@ class AddContactTest(unittest.TestCase):
 
         # dummy_contact = Contact(VirtualProtocol(), ID(0))
         #  ((VirtualProtocol)dummyContact.Protocol).Node = new Node(dummyContact, new VirtualStorage());
-        bucket_list: BucketList = BucketList(ID.random_id_in_space()) # ,
+        bucket_list: BucketList = BucketList(ID.random_id()) # ,
                                              # dummy_contact)
         for i in range(Constants.K):
-            bucket_list.add_contact(Contact(ID.random_id_in_space()))
-        bucket_list.add_contact(Contact(ID.random_id_in_space()))
+            bucket_list.add_contact(Contact(ID.random_id()))
+        bucket_list.add_contact(Contact(ID.random_id()))
 
         self.assertTrue(
             len(bucket_list.buckets) > 1,
@@ -126,21 +126,21 @@ class ForceFailedAddTest(unittest.TestCase):
 class NodeLookupTests(unittest.TestCase):
 
     def test_get_close_contacts_ordered(self):
-        sender: Contact = Contact(id=ID.random_id_in_space(),
+        sender: Contact = Contact(id=ID.random_id(),
                                   protocol=None)
         node: Node = Node(
-            Contact(id=ID.random_id_in_space(), protocol=None),
+            Contact(id=ID.random_id(), protocol=None),
             VirtualStorage())
 
         contacts: list[Contact] = []
         for _ in range(100):
             contacts.append(
-                Contact(id=ID.random_id_in_space(), protocol=None))
+                Contact(id=ID.random_id(), protocol=None))
 
         for contact in contacts:
             node.bucket_list.add_contact(contact)
 
-        key: ID = ID.random_id_in_space()
+        key: ID = ID.random_id()
 
         closest: list[Contact] = node.find_node(sender=sender, key=key)[0]
         # print(closest)
@@ -173,7 +173,7 @@ class NodeLookupTests(unittest.TestCase):
         )
 
     def test_no_nodes_to_query(self):
-        router_node_contact = Contact(id=ID.random_id_in_space(),
+        router_node_contact = Contact(id=ID.random_id(),
                                       protocol=None)
         router = Router(
             node=Node(contact=router_node_contact, storage=VirtualStorage()))
@@ -231,12 +231,12 @@ class NodeLookupTests(unittest.TestCase):
 
     def __setup(self):
         self.router = Router(
-            Node(Contact(id=ID.random_id_in_space(), protocol=None),
+            Node(Contact(id=ID.random_id(), protocol=None),
                  storage=VirtualStorage()))
 
         self.nodes: list[Node] = []
         for _ in range(100):
-            contact: Contact = Contact(id=ID.random_id_in_space(), protocol=VirtualProtocol())
+            contact: Contact = Contact(id=ID.random_id(), protocol=VirtualProtocol())
             node: Node = Node(contact, VirtualStorage())
             contact.protocol.node = node
             self.nodes.append(node)
@@ -258,7 +258,7 @@ class NodeLookupTests(unittest.TestCase):
                     n.bucket_list.add_contact(other_n.our_contact)
 
         # pick a random bucket
-        key = ID.random_id_in_space()
+        key = ID.random_id()
         # take "A" contacts from a random KBucket
         # TODO: Check this returns A contacts - also it could error if len(contacts) < A
         self.contacts_to_query: list[Contact] = \
@@ -315,7 +315,7 @@ class NodeLookupTests(unittest.TestCase):
 
 
         for i in range(100):
-            id = ID.random_id_in_space(seed=i)
+            id = ID.random_id(seed=i)
 
             self.__setup()
 
@@ -444,12 +444,12 @@ class DHTTest(unittest.TestCase):
     def test_local_store_find_value(self):
         vp = VirtualProtocol()
         # Below line should contain VirtualStorage(), which I don't have?
-        dht = DHT(id=ID.random_id_in_space(),
+        dht = DHT(id=ID.random_id(),
                   protocol=vp,
                   storage_factory=VirtualStorage,
                   router=Router())
         vp.node = dht._router.node
-        key = ID.random_id_in_space()
+        key = ID.random_id()
         dht.store(key, "Test")
         return_val = dht.find_value(key)
 
@@ -644,7 +644,7 @@ class BootstrappingTests(unittest.TestCase):
             vp.append(VirtualProtocol())
 
         # us
-        dht_us: DHT = DHT(ID.random_id_in_space())
+        dht_us: DHT = DHT(ID.random_id())
 
 
 
