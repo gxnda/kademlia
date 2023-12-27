@@ -644,7 +644,35 @@ class BootstrappingTests(unittest.TestCase):
             vp.append(VirtualProtocol())
 
         # us
-        dht_us: DHT = DHT(ID.random_id())
+        dht_us: DHT = DHT(ID.random_id(), vp[0], VirtualStorage, Router())
+        vp[0].node = dht_us._router.node
+
+        # our bootstrap peer
+        dht_bootstrap: DHT = DHT(ID.random_id(), vp[1], VirtualStorage, Router())
+        vp[1].node = dht_bootstrap._router.node
+
+        # Our bootstrapper knows 10 contacts
+        for i in range(10):
+            c: Contact = Contact(ID.random_id(), vp[i + 2])
+            n: Node = Node(c, VirtualStorage())
+            vp[i + 2].node = n
+            dht_bootstrap._router.node.bucket_list.add_contact(c)
+
+        # One of those nodes, in this case the last one we added to our bootstrapper (for convenience)
+        # knows about 10 other contacts
+        for i in range(10):
+            c: Contact = Contact(ID.random_id(), vp[i + 12])
+            n2: Node = Node(c, VirtualStorage())
+            vp[i + 12].node = n  # Ignore PyCharm error saying it can be referenced before being created.
+            n.bucket_list.add_contact(c)
+
+        dht_us.bootstrap(dht_bootstrap._router.node.our_contact)
+
+        sum_of_contacts = sum([len(b.contacts) for b in dht_bootstrap._router.node.bucket_list.buckets])
+        print(sum_of_contacts)
+        self.assertTrue(sum_of_contacts == 11,
+                        "Expected our peer to get 11 contacts.")
+
 
 
 
