@@ -2,7 +2,7 @@ import random
 from abc import abstractmethod
 from datetime import datetime
 from statistics import median_high
-from typing import Type
+from typing import Type, Callable
 
 # from threading import Lock
 
@@ -825,7 +825,7 @@ class DHT:
     def __init__(self,
                  id: ID,
                  protocol: IProtocol,
-                 storage_factory: Type[IStorage],
+                 storage_factory: Callable[[], Type[IStorage]],
                  router: Router):
         self._router = None
         self._originator_storage = storage_factory()
