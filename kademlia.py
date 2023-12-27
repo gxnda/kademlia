@@ -4,6 +4,8 @@ from datetime import datetime
 from statistics import median_high
 from typing import Type, Callable
 
+from typing_classes import QueryReturn
+
 # from threading import Lock
 
 
@@ -587,7 +589,7 @@ class Router:
         self.node = node
         # self.lock = WithLock(Lock())
 
-    def lookup(self, key: ID, rpc_call: Callable, give_me_all: bool = False) -> tuple:
+    def lookup(self, key: ID, rpc_call: Callable, give_me_all: bool = False) -> QueryReturn:
         """
         Performs main Kademlia Lookup.
         :param key: Key to be looked up
@@ -622,9 +624,9 @@ class Router:
                 contacted_nodes.append(i)
 
         # In the spec they then send parallel async find_node RPC commands
-        query_result = self.query(key, nodes_to_query, rpc_call, closer_contacts, further_contacts)
+        query_result: QueryReturn = self.query(key, nodes_to_query, rpc_call, closer_contacts, further_contacts)
 
-        if query_result.found:  # if a node responded
+        if query_result["found"]:  # if a node responded
             return query_result
 
         # add any new closer contacts
@@ -654,7 +656,7 @@ class Router:
 
                 query_result = self.query(key, new_nodes_to_query, rpc_call, closer_contacts, further_contacts)
 
-                if query_result.found:
+                if query_result["found"]:
                     return query_result
 
             elif have_further:
@@ -665,13 +667,13 @@ class Router:
 
                 query_result = self.query(key, new_nodes_to_query, rpc_call, closer_contacts, further_contacts)
 
-                if query_result.found:
+                if query_result["found"]:
                     return query_result
 
         # return k closer nodes sorted by distance,
 
         contacts = sorted(ret[:Constants().K], key=(lambda x: x.id ^ key))
-        return False, contacts, None, None
+        return {"found": False, "contacts": contacts, "val": None, "found_by": None}
 
     def find_closest_nonempty_kbucket(self, key: ID) -> KBucket:
         """
@@ -734,7 +736,7 @@ class Router:
 
         return val is not None  # Can you use "is not" between empty strings and None?
 
-    def query(self, key, new_nodes_to_query, rpc_call, closer_contacts, further_contacts) -> dict:
+    def query(self, key, new_nodes_to_query, rpc_call, closer_contacts, further_contacts) -> QueryReturn:
         pass
 
 
@@ -898,7 +900,7 @@ class DHT:
             found = True
             val = our_val
         else:
-            lookup = self._router.lookup(key, self._router.rpc_find_value)
+            lookup: QueryReturn = self._router.lookup(key, self._router.rpc_find_value)
             if lookup.found:
                 found = True
                 val = lookup.val
