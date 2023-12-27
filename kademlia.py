@@ -846,7 +846,7 @@ class DHT:
     def __init__(self,
                  id: ID,
                  protocol: IProtocol,
-                 storage_factory: Callable[[], Type[IStorage]],
+                 storage_factory: Callable[[], IStorage],
                  router: Router):
         self._router = None
         self._originator_storage = storage_factory()
