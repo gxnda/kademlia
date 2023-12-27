@@ -28,7 +28,7 @@ class KBucketTest(unittest.TestCase):
 class AddContactTest(unittest.TestCase):
 
     def test_unique_id_add(self):
-        dummy_contact: Contact = Contact(contact_ID=ID(0),
+        dummy_contact: Contact = Contact(id=ID(0),
                                          protocol=VirtualProtocol())
 
         dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
@@ -127,16 +127,16 @@ class ForceFailedAddTest(unittest.TestCase):
 class NodeLookupTests(unittest.TestCase):
 
     def test_get_close_contacts_ordered(self):
-        sender: Contact = Contact(contact_ID=random_id_in_space(),
+        sender: Contact = Contact(id=random_id_in_space(),
                                   protocol=None)
         node: Node = Node(
-            Contact(contact_ID=random_id_in_space(), protocol=None),
+            Contact(id=random_id_in_space(), protocol=None),
             VirtualStorage())
 
         contacts: list[Contact] = []
         for _ in range(100):
             contacts.append(
-                Contact(contact_ID=random_id_in_space(), protocol=None))
+                Contact(id=random_id_in_space(), protocol=None))
 
         for contact in contacts:
             node.bucket_list.add_contact(contact)
@@ -174,7 +174,7 @@ class NodeLookupTests(unittest.TestCase):
         )
 
     def test_no_nodes_to_query(self):
-        router_node_contact = Contact(contact_ID=random_id_in_space(),
+        router_node_contact = Contact(id=random_id_in_space(),
                                       protocol=None)
         router = Router(
             node=Node(contact=router_node_contact, storage=VirtualStorage()))
@@ -183,7 +183,7 @@ class NodeLookupTests(unittest.TestCase):
 
         for i in range(Constants().K):
             nodes.append(
-                Node(Contact(contact_ID=ID(2**i)), storage=VirtualStorage()))
+                Node(Contact(id=ID(2 ** i)), storage=VirtualStorage()))
 
         for n in nodes:
             # fixup protocols
@@ -232,12 +232,12 @@ class NodeLookupTests(unittest.TestCase):
 
     def __setup(self):
         self.router = Router(
-            Node(Contact(contact_ID=random_id_in_space(), protocol=None),
+            Node(Contact(id=random_id_in_space(), protocol=None),
                  storage=VirtualStorage()))
 
         self.nodes: list[Node] = []
         for _ in range(100):
-            contact: Contact = Contact(contact_ID=random_id_in_space(), protocol=VirtualProtocol())
+            contact: Contact = Contact(id=random_id_in_space(), protocol=VirtualProtocol())
             node: Node = Node(contact, VirtualStorage())
             contact.protocol.node = node
             self.nodes.append(node)
@@ -344,12 +344,12 @@ class NodeLookupTests(unittest.TestCase):
         # are greater than the distance to our node.
 
         # Create a router with the largest ID possible.
-        router = Router(Node(Contact(contact_ID=ID(2**160 - 1), protocol=None), VirtualStorage()))
+        router = Router(Node(Contact(id=ID(2 ** 160 - 1), protocol=None), VirtualStorage()))
         nodes: list[Node] = []
 
         for n in range(Constants().K):
             # Create a node with id of a power of 2, up to 2**20.
-            node = Node(Contact(contact_ID=ID(2**n), protocol=None), storage=VirtualStorage())
+            node = Node(Contact(id=ID(2 ** n), protocol=None), storage=VirtualStorage())
             nodes.append(node)
 
         # Fixup protocols
@@ -395,12 +395,12 @@ class NodeLookupTests(unittest.TestCase):
         # are greater than the distance to our node.
 
         # Create a router with the largest ID possible.
-        router = Router(Node(Contact(contact_ID=ID(0), protocol=None), VirtualStorage()))
+        router = Router(Node(Contact(id=ID(0), protocol=None), VirtualStorage()))
         nodes: list[Node] = []
     
         for n in range(Constants().K):
             # Create a node with id of a power of 2, up to 2**20.
-            node = Node(Contact(contact_ID=ID(2**n), protocol=None), storage=VirtualStorage())
+            node = Node(Contact(id=ID(2 ** n), protocol=None), storage=VirtualStorage())
             nodes.append(node)
     
         # Fixup protocols
@@ -478,7 +478,7 @@ class DHTTest(unittest.TestCase):
 
         vp1.node = dht._router.node
         contact_id: ID = ID(2 ** 159)  # middle ID
-        other_contact: Contact = Contact(contact_ID=contact_id, protocol=vp2)
+        other_contact: Contact = Contact(id=contact_id, protocol=vp2)
         other_node = Node(contact=other_contact, storage=store2)
         vp2.node = other_node
 
@@ -505,7 +505,38 @@ class DHTTest(unittest.TestCase):
         store1 = VirtualStorage()
         store2 = VirtualStorage()
 
+        # Ensures that all nodes are closer, because max id ^ n < max id when n > 0.
 
+        dht: DHT = DHT(id=ID(0), protocol=vp1, router=Router(), storage_factory=lambda: store1)
+
+        vp1.node = dht._router.node
+        contact_id = ID(0).MAX_ID
+        other_contact = Contact(contact_id, vp2)
+        other_node = Node(other_contact, store2)
+        vp2.node = other_node
+        # Add this other contact to our peer list.
+        dht._router.node.bucket_list.add_contact(other_contact)
+        key = ID(1)
+        val = "Test"
+        other_node.simply_store(key, val)
+
+        self.assertFalse(store1.contains(key),
+                         "Expected our peer to have NOT cached the key-value.")
+
+        self.assertTrue(store2.contains(key),
+                        "Expected other node to HAVE cached the key-value.")
+
+        retval: str = dht.find_value(key)[2]
+        self.assertTrue(retval == val,
+                        "Expected to get back what we stored.")
+
+    def test_value_stored_gets_propagated(self):
+        vp1 = VirtualProtocol()
+        vp2 = VirtualProtocol()
+        store1 = VirtualStorage()
+        store2 = VirtualStorage()
+
+        dht = DHT(ID.MAX_ID())
 
 
 
