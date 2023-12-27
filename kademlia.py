@@ -253,7 +253,6 @@ class QueryReturn(TypedDict):
     found_by: Contact | None
 
 
-
 class Node:
 
     def __init__(self,
