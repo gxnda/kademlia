@@ -190,6 +190,14 @@ class ID:
     def __str__(self) -> str:
         return str(self.denary())
 
+    @classmethod
+    def max(cls):
+        return ID(2 ** 160)
+
+    @classmethod
+    def max(cls):
+        return ID(0)
+
 
 class IStorage:
     """Interface which 'abstracts the storage mechanism for key-value pairs.''"""
@@ -904,7 +912,7 @@ class DHT:
         val: str | None = None
 
         # TODO: Talk about what this does - I haven't made it yet so IDK.
-        our_val: str = self._originator_storage.try_get_value(key)
+        our_val: str = self._originator_storage.try_get_value(key)[1]
         if our_val:
             found = True
             val = our_val
