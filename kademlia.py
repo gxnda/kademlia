@@ -587,7 +587,14 @@ class Router:
         self.node = node
         # self.lock = WithLock(Lock())
 
-    def lookup(self, key: ID, rpc_call, give_me_all: bool = False) -> tuple:
+    def lookup(self, key: ID, rpc_call: Callable, give_me_all: bool = False) -> tuple:
+        """
+        Performs main Kademlia Lookup.
+        :param key: Key to be looked up
+        :param rpc_call: RPC call to be used.
+        :param give_me_all: TODO: Implement.
+        :return: returns query result.
+        """
         have_work = True
         ret = []
         contacted_nodes = []
