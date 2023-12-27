@@ -819,6 +819,27 @@ class VirtualStorage(IStorage):
         else:
             raise TypeError("'get()' parameter 'key' must be type ID or int.")
 
+    def get_timestamp(self, key: int) -> datetime:
+        pass
+
+    def set(self, key: ID, value: str, expiration_time_sec: int = 0) -> None:
+        pass
+
+    def get_expiration_time_sec(self, key: int) -> int:
+        pass
+
+    def remove(self, key: int) -> None:
+        pass
+
+    def get_keys(self) -> list[int]:
+        pass
+
+    def touch(self, key: int) -> None:
+        pass
+
+    def try_get_value(self, key: ID) -> tuple[bool, int | str]:
+        pass
+
 
 class DHT:
 
