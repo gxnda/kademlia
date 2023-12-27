@@ -77,7 +77,10 @@ class SenderIsSelfError(Exception):
 
 
 class Constants:
-
+    K = 20
+    B = 160
+    A = 10
+    EXPIRATION_TIME_SEC = 86400  # TODO: Give this a proper number.
     def __init__(self):
         """
         https://xlattice.sourceforge.net/components/protocol/kademlia/specs.html
@@ -196,7 +199,7 @@ class ID:
         Returns max ID.
         :return: max ID.
         """
-        return ID(2 ** 160)
+        return ID(2 ** 160 - 1)
 
     @classmethod
     def mid(cls):
