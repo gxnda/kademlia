@@ -2,7 +2,7 @@ import random
 from abc import abstractmethod
 from datetime import datetime
 from statistics import median_high
-from typing import Type, Callable, TypedDict
+from typing import Callable, TypedDict
 
 
 # from threading import Lock
@@ -911,19 +911,19 @@ class DHT:
             val = our_val
         else:
             lookup: QueryReturn = self._router.lookup(key, self._router.rpc_find_value)
-            if lookup.found:
+            if lookup["found"]:
                 found = True
-                val = lookup.val
+                val = lookup["val"]
                 # Find the closest contact (other than the one the value was found by)
                 # in which to "cache" the key-value.
-                close_contacts: list[Contact] = [i for i in lookup.contacts if i != lookup.found_by]
+                close_contacts: list[Contact] = [i for i in lookup["contacts"] if i != lookup["found_by"]]
 
                 if close_contacts:  # if a close contact exists.
                     store_to: Contact = sorted(close_contacts, key=lambda i: i.id ^ key)[0]
                     separating_nodes: int = self.get_separating_nodes_count(self.our_contact, store_to)
                     store_to.protocol.store(self._node.our_contact,
                                             key,
-                                            lookup.val,
+                                            lookup["val"],
                                             True,
                                             Constants().EXPIRATION_TIME_SEC)
 
