@@ -210,6 +210,33 @@ class ID:
         """
         return ID(0)
 
+    @classmethod
+    def random_id_within_bucket_range(cls, bucket):
+        """
+        Returns an ID within the range of the bucket's low and high range.
+        THIS IS NOT AN ID IN THE BUCKETS CONTACT LIST!
+        (I mean it could be but shush)
+
+        :param bucket: bucket to be searched
+        :return: random ID in bucket.
+        """
+        return ID(bucket.low() + random.randint(0, bucket.high() - bucket.low()))
+
+    @classmethod
+    def random_id_in_space(cls, low=0, high=2 ** 160, seed=None):
+        """
+        FOR TESTING PURPOSES.
+        Generating random ID's this way will not perfectly spread the prefixes,
+        this is a maths law I've forgotten - due to the small scale of this
+        I don't particularly see the need to perfectly randomise this.
+
+        If I do though, here's how it would be done:
+        - Randomly generate each individual bit, then concatenate.
+        """
+        if seed:
+            random.seed(seed)
+        return ID(random.randint(low, high))
+
 
 class IStorage:
     """Interface which 'abstracts the storage mechanism for key-value pairs.''"""
@@ -1013,7 +1040,7 @@ class DHT:
         :returns: Nothing.
         """
         bucket.touch()
-        random_id: ID = random_id_within_bucket_range(bucket)
+        random_id: ID = ID.random_id_within_bucket_range(bucket)
 
         # Isolate in a separate list as contacts collection for this bucket might change.
         contacts: list[Contact] = bucket.contacts
@@ -1025,22 +1052,6 @@ class DHT:
                     self._node.bucket_list.add_contact(other_contact)
 
 
-def random_id_in_space(low=0, high=2 ** 160, seed=None):
-    """
-    FOR TESTING PURPOSES.
-    TODO: Remove.
-    Generating random ID's this way will not perfectly spread the prefixes,
-    this is a maths law I've forgotten - due to the small scale of this 
-    I don't particularly see the need to perfectly randomise this.
-
-    If I do though, here's how it would be done:
-    - Randomly generate each individual bit, then concatenate.
-    """
-    if seed:
-        random.seed(seed)
-    return ID(random.randint(low, high))
-
-
 def empty_node():
     """
     For testing.
@@ -1050,25 +1061,11 @@ def empty_node():
 
 
 def random_node():
-    return Node(Contact(id=random_id_in_space()), storage=VirtualStorage())
+    return Node(Contact(id=ID.random_id_in_space()), storage=VirtualStorage())
 
 
 def select_random(arr: list, freq: int) -> list:
     return random.sample(arr, freq)
-
-
-def random_id_within_bucket_range(bucket: KBucket, force_bit_1: bool = False) -> ID:
-    """
-    Returns an ID within the range of the bucket's low and high range.
-    THIS IS NOT AN ID IN THE BUCKETS CONTACT LIST!
-    (I mean it could be but shush)
-    This works because the bucket low-high range will always be a power of 2.
-
-    :param bucket: bucket to be searched
-    :param force_bit_1: For unit tests
-    :return: random ID in bucket.
-    """
-    return ID(bucket.low() + random.randint(0, bucket.high() - bucket.low()))
 
 
 

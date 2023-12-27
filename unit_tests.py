@@ -1,8 +1,7 @@
 import unittest
 
 from kademlia import BucketList, VirtualProtocol, \
-    random_id_in_space, Constants, Contact, ID, KBucket, \
-    TooManyContactsError, Node, Router, VirtualStorage, DHT
+    Constants, Contact, ID, KBucket, TooManyContactsError, Node, Router, VirtualStorage, DHT
 
 
 class KBucketTest(unittest.TestCase):
@@ -33,11 +32,11 @@ class AddContactTest(unittest.TestCase):
 
         dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
 
-        bucket_list: BucketList = BucketList(random_id_in_space())  # ,
+        bucket_list: BucketList = BucketList(ID.random_id_in_space())  # ,
                                              # dummy_contact)
 
         for i in range(Constants.K):
-            bucket_list.add_contact(Contact(random_id_in_space()))
+            bucket_list.add_contact(Contact(ID.random_id_in_space()))
 
         self.assertTrue(
             len(bucket_list.buckets) == 1, "No split should have taken place.")
@@ -49,11 +48,11 @@ class AddContactTest(unittest.TestCase):
     def test_duplicate_id(self):
         dummy_contact = Contact(ID(0), VirtualProtocol())
         #  ((VirtualProtocol)dummyContact.Protocol).Node = new Node(dummyContact, new VirtualStorage());
-        bucket_list: BucketList = BucketList(random_id_in_space()) 
+        bucket_list: BucketList = BucketList(ID.random_id_in_space())
         # !!! ^ There is a 2nd param "dummy_contact" in book here, 
         # book is rather silly sometimes imo.
 
-        id: ID = random_id_in_space()
+        id: ID = ID.random_id_in_space()
 
         bucket_list.add_contact(Contact(id))
         bucket_list.add_contact(Contact(id))
@@ -69,11 +68,11 @@ class AddContactTest(unittest.TestCase):
 
         # dummy_contact = Contact(VirtualProtocol(), ID(0))
         #  ((VirtualProtocol)dummyContact.Protocol).Node = new Node(dummyContact, new VirtualStorage());
-        bucket_list: BucketList = BucketList(random_id_in_space()) # ,
+        bucket_list: BucketList = BucketList(ID.random_id_in_space()) # ,
                                              # dummy_contact)
         for i in range(Constants.K):
-            bucket_list.add_contact(Contact(random_id_in_space()))
-        bucket_list.add_contact(Contact(random_id_in_space()))
+            bucket_list.add_contact(Contact(ID.random_id_in_space()))
+        bucket_list.add_contact(Contact(ID.random_id_in_space()))
 
         self.assertTrue(
             len(bucket_list.buckets) > 1,
@@ -127,21 +126,21 @@ class ForceFailedAddTest(unittest.TestCase):
 class NodeLookupTests(unittest.TestCase):
 
     def test_get_close_contacts_ordered(self):
-        sender: Contact = Contact(id=random_id_in_space(),
+        sender: Contact = Contact(id=ID.random_id_in_space(),
                                   protocol=None)
         node: Node = Node(
-            Contact(id=random_id_in_space(), protocol=None),
+            Contact(id=ID.random_id_in_space(), protocol=None),
             VirtualStorage())
 
         contacts: list[Contact] = []
         for _ in range(100):
             contacts.append(
-                Contact(id=random_id_in_space(), protocol=None))
+                Contact(id=ID.random_id_in_space(), protocol=None))
 
         for contact in contacts:
             node.bucket_list.add_contact(contact)
 
-        key: ID = random_id_in_space()
+        key: ID = ID.random_id_in_space()
 
         closest: list[Contact] = node.find_node(sender=sender, key=key)[0]
         # print(closest)
@@ -174,7 +173,7 @@ class NodeLookupTests(unittest.TestCase):
         )
 
     def test_no_nodes_to_query(self):
-        router_node_contact = Contact(id=random_id_in_space(),
+        router_node_contact = Contact(id=ID.random_id_in_space(),
                                       protocol=None)
         router = Router(
             node=Node(contact=router_node_contact, storage=VirtualStorage()))
@@ -232,12 +231,12 @@ class NodeLookupTests(unittest.TestCase):
 
     def __setup(self):
         self.router = Router(
-            Node(Contact(id=random_id_in_space(), protocol=None),
+            Node(Contact(id=ID.random_id_in_space(), protocol=None),
                  storage=VirtualStorage()))
 
         self.nodes: list[Node] = []
         for _ in range(100):
-            contact: Contact = Contact(id=random_id_in_space(), protocol=VirtualProtocol())
+            contact: Contact = Contact(id=ID.random_id_in_space(), protocol=VirtualProtocol())
             node: Node = Node(contact, VirtualStorage())
             contact.protocol.node = node
             self.nodes.append(node)
@@ -259,7 +258,7 @@ class NodeLookupTests(unittest.TestCase):
                     n.bucket_list.add_contact(other_n.our_contact)
 
         # pick a random bucket
-        key = random_id_in_space()
+        key = ID.random_id_in_space()
         # take "A" contacts from a random KBucket
         # TODO: Check this returns A contacts - also it could error if len(contacts) < A
         self.contacts_to_query: list[Contact] = \
@@ -316,7 +315,7 @@ class NodeLookupTests(unittest.TestCase):
 
 
         for i in range(100):
-            id = random_id_in_space(seed=i)
+            id = ID.random_id_in_space(seed=i)
 
             self.__setup()
 
@@ -445,12 +444,12 @@ class DHTTest(unittest.TestCase):
     def test_local_store_find_value(self):
         vp = VirtualProtocol()
         # Below line should contain VirtualStorage(), which I don't have?
-        dht = DHT(id=random_id_in_space(),
+        dht = DHT(id=ID.random_id_in_space(),
                   protocol=vp,
                   storage_factory=VirtualStorage,
                   router=Router())
         vp.node = dht._router.node
-        key = random_id_in_space()
+        key = ID.random_id_in_space()
         dht.store(key, "Test")
         return_val = dht.find_value(key)
 
@@ -610,6 +609,48 @@ class DHTTest(unittest.TestCase):
         self.assertTrue(cache3.contains(key), "Key should be in the cache store.")
         self.assertTrue(cache3.get_expiration_time_sec(key.value) == Constants.EXPIRATION_TIME_SEC / 2,
                         "Expected 12 hour expiration.")
+
+
+class BootstrappingTests(unittest.TestCase):
+
+    def test_random_within_bucket_tests(self):
+
+        test_cases: list[tuple[int, int]] = [
+
+                (0, 256),              # 7 bits should be set
+                (256, 1024),          # 2 bits (256 + 512) should be set
+                (65536, 65536 * 2),   # no additional bits should be set.
+                (65536, 65536 * 4),   # 2 bits (65536 and 65536*2) should be set.
+                (65536, 65536 * 16)   # 4 bits (65536, 65536*2, 65536*4, 65536*8) set.
+        ]
+        for test_case in test_cases:
+            low = test_case[0]
+            high = test_case[1]
+            bucket: KBucket = KBucket(low=low, high=high)
+
+            id: ID = ID.random_id_within_bucket_range(bucket)
+            self.assertTrue(bucket.is_in_range(id))
+
+    def test_bootstrap(self):
+        """
+        We need 22 virtual protocols. One for the bootstrap peer,
+        10 for the nodes the bootstrap peer knows about, and 10 for
+        the nodes one of the nodes knows about. And one for us to
+        rule them all.
+        :return: None
+        """
+        vp: list[VirtualProtocol] = []
+        for i in range(22):
+            vp.append(VirtualProtocol())
+
+        # us
+        dht_us: DHT = DHT(ID.random_id_in_space())
+
+
+
+
+
+
 
 
 if __name__ == '__main__':
