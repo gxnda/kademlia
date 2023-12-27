@@ -823,7 +823,7 @@ class VirtualStorage(IStorage):
         pass
 
     def set(self, key: ID, value: str, expiration_time_sec: int = 0) -> None:
-        self._store[key] = value
+        self._store[key.value] = value
         # TODO: Add expiration time to this.
 
     def get_expiration_time_sec(self, key: int) -> int:
