@@ -77,36 +77,30 @@ class SenderIsSelfError(Exception):
 
 
 class Constants:
+    """
+    https://xlattice.sourceforge.net/components/protocol/kademlia/specs.html
+
+    A Kademlia network is characterized by three constants, which we call alpha, B, and k.
+    The first and last are standard terms. The second is introduced because some Kademlia implementations use a
+    different key length.
+
+    alpha is a small number representing the degree of parallelism in network calls, usually 3
+    B is the size in bits of the keys used to identify nodes and store and retrieve data; in basic Kademlia
+    this is 160, the length of an SHA1 digest (hash)
+    k is the maximum number of contacts stored in a bucket; this is normally 20
+    It is also convenient to introduce several other constants not found in the original Kademlia papers.
+
+    tExpire = 86400s, the time after which a key/value pair expires; this is a time-to-live (TTL) from the
+    original publication date
+    tRefresh = 3600s, after which an otherwise un-accessed bucket must be refreshed
+    tReplicate = 3600s, the interval between Kademlia replication events, when a node is required to publish
+    its entire database
+    tRepublish = 86400s, the time after which the original publisher must republish a key/value pair
+    """
     K = 20
     B = 160
     A = 10
     EXPIRATION_TIME_SEC = 86400  # TODO: Give this a proper number.
-    def __init__(self):
-        """
-        https://xlattice.sourceforge.net/components/protocol/kademlia/specs.html
-
-        A Kademlia network is characterized by three constants, which we call alpha, B, and k.
-        The first and last are standard terms. The second is introduced because some Kademlia implementations use a
-        different key length.
-
-        alpha is a small number representing the degree of parallelism in network calls, usually 3
-        B is the size in bits of the keys used to identify nodes and store and retrieve data; in basic Kademlia
-        this is 160, the length of an SHA1 digest (hash)
-        k is the maximum number of contacts stored in a bucket; this is normally 20
-        It is also convenient to introduce several other constants not found in the original Kademlia papers.
-
-        tExpire = 86400s, the time after which a key/value pair expires; this is a time-to-live (TTL) from the
-        original publication date
-        tRefresh = 3600s, after which an otherwise un-accessed bucket must be refreshed
-        tReplicate = 3600s, the interval between Kademlia replication events, when a node is required to publish
-        its entire database
-        tRepublish = 86400s, the time after which the original publisher must republish a key/value pair
-        """
-        self.K = 20
-        self.B = 160
-        self.A = 10
-        self.EXPIRATION_TIME_SEC = 86400  # TODO: Give this a proper number.
-
 
 class ID:
 
@@ -314,7 +308,7 @@ class Node:
             self.cache_storage.set(key, val, expiration_time_sec)
         else:
             self.send_key_values_if_new_contact(sender)
-            self._storage.set(key, val, Constants().EXPIRATION_TIME_SEC)
+            self._storage.set(key, val, Constants.EXPIRATION_TIME_SEC)
 
     def find_node(self, key: ID, sender: Contact) -> tuple[list[Contact], str | None]:
 
@@ -378,7 +372,7 @@ class KBucket:
         This INCLUDES K, so if there are 20 inside, no more can be added.
         :return: Boolean saying if it's full.
         """
-        return len(self.contacts) >= Constants().K
+        return len(self.contacts) >= Constants.K
 
     def contains(self, id: ID) -> bool:
         """
@@ -509,7 +503,7 @@ class BucketList:
         # TODO: What is self.node?
 
         return (kbucket.is_in_range(self.our_id)
-                or (kbucket.depth() % Constants().B != 0))
+                or (kbucket.depth() % Constants.B != 0))
 
     def _get_kbucket_index(self, other_id: ID) -> int:
         """
@@ -603,12 +597,12 @@ class BucketList:
                 if contact.id != exclude:
                     contacts.append(contact)
 
-        contacts = sorted(contacts, key=lambda c: c.id ^ key)[:Constants().K]
+        contacts = sorted(contacts, key=lambda c: c.id ^ key)[:Constants.K]
 
-        if len(contacts) > Constants().K and DEBUG:
+        if len(contacts) > Constants.K and DEBUG:
             raise ValueError(
                 f"Contacts should be smaller than or equal to K. Has length {len(contacts)}, "
-                f"which is {Constants().K - len(contacts)} too big.")
+                f"which is {Constants.K - len(contacts)} too big.")
         return contacts
 
 
@@ -641,9 +635,9 @@ class Router:
         # closer_uncontacted_nodes = []
         # further_uncontacted_nodes = []
 
-        all_nodes = self.node.bucket_list.get_close_contacts(key, self.node.our_contact.id)[0:Constants().K]
+        all_nodes = self.node.bucket_list.get_close_contacts(key, self.node.our_contact.id)[0:Constants.K]
 
-        nodes_to_query: list[Contact] = all_nodes[0:Constants().A]
+        nodes_to_query: list[Contact] = all_nodes[0:Constants.A]
 
         for i in nodes_to_query:
             if i.id.value ^ key.value < self.node.our_contact.id.value ^ key.value:
@@ -652,7 +646,7 @@ class Router:
                 self.further_contacts.append(i)
 
         # all untested contacts just get dumped here.
-        for i in all_nodes[Constants().A + 1:]:
+        for i in all_nodes[Constants.A + 1:]:
             self.further_contacts.append(i)
 
         for i in nodes_to_query:
@@ -671,7 +665,7 @@ class Router:
             if i.id not in [j.id for j in ret]:  # if id does not already exist inside list
                 ret.append(i)
 
-        while len(ret) < Constants().K and have_work:
+        while len(ret) < Constants.K and have_work:
             closer_uncontacted_nodes = [i for i in self.closer_contacts if i not in contacted_nodes]
             further_uncontacted_nodes = [i for i in self.further_contacts if i not in contacted_nodes]
 
@@ -686,7 +680,7 @@ class Router:
             to them.
             """
             if have_closer:
-                new_nodes_to_query = closer_uncontacted_nodes[:Constants().A]
+                new_nodes_to_query = closer_uncontacted_nodes[:Constants.A]
                 for i in new_nodes_to_query:
                     if i not in contacted_nodes:
                         contacted_nodes.append(i)
@@ -698,7 +692,7 @@ class Router:
                     return query_result
 
             elif have_further:
-                new_nodes_to_query = further_uncontacted_nodes[:Constants().A]
+                new_nodes_to_query = further_uncontacted_nodes[:Constants.A]
                 for i in new_nodes_to_query:
                     if i not in contacted_nodes:
                         contacted_nodes.append(i)
@@ -711,7 +705,7 @@ class Router:
 
         # return k closer nodes sorted by distance,
 
-        contacts = sorted(ret[:Constants().K], key=(lambda x: x.id ^ key))
+        contacts = sorted(ret[:Constants.K], key=(lambda x: x.id ^ key))
         return {"found": False, "contacts": contacts, "val": None, "found_by": None}
 
     def find_closest_nonempty_kbucket(self, key: ID) -> KBucket:
@@ -954,7 +948,7 @@ class DHT:
                                             key,
                                             lookup["val"],
                                             True,
-                                            Constants().EXPIRATION_TIME_SEC)
+                                            Constants.EXPIRATION_TIME_SEC)
 
         return found, contacts, val
 
