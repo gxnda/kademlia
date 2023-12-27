@@ -195,7 +195,7 @@ class ID:
         return ID(2 ** 160)
 
     @classmethod
-    def max(cls):
+    def min(cls):
         return ID(0)
 
 
