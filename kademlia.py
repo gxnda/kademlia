@@ -254,7 +254,7 @@ class IStorage:
 class Contact:
 
     def __init__(self, id: ID, protocol=None):
-        self.protocol = protocol
+        self.protocol: VirtualProtocol | IProtocol = protocol
         self.id = id
         self.last_seen: datetime = datetime.now()
 
@@ -966,6 +966,63 @@ class DHT:
 
     def store_on_closer_contacts(self, key: ID, val: str):
         pass
+
+    def bootstrap(self, known_peer: Contact) -> RPCError:
+        """
+        This is how we join the network.
+
+        We bootstrap our peer by contacting a known peer in the network, adding its contacts
+        to our list, then getting the contacts for other peers not in the
+        bucket range of our known peer we're joining.
+        :param known_peer: Peer we know.
+        :return: RPC Error, not sure when it should be raised?
+        """
+        self._node.bucket_list.add_contact(known_peer)
+        contacts, error = known_peer.protocol.find_node(sender=self.our_contact, key=self.our_id)
+
+        # handle_error(error, known_peer)
+        if not error:
+            for contact in contacts:
+                self._node.bucket_list.add_contact(contact)
+
+            known_peer_bucket: KBucket = self._node.bucket_list.get_kbucket(known_peer.id)
+            # Resolve the list now, so we don't include additional contacts
+            # as we add to our bucket additional contacts.
+            other_buckets: list[KBucket] = [i for i in self._node.bucket_list.buckets if i != known_peer_bucket]
+            for other_bucket in other_buckets:
+                self.refresh_bucket(other_bucket)
+
+        return error
+
+    def refresh_bucket(self, bucket: KBucket):
+        """
+        Refreshes the given Kademlia KBucket by updating its last-touch timestamp,
+        obtaining a random ID within the bucket's range, and attempting to find
+        nodes in the network with that random ID.
+
+        The method touches the bucket to update its last-touch timestamp, generates
+        a random ID within the bucket's range, and queries nodes in the network
+        using the Kademlia protocol to find nodes with the generated ID. If successful,
+        the discovered contacts are added to the Kademlia node's bucket list.
+
+        Note:
+        The contacts collection for the given bucket might change during the operation,
+        so it is isolated in a separate list before iterating over it.
+
+        :param bucket: The KBucket to be refreshed.
+        :returns: Nothing.
+        """
+        bucket.touch()
+        random_id: ID = random_id_within_bucket_range(bucket)
+
+        # Isolate in a separate list as contacts collection for this bucket might change.
+        contacts: list[Contact] = bucket.contacts
+        for contact in contacts:
+            new_contacts, timeout_error = contact.protocol.find_node(self.our_contact, random_id)
+            # handle_error(timeout_error, contact)
+            if new_contacts:
+                for other_contact in new_contacts:
+                    self._node.bucket_list.add_contact(other_contact)
 
 
 def random_id_in_space(low=0, high=2 ** 160, seed=None):
