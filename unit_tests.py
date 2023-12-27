@@ -9,7 +9,7 @@ class KBucketTest(unittest.TestCase):
 
     def test_too_many_contacts(self):
         with self.assertRaises(TooManyContactsError):
-            k = Constants().K
+            k = Constants.K
             k_bucket = KBucket()
             for i in range(k):
                 contact = Contact(ID(i))
@@ -36,14 +36,14 @@ class AddContactTest(unittest.TestCase):
         bucket_list: BucketList = BucketList(random_id_in_space())  # ,
                                              # dummy_contact)
 
-        for i in range(Constants().K):
+        for i in range(Constants.K):
             bucket_list.add_contact(Contact(random_id_in_space()))
 
         self.assertTrue(
             len(bucket_list.buckets) == 1, "No split should have taken place.")
 
         self.assertTrue(
-            len(bucket_list.buckets[0].contacts) == Constants().K,
+            len(bucket_list.buckets[0].contacts) == Constants.K,
             "K contacts should have been added.")
 
     def test_duplicate_id(self):
@@ -71,7 +71,7 @@ class AddContactTest(unittest.TestCase):
         #  ((VirtualProtocol)dummyContact.Protocol).Node = new Node(dummyContact, new VirtualStorage());
         bucket_list: BucketList = BucketList(random_id_in_space()) # ,
                                              # dummy_contact)
-        for i in range(Constants().K):
+        for i in range(Constants.K):
             bucket_list.add_contact(Contact(random_id_in_space()))
         bucket_list.add_contact(Contact(random_id_in_space()))
 
@@ -145,7 +145,7 @@ class NodeLookupTests(unittest.TestCase):
 
         closest: list[Contact] = node.find_node(sender=sender, key=key)[0]
         # print(closest)
-        self.assertTrue(len(closest) == Constants().K,
+        self.assertTrue(len(closest) == Constants.K,
                         "Expected K contacts to be returned.")
 
         # the contacts are already in ascending order with respect to the key.
@@ -181,7 +181,7 @@ class NodeLookupTests(unittest.TestCase):
 
         nodes: list[Node] = []
 
-        for i in range(Constants().K):
+        for i in range(Constants.K):
             nodes.append(
                 Node(Contact(id=ID(2 ** i)), storage=VirtualStorage()))
 
@@ -263,7 +263,7 @@ class NodeLookupTests(unittest.TestCase):
         # take "A" contacts from a random KBucket
         # TODO: Check this returns A contacts - also it could error if len(contacts) < A
         self.contacts_to_query: list[Contact] = \
-            self.router.node.bucket_list.get_kbucket(key).contacts[:Constants().A]
+            self.router.node.bucket_list.get_kbucket(key).contacts[:Constants.A]
         
         self.closer_contacts: list[Contact] = []
         self.further_contacts: list[Contact] = []
@@ -344,10 +344,10 @@ class NodeLookupTests(unittest.TestCase):
         # are greater than the distance to our node.
 
         # Create a router with the largest ID possible.
-        router = Router(Node(Contact(id=ID(2 ** 160 - 1), protocol=None), VirtualStorage()))
+        router = Router(Node(Contact(id=ID.max(), protocol=None), VirtualStorage()))
         nodes: list[Node] = []
 
-        for n in range(Constants().K):
+        for n in range(Constants.K):
             # Create a node with id of a power of 2, up to 2**20.
             node = Node(Contact(id=ID(2 ** n), protocol=None), storage=VirtualStorage())
             nodes.append(node)
@@ -381,10 +381,10 @@ class NodeLookupTests(unittest.TestCase):
                                  give_me_all=True)
 
         # Make sure lookup returns K contacts.
-        self.assertTrue(len(contacts) == Constants().K, "Expected K closer contacts.")
+        self.assertTrue(len(contacts) == Constants.K, "Expected K closer contacts.")
 
         # Make sure it realises all contacts should be closer than 2**160 - 1.
-        self.assertTrue(len(router.closer_contacts) == Constants().K,
+        self.assertTrue(len(router.closer_contacts) == Constants.K,
                         "All contacts should be closer than the ID 2**160 - 1.")
 
         self.assertTrue(len(router.further_contacts) == 0, "Expected no further contacts.")
@@ -398,7 +398,7 @@ class NodeLookupTests(unittest.TestCase):
         router = Router(Node(Contact(id=ID(0), protocol=None), VirtualStorage()))
         nodes: list[Node] = []
     
-        for n in range(Constants().K):
+        for n in range(Constants.K):
             # Create a node with id of a power of 2, up to 2**20.
             node = Node(Contact(id=ID(2 ** n), protocol=None), storage=VirtualStorage())
             nodes.append(node)
@@ -432,10 +432,10 @@ class NodeLookupTests(unittest.TestCase):
                                  give_me_all=True)
     
         # Make sure lookup returns K contacts.
-        self.assertTrue(len(contacts) == Constants().K, "Expected K closer contacts.")
+        self.assertTrue(len(contacts) == Constants.K, "Expected K closer contacts.")
     
         # Make sure it realises all contacts should be further than the ID 0.
-        self.assertTrue(len(router.further_contacts) == Constants().K,
+        self.assertTrue(len(router.further_contacts) == Constants.K,
                         "All contacts should be further than the ID 0.")
     
         self.assertTrue(len(router.closer_contacts) == 0, "Expected no closer contacts.")
@@ -474,10 +474,10 @@ class DHTTest(unittest.TestCase):
         # Ensures that all nodes are closer, because id.max ^ n < id.max when n > 0.
         # (the distance between a node and max id is always closer than the furthest possible)
         # TODO: Why are there 6 arguments? im tired i sleep now
-        dht = DHT(id=ID(0).MAX_ID, router=Router(), storage_factory=lambda: store1, protocol=VirtualProtocol())
+        dht = DHT(id=ID.max(), router=Router(), storage_factory=lambda: store1, protocol=VirtualProtocol())
 
         vp1.node = dht._router.node
-        contact_id: ID = ID(2 ** 159)  # middle ID
+        contact_id: ID = ID.mid()  # middle ID
         other_contact: Contact = Contact(id=contact_id, protocol=vp2)
         other_node = Node(contact=other_contact, storage=store2)
         vp2.node = other_node
@@ -485,7 +485,7 @@ class DHTTest(unittest.TestCase):
         # add this other contact to our peer list
         dht._router.node.bucket_list.add_contact(other_contact)
         # we want an integer distance, not an XOR distance.
-        key: ID = ID(0)
+        key: ID = ID.min()
         val = "Test"
         other_node.simply_store(key, val)
         self.assertFalse(store1.contains(key),
@@ -507,10 +507,10 @@ class DHTTest(unittest.TestCase):
 
         # Ensures that all nodes are closer, because max id ^ n < max id when n > 0.
 
-        dht: DHT = DHT(id=ID(0), protocol=vp1, router=Router(), storage_factory=lambda: store1)
+        dht: DHT = DHT(id=ID.min(), protocol=vp1, router=Router(), storage_factory=lambda: store1)
 
         vp1.node = dht._router.node
-        contact_id = ID(0).MAX_ID
+        contact_id = ID.max()
         other_contact = Contact(contact_id, vp2)
         other_node = Node(other_contact, store2)
         vp2.node = other_node
@@ -536,8 +536,80 @@ class DHTTest(unittest.TestCase):
         store1 = VirtualStorage()
         store2 = VirtualStorage()
 
-        dht = DHT(ID.MAX_ID())
+        dht: DHT = DHT(id=ID.min(), protocol=vp1, router=Router(), storage_factory=lambda: store1)
+        vp1.node = dht._router.node
+        contact_id = ID.mid()
+        other_contact = Contact(contact_id, vp2)
+        other_node = Node(other_contact, store2)
+        vp2.node = other_node
+        dht._router.node.bucket_list.add_contact(other_contact)
 
+        key = ID(0)
+        val = "Test"
+
+        self.assertFalse(store1.contains(key),
+                         "Obviously we don't have the key-value yet.")
+
+        self.assertFalse(store2.contains(key),
+                         "And equally obvious, the other peer doesn't have the key-value yet either.")
+
+        dht.store(key, val)
+
+        self.assertTrue(store1.contains(key),
+                        "Expected our peer to have stored the key-value.")
+
+        self.assertTrue(store2.contains(key),
+                        "Expected the other peer to have stored the key-value.")
+
+    def test_value_propagates_to_closer_node(self):
+
+        vp1 = VirtualProtocol()
+        vp2 = VirtualProtocol()
+        vp3 = VirtualProtocol()
+
+        store1 = VirtualStorage()
+        store2 = VirtualStorage()
+        store3 = VirtualStorage()
+
+        cache3 = VirtualStorage()
+
+        dht: DHT = DHT(id=ID.max(), protocol=vp1, router=Router(), storage_factory=lambda: store1)
+
+        vp1.node = dht._router.node
+
+        # setup node 2
+        contact_id_2 = ID.mid()
+        other_contact_2 = Contact(contact_id_2, vp2)
+        other_node_2 = Node(other_contact_2, store2)
+        vp2.node = other_node_2
+        # add the second contact to our peer list.
+        dht._router.node.bucket_list.add_contact(other_contact_2)
+        # node 2 has the value
+        key = ID(0)
+        val = "Test"
+        other_node_2._storage.set(key, val)
+
+        # setup node 3
+        contact_id_3 = ID(2 ** 158)  # I think this is the same as ID.Zero.SetBit(158)?
+        other_contact_3 = Contact(contact_id_3, vp3)
+        other_node_3 = Node(other_contact_3, store3, cache_storage=cache3)
+        vp3.node = other_node_3
+        # add the third contact to our peer list
+        dht._router.node.bucket_list.add_contact(other_contact_3)
+
+        self.assertFalse(store1.contains(key),
+                         "Obviously we don't have the key-value yet.")
+
+        self.assertFalse(store3.contains(key),
+                         "And equally obvious, the third peer doesn't have the key-value yet either.")
+
+        ret_found, ret_contacts, ret_val = dht.find_value(key)
+
+        self.assertTrue(ret_found, "Expected value to be found.")
+        self.assertFalse(store3.contains(key), "Key should not be in the republish store.")
+        self.assertTrue(cache3.contains(key), "Key should be in the cache store.")
+        self.assertTrue(cache3.get_expiration_time_sec(key.value) == Constants.EXPIRATION_TIME_SEC / 2,
+                        "Expected 12 hour expiration.")
 
 
 
