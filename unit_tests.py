@@ -9,14 +9,14 @@ class KBucketTest(unittest.TestCase):
 
     def test_too_many_contacts(self):
         with self.assertRaises(TooManyContactsError):
-            K = Constants().K
+            k = Constants().K
             k_bucket = KBucket()
-            for i in range(K):
+            for i in range(k):
                 contact = Contact(ID(i))
                 k_bucket.add_contact(contact)
 
             # Trying to add one more contact should raise the exception
-            contact = Contact(ID(K + 1))
+            contact = Contact(ID(k + 1))
             k_bucket.add_contact(contact)
 
     def test_no_funny_business(self):
