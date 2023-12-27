@@ -192,10 +192,26 @@ class ID:
 
     @classmethod
     def max(cls):
+        """
+        Returns max ID.
+        :return: max ID.
+        """
         return ID(2 ** 160)
 
     @classmethod
+    def mid(cls):
+        """
+        returns middle of the road ID
+        :return: middle ID.
+        """
+        return ID(2 ** 159)
+
+    @classmethod
     def min(cls):
+        """
+        Returns minimum ID.
+        :return: minimum ID.
+        """
         return ID(0)
 
 
