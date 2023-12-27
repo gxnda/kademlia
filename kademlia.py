@@ -620,6 +620,8 @@ class Router:
         :param node:
         """
         self.node = node
+        self.closer_contacts: list[Contact] = []
+        self.further_contacts: list[Contact] = []
         # self.lock = WithLock(Lock())
 
     def lookup(self, key: ID, rpc_call: Callable, give_me_all: bool = False) -> QueryReturn:
@@ -633,8 +635,6 @@ class Router:
         have_work = True
         ret = []
         contacted_nodes = []
-        closer_contacts: list[Contact] = []
-        further_contacts: list[Contact] = []
         # closer_uncontacted_nodes = []
         # further_uncontacted_nodes = []
 
@@ -644,32 +644,33 @@ class Router:
 
         for i in nodes_to_query:
             if i.id.value ^ key.value < self.node.our_contact.id.value ^ key.value:
-                closer_contacts.append(i)
+                self.closer_contacts.append(i)
             else:
-                further_contacts.append(i)
+                self.further_contacts.append(i)
 
         # all untested contacts just get dumped here.
         for i in all_nodes[Constants().A + 1:]:
-            further_contacts.append(i)
+            self.further_contacts.append(i)
 
         for i in nodes_to_query:
             if i not in contacted_nodes:
                 contacted_nodes.append(i)
 
         # In the spec they then send parallel async find_node RPC commands
-        query_result: QueryReturn = self.query(key, nodes_to_query, rpc_call, closer_contacts, further_contacts)
+        query_result: QueryReturn = (
+            self.query(key, nodes_to_query, rpc_call, self.closer_contacts, self.further_contacts))
 
         if query_result["found"]:  # if a node responded
             return query_result
 
         # add any new closer contacts
-        for i in closer_contacts:
+        for i in self.closer_contacts:
             if i.id not in [j.id for j in ret]:  # if id does not already exist inside list
                 ret.append(i)
 
         while len(ret) < Constants().K and have_work:
-            closer_uncontacted_nodes = [i for i in closer_contacts if i not in contacted_nodes]
-            further_uncontacted_nodes = [i for i in further_contacts if i not in contacted_nodes]
+            closer_uncontacted_nodes = [i for i in self.closer_contacts if i not in contacted_nodes]
+            further_uncontacted_nodes = [i for i in self.further_contacts if i not in contacted_nodes]
 
             # If we have uncontacted nodes, we still have work to be done.
             have_closer: bool = len(closer_uncontacted_nodes) > 0
@@ -687,7 +688,8 @@ class Router:
                     if i not in contacted_nodes:
                         contacted_nodes.append(i)
 
-                query_result = self.query(key, new_nodes_to_query, rpc_call, closer_contacts, further_contacts)
+                query_result = (
+                    self.query(key, new_nodes_to_query, rpc_call, self.closer_contacts, self.further_contacts))
 
                 if query_result["found"]:
                     return query_result
@@ -698,7 +700,8 @@ class Router:
                     if i not in contacted_nodes:
                         contacted_nodes.append(i)
 
-                query_result = self.query(key, new_nodes_to_query, rpc_call, closer_contacts, further_contacts)
+                query_result = (
+                    self.query(key, new_nodes_to_query, rpc_call, self.closer_contacts, self.further_contacts))
 
                 if query_result["found"]:
                     return query_result
