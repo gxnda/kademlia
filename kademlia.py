@@ -909,12 +909,11 @@ class DHT:
                 if close_contacts:  # if a close contact exists.
                     store_to: Contact = sorted(close_contacts, key=lambda i: i.id ^ key)[0]
                     separating_nodes: int = self.get_separating_nodes_count(self.our_contact, store_to)
-                    error: RPCError = store_to.protocol.store(self._node.our_contact,
+                    store_to.protocol.store(self._node.our_contact,
                                                               key,
                                                               lookup.val,
                                                               True,
                                                               Constants().EXPIRATION_TIME_SEC)
-                    handle_error(error, store_to)  # TODO: is this needed?
 
         return found, contacts, val
 
