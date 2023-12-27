@@ -1,6 +1,6 @@
 import unittest
 
-from kademlia import ID, BucketList, Constants, Contact, VirtualProtocol, \
+from kademlia import BucketList, VirtualProtocol, \
     random_id_in_space, Constants, Contact, ID, KBucket, \
     TooManyContactsError, Node, Router, VirtualStorage, DHT
 
@@ -458,14 +458,51 @@ class DHTTest(unittest.TestCase):
                         "Expected to get back what we stored.")
 
     def test_value_stored_in_closer_node(self):
+        """
+        This test creates a single contact and stores the value in that contact. We set up the IDs so that the
+        contact’s ID is less (XOR metric) than our peer’s ID, and we use a key of ID.Zero to prevent further
+        complexities when computing the distance. Most of the code here is to set up the conditions to make this test!
+        - "The Kademlia Protocol Succinctly" by Marc Clifton
+        :return: None
+        """
+
         vp1 = VirtualProtocol()
         vp2 = VirtualProtocol()
         store1 = VirtualStorage()
         store2 = VirtualStorage()
 
         # Ensures that all nodes are closer, because id.max ^ n < id.max when n > 0.
+        # (the distance between a node and max id is always closer than the furthest possible)
         # TODO: Why are there 6 arguments? im tired i sleep now
-        dht = DHT(ID(0).MAX_ID, Router(), store1, store2, VirtualStorage())
+        dht = DHT(id=ID(0).MAX_ID, router=Router(), storage_factory=lambda: store1, protocol=VirtualProtocol())
+
+        vp1.node = dht._router.node
+        contact_id: ID = ID(2 ** 159)  # middle ID
+        other_contact: Contact = Contact(contact_ID=contact_id, protocol=vp2)
+        other_node = Node(contact=other_contact, storage=store2)
+        vp2.node = other_node
+
+        # add this other contact to our peer list
+        dht._router.node.bucket_list.add_contact(other_contact)
+        # we want an integer distance, not an XOR distance.
+        key: ID = ID(0)
+        val = "Test"
+        other_node.simply_store(key, val)
+        self.assertFalse(store1.contains(key),
+                         "Expected our peer to NOT have cached the key-value.")
+
+        self.assertTrue(store2.contains(key),
+                        "Expected other node to HAVE cached the key-value.")
+
+        # Try and find the value, given our Dht knows about the other contact.
+        _, _, retval = dht.find_value(key)
+        self.assertTrue(retval == val,
+                        "Expected to get back what we stored")
+
+
+
+
+
 
 
 
