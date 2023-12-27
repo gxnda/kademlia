@@ -225,6 +225,8 @@ class ID:
     @classmethod
     def random_id(cls, low=0, high=2 ** 160, seed=None):
         """
+        Generates a random ID, including both endpoints.
+
         FOR TESTING PURPOSES.
         Generating random ID's this way will not perfectly spread the prefixes,
         this is a maths law I've forgotten - due to the small scale of this
