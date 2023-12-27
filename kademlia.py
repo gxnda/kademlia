@@ -424,8 +424,8 @@ class KBucket:
 
         k1: KBucket = KBucket(low=self._low, high=midpoint)
         k2: KBucket = KBucket(low=midpoint, high=self._high)
-        assert(len(k1.contacts) == 0)
-        assert(len(k2.contacts) == 0)
+        assert (len(k1.contacts) == 0)
+        assert (len(k2.contacts) == 0)
         for c in self.contacts:
             if c.id.value < midpoint:
                 k1.add_contact(c)
@@ -910,10 +910,10 @@ class DHT:
                     store_to: Contact = sorted(close_contacts, key=lambda i: i.id ^ key)[0]
                     separating_nodes: int = self.get_separating_nodes_count(self.our_contact, store_to)
                     store_to.protocol.store(self._node.our_contact,
-                                                              key,
-                                                              lookup.val,
-                                                              True,
-                                                              Constants().EXPIRATION_TIME_SEC)
+                                            key,
+                                            lookup.val,
+                                            True,
+                                            Constants().EXPIRATION_TIME_SEC)
 
         return found, contacts, val
 
