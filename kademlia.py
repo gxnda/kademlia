@@ -600,8 +600,8 @@ class Router:
         contacted_nodes = []
         closer_contacts: list[Contact] = []
         further_contacts: list[Contact] = []
-        closer_uncontacted_nodes = []
-        further_uncontacted_nodes = []
+        # closer_uncontacted_nodes = []
+        # further_uncontacted_nodes = []
 
         all_nodes = self.node.bucket_list.get_close_contacts(key, self.node.our_contact.id)[0:Constants().K]
 
