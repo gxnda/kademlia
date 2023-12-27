@@ -499,6 +499,12 @@ class DHTTest(unittest.TestCase):
         self.assertTrue(retval == val,
                         "Expected to get back what we stored")
 
+    def test_value_stored_in_further_node(self):
+        vp1 = VirtualProtocol()
+        vp2 = VirtualProtocol()
+        store1 = VirtualStorage()
+        store2 = VirtualStorage()
+
 
 
 
