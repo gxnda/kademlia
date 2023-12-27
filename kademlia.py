@@ -129,19 +129,18 @@ class ID:
 
     def bin(self) -> str:
         """
-        Returns value in binary - this includes a 0b tag at the start.
-        Do [2:] to remove this.
+        Returns value in binary - this does not include a 0b tag at the start.
         """
-        return bin(self.value)
+        return bin(self.value)[2:]
 
-    def big_endian_bytes(self) -> list:
+    def big_endian_bytes(self) -> list[str]:
         """
         Returns the ID in big-endian binary - largest bit is at index 0.
         """
         big_endian = [x for x in self.bin()[2:]]
         return big_endian
 
-    def little_endian_bytes(self) -> list:
+    def little_endian_bytes(self) -> list[str]:
         """
         Returns the ID in little-endian binary - smallest bit is at index 0.
         """
@@ -366,6 +365,12 @@ class KBucket:
         self._high = high
         self.time_stamp: datetime = datetime.now()
         # self.lock = WithLock(Lock())
+
+    def low(self):
+        return self._low
+
+    def high(self):
+        return self._high
 
     def is_full(self) -> bool:
         """
@@ -993,3 +998,22 @@ def random_node():
 
 def select_random(arr: list, freq: int) -> list:
     return random.sample(arr, freq)
+
+
+def random_id_within_bucket_range(bucket: KBucket, force_bit_1: bool = False) -> ID:
+    """
+    Returns an ID within the range of the bucket's low and high range.
+    THIS IS NOT AN ID IN THE BUCKETS CONTACT LIST!
+    (I mean it could be but shush)
+    This works because the bucket low-high range will always be a power of 2.
+
+    :param bucket: bucket to be searched
+    :param force_bit_1: For unit tests
+    :return: random ID in bucket.
+    """
+    return ID(bucket.low() + random.randint(0, bucket.high() - bucket.low()))
+
+
+
+
+
