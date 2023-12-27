@@ -612,10 +612,5 @@ class DHTTest(unittest.TestCase):
                         "Expected 12 hour expiration.")
 
 
-
-
-
-
-
 if __name__ == '__main__':
     unittest.main()
