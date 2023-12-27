@@ -309,6 +309,15 @@ class Node:
         # TODO: Complete this.
         pass
 
+    def simply_store(self, key, val) -> None:
+        """
+        For unit testing.
+        :param key:
+        :param val:
+        :return: None
+        """
+        self._storage.set(key, val)
+
 
 class KBucket:
 
