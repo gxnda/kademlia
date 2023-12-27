@@ -2,9 +2,8 @@ import random
 from abc import abstractmethod
 from datetime import datetime
 from statistics import median_high
-from typing import Type, Callable
+from typing import Type, Callable, TypedDict
 
-from typing_classes import QueryReturn
 
 # from threading import Lock
 
@@ -242,6 +241,17 @@ class Contact:
     def touch(self):
         """Updates the last time the contact was seen."""
         self.last_seen = datetime.now()
+
+
+class QueryReturn(TypedDict):
+    """
+    Has elements: contacts, val, found, found_by
+    """
+    contacts: list[Contact]
+    val: str | None
+    found: bool
+    found_by: Contact | None
+
 
 
 class Node:
