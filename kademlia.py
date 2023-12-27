@@ -233,9 +233,9 @@ class IStorage:
 
 class Contact:
 
-    def __init__(self, contact_ID: ID, protocol=None):
+    def __init__(self, id: ID, protocol=None):
         self.protocol = protocol
-        self.id = contact_ID
+        self.id = id
         self.last_seen: datetime = datetime.now()
 
     def touch(self):
@@ -871,7 +871,7 @@ class DHT:
         self._router = None
         self._originator_storage = storage_factory()
         self.our_id = id
-        self.our_contact = Contact(contact_ID=id, protocol=protocol)
+        self.our_contact = Contact(id=id, protocol=protocol)
         self._node = Node(self.our_contact, storage=VirtualStorage())
         self._node.DHT = self
         self._node.bucket_list.DHT = self
@@ -957,11 +957,11 @@ def empty_node():
     For testing.
     :return:
     """
-    return Node(Contact(contact_ID=ID(0)), storage=VirtualStorage())
+    return Node(Contact(id=ID(0)), storage=VirtualStorage())
 
 
 def random_node():
-    return Node(Contact(contact_ID=random_id_in_space()), storage=VirtualStorage())
+    return Node(Contact(id=random_id_in_space()), storage=VirtualStorage())
 
 
 def select_random(arr: list, freq: int) -> list:
