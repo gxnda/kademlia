@@ -639,6 +639,12 @@ class BucketList:
                 f"which is {Constants.K - len(contacts)} too big.")
         return contacts
 
+    def contacts(self) -> list[Contact]:
+        contacts = []
+        for bucket in self.buckets:
+            for contact in bucket.contacts:
+                contacts.append(contact)
+        return contacts
 
 class Router:
     """
@@ -1008,7 +1014,6 @@ class DHT:
         """
         self._node.bucket_list.add_contact(known_peer)
         contacts, error = known_peer.protocol.find_node(sender=self.our_contact, key=self.our_id)
-
         # handle_error(error, known_peer)
         if not error:
             for contact in contacts:
