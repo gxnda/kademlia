@@ -673,6 +673,53 @@ class BootstrappingTests(unittest.TestCase):
         self.assertTrue(sum_of_contacts == 11,
                         "Expected our peer to get 11 contacts.")
 
+    def test_bootstrap_outside_bootstrapping_bucket(self):
+        vp: list[VirtualProtocol] = []
+        for i in range(32):
+            vp.append(VirtualProtocol())
+
+        # Us, ID doesn't matter.
+        dht_us: DHT = DHT(ID.random_id(), vp[0], VirtualStorage, Router())
+        vp[0].node = dht_us._router.node
+
+        # our bootstrap peer
+        # all IDs are < 2 ** 159
+        dht_bootstrap: DHT = DHT(ID.random_id(0, 2 ** 159 - 1), vp[1], VirtualStorage, Router())
+        vp[1].node = dht_bootstrap._router.node
+        print(sum([len([c for c in b.contacts]) for b in dht_bootstrap._router.node.bucket_list.buckets]))
+        # Our bootstrapper knows 20 contacts
+        for i in range(20):
+            id: ID
+            # all IDs are < 2 ** 159, except the last one, which is >= 2 ** 159
+            # Which will force a bucket split for us
+            if i < 19:
+                id = ID.random_id(0, 2 ** 159 - 1)
+            else:
+                id = ID.max()
+            c: Contact = Contact(id, vp[i + 2])
+            n = Node(c, VirtualStorage())
+            vp[i + 2].node = n
+            dht_bootstrap._router.node.bucket_list.add_contact(c)
+
+        print(len(dht_bootstrap._router.node.bucket_list.contacts()))
+        # One of those nodes, in this case specifically the last one we added to our bootstrapper so that it isn't in
+        # the bucket of our bootstrapper, we add 10 contacts. The IDs of those contacts don't matter.
+
+        for i in range(10):
+            c: Contact = Contact(ID.random_id(), vp[i + 22])
+            n2 = Node(c, VirtualStorage())
+            vp[i + 22].node = n
+            n.bucket_list.add_contact(c)  # Note we're adding these contacts to the 10th node.
+
+        dht_us.bootstrap(dht_bootstrap._router.node.our_contact)
+
+        sum_of_contacts = len(dht_us._router.node.bucket_list.contacts())
+        self.assertTrue(sum_of_contacts == 31,
+                        f"Expected our peer to have 31 contacts, {sum_of_contacts} were given.")
+
+
+
+
 
 
 
