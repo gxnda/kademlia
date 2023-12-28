@@ -749,7 +749,7 @@ class BootstrappingTests(unittest.TestCase):
         for i in range(10):
             c: Contact = Contact(ID.random_id(), vp[i + 22])
             n2 = Node(c, VirtualStorage())
-            vp[i + 22].node = n2
+            c.protocol.node = n2
             n.bucket_list.add_contact(c)  # Note we're adding these contacts to the 10th node.
 
         self.assertTrue([len(b.contacts) for b in n.bucket_list.buckets] == [10],
@@ -760,6 +760,7 @@ class BootstrappingTests(unittest.TestCase):
         print("Bootstrap finished!")
 
         print(f"\nLength of buckets: {[len(b.contacts) for b in dht_us._router.node.bucket_list.buckets]}")
+
         sum_of_contacts = len(dht_us._router.node.bucket_list.contacts())
         self.assertTrue(sum_of_contacts == 31,
                         f"Expected our peer to have 31 contacts, {sum_of_contacts} were given.")

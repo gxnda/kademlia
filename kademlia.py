@@ -1016,7 +1016,7 @@ class DHT:
         contacts, error = known_peer.protocol.find_node(sender=self.our_contact, key=self.our_id)
         # handle_error(error, known_peer)
         if not error:
-            print("NO ERROR")
+            # print("NO ERROR")
 
             # add all contacts the known peer DIRECTLY knows
             for contact in contacts:
@@ -1033,6 +1033,7 @@ class DHT:
 
     def refresh_bucket(self, bucket: KBucket):
         """
+        TODO: This is broken! - contact.protocol.find_node() isn't returning anything.
         Refreshes the given Kademlia KBucket by updating its last-touch timestamp,
         obtaining a random ID within the bucket's range, and attempting to find
         nodes in the network with that random ID.
@@ -1052,7 +1053,7 @@ class DHT:
         bucket.touch()
         random_id: ID = ID.random_id_within_bucket_range(bucket)
 
-        # Isolate in a separate list as contacts collection for this bucket might change.
+        # put in a separate list as contacts collection for this bucket might change.
         contacts: list[Contact] = bucket.contacts
         for contact in contacts:
             new_contacts, timeout_error = contact.protocol.find_node(self.our_contact, random_id)
