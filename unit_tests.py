@@ -631,8 +631,15 @@ class BootstrappingTests(unittest.TestCase):
             id: ID = ID.random_id_within_bucket_range(bucket)
             self.assertTrue(bucket.is_in_range(id))
 
-    def test_bootstrap(self):
+    def test_bootstrap_within_bootstrapping_bucket(self):
         """
+        Test the bootstrap process within a bootstrapping bucket scenario.
+
+        This test creates a network with 22 virtual protocols representing nodes.
+        It sets up a bootstrap peer, with the bootstrapper having knowledge of 10 other nodes,
+        and one of those nodes having knowledge of another 10 nodes. The goal is to simulate
+        the bootstrap process and ensure that the expected number of contacts is received.
+
         We need 22 virtual protocols. One for the bootstrap peer,
         10 for the nodes the bootstrap peer knows about, and 10 for
         the nodes one of the nodes knows about. And one for us to
@@ -674,6 +681,23 @@ class BootstrappingTests(unittest.TestCase):
                         "Expected our peer to get 11 contacts.")
 
     def test_bootstrap_outside_bootstrapping_bucket(self):
+        """
+        Test the bootstrap process when bootstrapping from a DHT node with contacts outside its own bucket.
+
+        This test simulates the scenario where a DHT node (dht_us) attempts to bootstrap from another node
+        (dht_bootstrap) whose contact list includes nodes outside its immediate bucket range. The goal is to
+        verify that the bootstrapping process correctly adds and organizes contacts, and handles bucket splits.
+
+        Steps:
+        1. Create two DHT nodes, dht_us and dht_bootstrap, and establish virtual protocols (vp) for communication.
+        2. Populate dht_bootstrap with 20 contacts, with one contact having an ID >= 2 ** 159 to trigger a bucket split.
+        3. Add 10 contacts to one of the nodes in dht_bootstrap's contact list (simulating contacts outside the bucket).
+        4. Perform bootstrap operation from dht_us to dht_bootstrap.
+        5. Verify that dht_us has a total of 31 contacts after bootstrapping.
+
+        Raises:
+            AssertionError: If the number of contacts in dht_us after bootstrapping is not 31.
+            """
         vp: list[VirtualProtocol] = []
         for i in range(32):
             vp.append(VirtualProtocol())
