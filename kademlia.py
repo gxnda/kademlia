@@ -586,12 +586,13 @@ class BucketList:
         # with self.lock:
         kbucket: KBucket = self.get_kbucket(contact.id)
         if kbucket.contains(contact.id):
+            print("Contact already in KBucket.")
             # replace contact, then touch it
             kbucket.replace_contact(contact)
 
         elif kbucket.is_full():
             if self.can_split(kbucket):
-                # print("Splitting!")
+                print("Splitting!")
                 # Split then try again
                 k1, k2 = kbucket.split()
                 index: int = self._get_kbucket_index(contact.id)
@@ -607,6 +608,7 @@ class BucketList:
 
         else:
             # Bucket is not full, nothing special happens.
+            print("adding contact to a kbucket.")
             kbucket.add_contact(contact)
 
     def get_close_contacts(self, key: ID, exclude: ID) -> list[Contact]:
@@ -840,32 +842,28 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
         self.responds = responds
         self.node = node
 
-    @staticmethod
-    def _NoError() -> RPCError:
-        return RPCError()
-
     def ping(self, sender: Contact) -> RPCError:
         return RPCError()
 
-    def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact], RPCError]:
+    def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact], RPCError | None]:
         """
         Get the list of contacts for this node closest to the key.
         """
-        return self.node.find_node(sender=sender, key=key)[0], self._NoError()
+        return self.node.find_node(sender=sender, key=key)[0], None
 
-    def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact], str, RPCError]:
+    def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact], str, RPCError | None]:
         """
         Returns either contacts or None if the value is found.
         """
         contacts, val = self.node.find_value(sender=sender, key=key)
-        return contacts, val, self._NoError()
+        return contacts, val, None
 
     def store(self,
               sender: Contact,
               key: ID,
               val: str,
               is_cached=False,
-              exp_time: int = 0) -> RPCError:
+              exp_time: int = 0) -> RPCError | None:
         """
         Stores the key-value on the remote peer.
         """
@@ -875,7 +873,7 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
                         is_cached=is_cached,
                         expiration_time_sec=exp_time)
 
-        return self._NoError()
+        return None
 
 
 class VirtualStorage(IStorage):
@@ -1002,7 +1000,7 @@ class DHT:
     def store_on_closer_contacts(self, key: ID, val: str):
         pass
 
-    def bootstrap(self, known_peer: Contact) -> RPCError:
+    def bootstrap(self, known_peer: Contact) -> None:
         """
         This is how we join the network.
 
@@ -1012,7 +1010,9 @@ class DHT:
         :param known_peer: Peer we know.
         :return: RPC Error, not sure when it should be raised?
         """
+        print(f"Adding known peer with ID {known_peer.id}")
         self._node.bucket_list.add_contact(known_peer)
+
         contacts, error = known_peer.protocol.find_node(sender=self.our_contact, key=self.our_id)
         # handle_error(error, known_peer)
         if not error:
@@ -1025,8 +1025,8 @@ class DHT:
             other_buckets: list[KBucket] = [i for i in self._node.bucket_list.buckets if i != known_peer_bucket]
             for other_bucket in other_buckets:
                 self.refresh_bucket(other_bucket)
-
-        return error
+        else:
+            raise error
 
     def refresh_bucket(self, bucket: KBucket):
         """
