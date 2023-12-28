@@ -343,6 +343,7 @@ class Node:
         # managing sender
         if sender.id == self.our_contact.id:
             raise SendingQueryToSelfError("Sender cannot be ourselves.")
+
         self.send_key_values_if_new_contact(sender)
         self.bucket_list.add_contact(sender)
 
@@ -595,11 +596,13 @@ class BucketList:
                 print("Splitting!")
                 # Split then try again
                 k1, k2 = kbucket.split()
+                # print(f"K1: {len(k1.contacts)}, K2: {len(k2.contacts)}, Buckets: {self.buckets}")
                 index: int = self._get_kbucket_index(contact.id)
 
                 # adds the two buckets to 2 separate buckets.
                 self.buckets[index] = k1  # Replaces original KBucket
                 self.buckets.insert(index + 1, k2)  # Adds a new one after it
+                # print(self.buckets)
                 self.add_contact(contact)  # Unless k <= 0, This should never cause a recursive loop
 
             else:
@@ -608,19 +611,17 @@ class BucketList:
 
         else:
             # Bucket is not full, nothing special happens.
-            print(f"adding contact with ID {contact.id} to a KBucket.")
             kbucket.add_contact(contact)
 
     def get_close_contacts(self, key: ID, exclude: ID) -> list[Contact]:
         """
-        TODO: Is this in the right class (Code listing 42)
         Brute force distance lookup of all known contacts, sorted by distance.
         Then we take K of the closest.
         :param key: The ID for which we want to find close contacts.
         :param exclude: The ID to exclude (the requesters ID).
         :return: List of K contacts sorted by distance.
         """
-
+        # print(key, exclude)
         # with self.lock:
         contacts = []
         # print(self.buckets)
@@ -632,9 +633,8 @@ class BucketList:
 
                 if contact.id != exclude:
                     contacts.append(contact)
-
+        # print(contacts)
         contacts = sorted(contacts, key=lambda c: c.id ^ key)[:Constants.K]
-
         if len(contacts) > Constants.K and DEBUG:
             raise ValueError(
                 f"Contacts should be smaller than or equal to K. Has length {len(contacts)}, "
@@ -1016,6 +1016,9 @@ class DHT:
         contacts, error = known_peer.protocol.find_node(sender=self.our_contact, key=self.our_id)
         # handle_error(error, known_peer)
         if not error:
+            print("NO ERROR")
+
+            # add all contacts the known peer DIRECTLY knows
             for contact in contacts:
                 self._node.bucket_list.add_contact(contact)
 
@@ -1053,8 +1056,10 @@ class DHT:
         contacts: list[Contact] = bucket.contacts
         for contact in contacts:
             new_contacts, timeout_error = contact.protocol.find_node(self.our_contact, random_id)
+            # print(contacts.index(contact) + 1, "new contacts", new_contacts)
             # handle_error(timeout_error, contact)
             if new_contacts:
+                print("NEW CONTACTS")
                 for other_contact in new_contacts:
                     self._node.bucket_list.add_contact(other_contact)
 

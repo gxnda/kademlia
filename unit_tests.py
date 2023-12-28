@@ -721,7 +721,6 @@ class BootstrappingTests(unittest.TestCase):
         dht_bootstrap: DHT = DHT(ID.random_id(0, 2 ** 159 - 1), vp[1], VirtualStorage, Router())
         vp[1].node = dht_bootstrap._router.node
         # print(sum([len([c for c in b.contacts]) for b in dht_bootstrap._router.node.bucket_list.buckets]))
-        print("DHT Bootstrap contact length =", len(dht_bootstrap._router.node.bucket_list.contacts()))
 
         # Our bootstrapper knows 20 contacts
         for i in range(20):
@@ -734,34 +733,36 @@ class BootstrappingTests(unittest.TestCase):
                 id = ID.max()
             c: Contact = Contact(id, vp[i + 2])
             n = Node(c, VirtualStorage())
-            vp[i + 2].node = n
+            c.protocol.node = n  # I'm doing this instead of the below line, because I don't think that would work.
+            # vp[i + 2].node = n
             dht_bootstrap._router.node.bucket_list.add_contact(c)
 
-        print("DHT Bootstrap contact length =", len(dht_bootstrap._router.node.bucket_list.contacts()))
+        # print("DHT Bootstrap contact length =", len(dht_bootstrap._router.node.bucket_list.contacts()))
+        self.assertTrue(len(dht_bootstrap._router.node.bucket_list.contacts()) == 20,
+                        "DHT Bootstrapper must have 20 contacts.")
         # One of those nodes, in this case specifically the last one we added to our bootstrapper so that it isn't in
         # the bucket of our bootstrapper, we add 10 contacts. The IDs of those contacts don't matter.
 
+        # add 10 contacts to node
+        # this basically means that the bootstrapper knows 20 contacts, one of them knows 10 contacts.
+        # we're trying to add all 30 + bootstrapper so 31.
         for i in range(10):
             c: Contact = Contact(ID.random_id(), vp[i + 22])
             n2 = Node(c, VirtualStorage())
             vp[i + 22].node = n2
             n.bucket_list.add_contact(c)  # Note we're adding these contacts to the 10th node.
 
-        dht_us.bootstrap(dht_bootstrap._router.node.our_contact)
+        self.assertTrue([len(b.contacts) for b in n.bucket_list.buckets] == [10],
+                        "Must have 10 contacts in node.")
 
+        print("Starting bootstrap...")
+        dht_us.bootstrap(dht_bootstrap._router.node.our_contact)
+        print("Bootstrap finished!")
+
+        print(f"\nLength of buckets: {[len(b.contacts) for b in dht_us._router.node.bucket_list.buckets]}")
         sum_of_contacts = len(dht_us._router.node.bucket_list.contacts())
         self.assertTrue(sum_of_contacts == 31,
                         f"Expected our peer to have 31 contacts, {sum_of_contacts} were given.")
-
-
-
-
-
-
-
-
-
-
 
 
 if __name__ == '__main__':
