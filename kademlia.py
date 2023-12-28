@@ -608,7 +608,7 @@ class BucketList:
 
         else:
             # Bucket is not full, nothing special happens.
-            print("adding contact to a kbucket.")
+            print(f"adding contact with ID {contact.id} to a KBucket.")
             kbucket.add_contact(contact)
 
     def get_close_contacts(self, key: ID, exclude: ID) -> list[Contact]:

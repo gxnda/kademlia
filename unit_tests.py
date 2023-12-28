@@ -647,6 +647,7 @@ class BootstrappingTests(unittest.TestCase):
         :return: None
         """
         vp: list[VirtualProtocol] = []
+        # creates 22 virtual protocols
         for i in range(22):
             vp.append(VirtualProtocol())
 
@@ -658,6 +659,9 @@ class BootstrappingTests(unittest.TestCase):
         dht_bootstrap: DHT = DHT(ID.random_id(), vp[1], VirtualStorage, Router())
         vp[1].node = dht_bootstrap._router.node
 
+        # stops pycharm saying it could be undefined later on. THIS LINE IS USELESS.
+        n: Node = Node(Contact(ID.random_id(), vp[0]), VirtualStorage())
+
         # Our bootstrapper knows 10 contacts
         for i in range(10):
             c: Contact = Contact(ID.random_id(), vp[i + 2])
@@ -665,18 +669,24 @@ class BootstrappingTests(unittest.TestCase):
             vp[i + 2].node = n
             dht_bootstrap._router.node.bucket_list.add_contact(c)
 
-        # One of those nodes, in this case the last one we added to our bootstrapper (for convenience)
+        # One of those nodes, in this case the last one we added to our bootstrapper (for convenience's sake)
         # knows about 10 other contacts
+
+        # n is the last one our bootstrapper knows
+        node_who_knows_10 = n  # Ignore PyCharm error saying it can be referenced before being created.
+        del n  # bad naming, don't want to use it later on.
+
+        # create the 10 it knows about
         for i in range(10):
             c: Contact = Contact(ID.random_id(), vp[i + 12])
             n2: Node = Node(c, VirtualStorage())
-            vp[i + 12].node = n  # Ignore PyCharm error saying it can be referenced before being created.
-            n.bucket_list.add_contact(c)
+            vp[i + 12].node = n2
+            node_who_knows_10.bucket_list.add_contact(c)
 
         dht_us.bootstrap(dht_bootstrap._router.node.our_contact)
 
-        sum_of_contacts = sum([len(b.contacts) for b in dht_bootstrap._router.node.bucket_list.buckets])
-        print(sum_of_contacts)
+        sum_of_contacts = len(dht_us._router.node.bucket_list.contacts())
+        print(f"sum of contacts: {sum_of_contacts}")
         self.assertTrue(sum_of_contacts == 11,
                         "Expected our peer to get 11 contacts.")
 
@@ -710,7 +720,9 @@ class BootstrappingTests(unittest.TestCase):
         # all IDs are < 2 ** 159
         dht_bootstrap: DHT = DHT(ID.random_id(0, 2 ** 159 - 1), vp[1], VirtualStorage, Router())
         vp[1].node = dht_bootstrap._router.node
-        print(sum([len([c for c in b.contacts]) for b in dht_bootstrap._router.node.bucket_list.buckets]))
+        # print(sum([len([c for c in b.contacts]) for b in dht_bootstrap._router.node.bucket_list.buckets]))
+        print("DHT Bootstrap contact length =", len(dht_bootstrap._router.node.bucket_list.contacts()))
+
         # Our bootstrapper knows 20 contacts
         for i in range(20):
             id: ID
@@ -725,14 +737,14 @@ class BootstrappingTests(unittest.TestCase):
             vp[i + 2].node = n
             dht_bootstrap._router.node.bucket_list.add_contact(c)
 
-        print(len(dht_bootstrap._router.node.bucket_list.contacts()))
+        print("DHT Bootstrap contact length =", len(dht_bootstrap._router.node.bucket_list.contacts()))
         # One of those nodes, in this case specifically the last one we added to our bootstrapper so that it isn't in
         # the bucket of our bootstrapper, we add 10 contacts. The IDs of those contacts don't matter.
 
         for i in range(10):
             c: Contact = Contact(ID.random_id(), vp[i + 22])
             n2 = Node(c, VirtualStorage())
-            vp[i + 22].node = n
+            vp[i + 22].node = n2
             n.bucket_list.add_contact(c)  # Note we're adding these contacts to the 10th node.
 
         dht_us.bootstrap(dht_bootstrap._router.node.our_contact)
