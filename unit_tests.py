@@ -731,11 +731,14 @@ class BootstrappingTests(unittest.TestCase):
                 id = ID.random_id(0, 2 ** 159 - 1)
             else:
                 id = ID.max()
+
             c: Contact = Contact(id, vp[i + 2])
             n = Node(c, VirtualStorage())
-            c.protocol.node = n  # I'm doing this instead of the below line, because I don't think that would work.
-            # vp[i + 2].node = n
+            vp[i + 2].node = n
             dht_bootstrap._router.node.bucket_list.add_contact(c)
+
+        # just making sure vp[i + 2].node = n works retrospectively on c.
+        self.assertTrue(n.our_contact.id == c.protocol.node.our_contact.id == ID.max())
 
         # print("DHT Bootstrap contact length =", len(dht_bootstrap._router.node.bucket_list.contacts()))
         self.assertTrue(len(dht_bootstrap._router.node.bucket_list.contacts()) == 20,
@@ -747,10 +750,15 @@ class BootstrappingTests(unittest.TestCase):
         # this basically means that the bootstrapper knows 20 contacts, one of them knows 10 contacts.
         # we're trying to add all 30 + bootstrapper so 31.
         for i in range(10):
+            # creating 10 shell contacts
             c: Contact = Contact(ID.random_id(), vp[i + 22])
             n2 = Node(c, VirtualStorage())
-            c.protocol.node = n2
+            vp[i + 22].node = n2
+
+            # adding the 10 shell contacts
             n.bucket_list.add_contact(c)  # Note we're adding these contacts to the 10th node.
+
+        self.assertTrue(n2.our_contact.id == c.protocol.node.our_contact.id)
 
         self.assertTrue([len(b.contacts) for b in n.bucket_list.buckets] == [10],
                         "Must have 10 contacts in node.")

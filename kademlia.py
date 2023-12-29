@@ -339,15 +339,22 @@ class Node:
             self._storage.set(key, val, Constants.EXPIRATION_TIME_SEC)
 
     def find_node(self, key: ID, sender: Contact) -> tuple[list[Contact], str | None]:
+        """
+        Finds K close contacts to a given ID, while exluding the sender.
+        It also adds the sender if it hasn't seen it before.
+        :param key: K close contacts are found near this ID.
+        :param sender: Contact to be excluded and added if new.
+        :return: list of K (or less) contacts near the key
+        """
 
         # managing sender
         if sender.id == self.our_contact.id:
             raise SendingQueryToSelfError("Sender cannot be ourselves.")
-
         self.send_key_values_if_new_contact(sender)
         self.bucket_list.add_contact(sender)
 
         # actually finding nodes
+        # print([len(b.contacts) for b in self.bucket_list.buckets])
         contacts = self.bucket_list.get_close_contacts(key=key, exclude=sender.id)
         # print(f"contacts: {contacts}")
         return contacts, None
@@ -847,7 +854,11 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
 
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact], RPCError | None]:
         """
-        Get the list of contacts for this node closest to the key.
+        Finds K close contacts to a given ID, while excluding the sender.
+        It also adds the sender if it hasn't seen it before.
+        :param key: K close contacts are found near this ID.
+        :param sender: Contact to be excluded and added if new.
+        :return: list of K (or less) contacts near the key, and an error that may need to be handled.
         """
         return self.node.find_node(sender=sender, key=key)[0], None
 
@@ -1010,9 +1021,15 @@ class DHT:
         :param known_peer: Peer we know.
         :return: RPC Error, not sure when it should be raised?
         """
-        print(f"Adding known peer with ID {known_peer.id}")
+        # print(f"Adding known peer with ID {known_peer.id}")
         self._node.bucket_list.add_contact(known_peer)
 
+        # UNITTEST NOTES: This should return something in test_bootstrap_outside_bootstrapping_bucket,
+        # it isn't at the moment.
+        # find_node() should return the bucket list with the contact who knows 10 other contacts
+        # it does.
+
+        # finds K close contacts to self.our_id, excluding self.our_contact
         contacts, error = known_peer.protocol.find_node(sender=self.our_contact, key=self.our_id)
         # handle_error(error, known_peer)
         if not error:
@@ -1022,12 +1039,12 @@ class DHT:
             for contact in contacts:
                 self._node.bucket_list.add_contact(contact)
 
-            known_peer_bucket: KBucket = self._node.bucket_list.get_kbucket(known_peer.id)
+            known_peers_bucket: KBucket = self._node.bucket_list.get_kbucket(known_peer.id)
             # Resolve the list now, so we don't include additional contacts
             # as we add to our bucket additional contacts.
-            other_buckets: list[KBucket] = [i for i in self._node.bucket_list.buckets if i != known_peer_bucket]
+            other_buckets: list[KBucket] = [i for i in self._node.bucket_list.buckets if i != known_peers_bucket]
             for other_bucket in other_buckets:
-                self.refresh_bucket(other_bucket)
+                self.refresh_bucket(other_bucket)  # UNITTEST Notes: one of these should contain the correct contact
         else:
             raise error
 
@@ -1056,6 +1073,7 @@ class DHT:
         # put in a separate list as contacts collection for this bucket might change.
         contacts: list[Contact] = bucket.contacts
         for contact in contacts:
+            # print(contact.id, contact.protocol.node.bucket_list.contacts())
             new_contacts, timeout_error = contact.protocol.find_node(self.our_contact, random_id)
             # print(contacts.index(contact) + 1, "new contacts", new_contacts)
             # handle_error(timeout_error, contact)
