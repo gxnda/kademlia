@@ -1018,7 +1018,7 @@ class DHT:
         We bootstrap our peer by contacting a known peer in the network, adding its contacts
         to our list, then getting the contacts for other peers not in the
         bucket range of our known peer we're joining.
-        :param known_peer: Peer we know.
+        :param known_peer: Peer we know / are bootstrapping from.
         :return: RPC Error, not sure when it should be raised?
         """
         # print(f"Adding known peer with ID {known_peer.id}")
@@ -1040,17 +1040,19 @@ class DHT:
                 self._node.bucket_list.add_contact(contact)
 
             known_peers_bucket: KBucket = self._node.bucket_list.get_kbucket(known_peer.id)
+
+            if ID.max() in [c.id for c in known_peers_bucket.contacts]:
+                print("somethings gone wrong")
             # Resolve the list now, so we don't include additional contacts
             # as we add to our bucket additional contacts.
-            other_buckets: list[KBucket] = [i for i in self._node.bucket_list.buckets if i != known_peers_bucket]
+            other_buckets: list[KBucket] = [i for i in self._node.bucket_list.buckets]  #  if i != known_peers_bucket]
             for other_bucket in other_buckets:
-                self.refresh_bucket(other_bucket)  # UNITTEST Notes: one of these should contain the correct contact
+                self._refresh_bucket(other_bucket)  # UNITTEST Notes: one of these should contain the correct contact
         else:
             raise error
 
-    def refresh_bucket(self, bucket: KBucket):
+    def _refresh_bucket(self, bucket: KBucket):
         """
-        TODO: This is broken! - contact.protocol.find_node() isn't returning anything.
         Refreshes the given Kademlia KBucket by updating its last-touch timestamp,
         obtaining a random ID within the bucket's range, and attempting to find
         nodes in the network with that random ID.
@@ -1074,6 +1076,8 @@ class DHT:
         contacts: list[Contact] = bucket.contacts
         for contact in contacts:
             # print(contact.id, contact.protocol.node.bucket_list.contacts())
+            if contact.id == ID.max():  # For unit testing, This should trigger!
+                print("IMPORTANT")
             new_contacts, timeout_error = contact.protocol.find_node(self.our_contact, random_id)
             # print(contacts.index(contact) + 1, "new contacts", new_contacts)
             # handle_error(timeout_error, contact)
