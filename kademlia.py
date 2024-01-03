@@ -519,15 +519,13 @@ class KBucket:
 class BucketList:
 
     def __init__(self, our_id: ID):
+        self.DHT = None
         self.buckets: list[KBucket] = [KBucket()]
         # first k-bucket has max range
         self.our_id: ID = our_id
 
         # create locking object
         # self.lock = WithLock(Lock())
-
-        # DHT object?
-        self.DHT: DHT
 
     def can_split(self, kbucket: KBucket) -> bool:
         # kbucket.HasInRange(ourID) || ((kbucket.Depth() % Constants.B) != 0)
@@ -600,7 +598,7 @@ class BucketList:
 
         elif kbucket.is_full():
             if self.can_split(kbucket):
-                print("Splitting!")
+                # print("Splitting!")
                 # Split then try again
                 k1, k2 = kbucket.split()
                 # print(f"K1: {len(k1.contacts)}, K2: {len(k2.contacts)}, Buckets: {self.buckets}")
@@ -614,7 +612,15 @@ class BucketList:
 
             else:
                 # TODO: Ping the oldest contact to see if it's still around and replace it if not.
-                pass
+                last_seen_contact: Contact = sorted(kbucket.contacts, key=lambda c: c.last_seen)[0]
+                error: RPCError | None = last_seen_contact.protocol.ping(our_contact)
+                if error:
+                    if self.DHT:  # tests may not initialise a DHT
+                        self.DHT.delay_eviction(last_seen_contact, contact)
+                else:
+                    # still can't add the contact ,so put it into the pending list
+                    if self.DHT:
+                        self.DHT.add_to_pending(contact)
 
         else:
             # Bucket is not full, nothing special happens.
@@ -849,8 +855,11 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
         self.responds = responds
         self.node = node
 
-    def ping(self, sender: Contact) -> RPCError:
-        return RPCError()
+    def ping(self, sender: Contact) -> RPCError | None:
+        if self.responds:
+            self.node.ping(sender)
+        else:
+            return RPCError("Time out while pinging contact - VirtualProtocol does not respond.")
 
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact], RPCError | None]:
         """
