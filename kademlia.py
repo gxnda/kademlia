@@ -1045,7 +1045,7 @@ class DHT:
                 print("somethings gone wrong")
             # Resolve the list now, so we don't include additional contacts
             # as we add to our bucket additional contacts.
-            other_buckets: list[KBucket] = [i for i in self._node.bucket_list.buckets]  #  if i != known_peers_bucket]
+            other_buckets: list[KBucket] = [i for i in self._node.bucket_list.buckets if i != known_peers_bucket]
             for other_bucket in other_buckets:
                 self._refresh_bucket(other_bucket)  # UNITTEST Notes: one of these should contain the correct contact
         else:
