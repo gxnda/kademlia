@@ -4,17 +4,15 @@ from datetime import datetime
 from statistics import median_high
 from typing import Callable, TypedDict
 
-
 # from threading import Lock
-
 
 DEBUG: bool = True
 
 if DEBUG:
     random.seed(1)  # For consistent testing
 
-
 # Errors
+
 
 class TooManyContactsError(Exception):
     """Raised when a contact is added to a full k-bucket."""
@@ -102,6 +100,7 @@ class Constants:
     A: int = 3
     EXPIRATION_TIME_SEC: int = 86400  # TODO: Give this a proper number.
 
+
 class ID:
 
     def __init__(self, value: int):
@@ -112,7 +111,7 @@ class ID:
             value: (int) ID denary value
         """
 
-        self.MAX_ID = 2 ** 160
+        self.MAX_ID = 2**160
         self.MIN_ID = 0
         if not (self.MAX_ID > value >= self.MIN_ID):
             # TODO: check if value >= self.MIN_ID is valid.
@@ -192,7 +191,7 @@ class ID:
         Returns max ID.
         :return: max ID.
         """
-        return ID(2 ** 160 - 1)
+        return ID(2**160 - 1)
 
     @classmethod
     def mid(cls):
@@ -200,7 +199,7 @@ class ID:
         returns middle of the road ID
         :return: middle ID.
         """
-        return ID(2 ** 159)
+        return ID(2**159)
 
     @classmethod
     def min(cls):
@@ -220,10 +219,11 @@ class ID:
         :param bucket: bucket to be searched
         :return: random ID in bucket.
         """
-        return ID(bucket.low() + random.randint(0, bucket.high() - bucket.low()))
+        return ID(bucket.low() + random.randint(0,
+                                                bucket.high() - bucket.low()))
 
     @classmethod
-    def random_id(cls, low=0, high=2 ** 160, seed=None):
+    def random_id(cls, low=0, high=2**160, seed=None):
         """
         Generates a random ID, including both endpoints.
 
@@ -252,7 +252,7 @@ class IStorage:
         pass
 
     @abstractmethod
-    def get(self, key: (ID or int)) -> str:
+    def get(self, key: ID | int) -> str:
         pass
 
     @abstractmethod
@@ -338,7 +338,8 @@ class Node:
             self.send_key_values_if_new_contact(sender)
             self._storage.set(key, val, Constants.EXPIRATION_TIME_SEC)
 
-    def find_node(self, key: ID, sender: Contact) -> tuple[list[Contact], str | None]:
+    def find_node(self, key: ID,
+                  sender: Contact) -> tuple[list[Contact], str | None]:
         """
         Finds K close contacts to a given ID, while exluding the sender.
         It also adds the sender if it hasn't seen it before.
@@ -355,12 +356,19 @@ class Node:
 
         # actually finding nodes
         # print([len(b.contacts) for b in self.bucket_list.buckets])
-        contacts = self.bucket_list.get_close_contacts(key=key, exclude=sender.id)
+        contacts = self.bucket_list.get_close_contacts(key=key,
+                                                       exclude=sender.id)
         # print(f"contacts: {contacts}")
         return contacts, None
 
     def find_value(self, key: ID, sender: Contact) \
             -> tuple[list[Contact] | None, str | None]:
+        """
+        Find value in self._storage, testing 
+        self.cache_storage if it is not in the former. 
+        If it is not in either, it gets K
+        close contacts from the bucket list. 
+        """
         if sender.id == self.our_contact.id:
             raise SendingQueryToSelfError("Sender cannot be ourselves.")
 
@@ -389,7 +397,10 @@ class Node:
 
 class KBucket:
 
-    def __init__(self, initial_contacts: list[Contact] = None, low: int = 0, high: int = 2 ** 160):
+    def __init__(self,
+                 initial_contacts: list[Contact] = None,
+                 low: int = 0,
+                 high: int = 2**160):
         """
         Initialises a k-bucket with a specific ID range, 
         initially from 0 to 2**160.
@@ -438,7 +449,8 @@ class KBucket:
     def add_contact(self, contact: Contact):
         # TODO: Check if this is meant to check if it exists in the bucket.
         if self.is_full():
-            raise TooManyContactsError(f"KBucket is full - (length is {len(self.contacts)}).")
+            raise TooManyContactsError(
+                f"KBucket is full - (length is {len(self.contacts)}).")
         elif not self.is_in_range(contact.id):
             raise OutOfRangeError("Contact ID is out of range.")
         else:
@@ -508,7 +520,7 @@ class KBucket:
 
         return k1, k2
 
-    def replace_contact(self, contact) -> None:
+    def replace_contact(self, contact: Contact) -> None:
         """replaces contact, then touches it"""
         contact_ids = [c.id for c in self.contacts]
         index = contact_ids.index(contact.id)
@@ -608,12 +620,16 @@ class BucketList:
                 self.buckets[index] = k1  # Replaces original KBucket
                 self.buckets.insert(index + 1, k2)  # Adds a new one after it
                 # print(self.buckets)
-                self.add_contact(contact)  # Unless k <= 0, This should never cause a recursive loop
+                self.add_contact(
+                    contact
+                )  # Unless k <= 0, This should never cause a recursive loop
 
             else:
                 # TODO: Ping the oldest contact to see if it's still around and replace it if not.
-                last_seen_contact: Contact = sorted(kbucket.contacts, key=lambda c: c.last_seen)[0]
-                error: RPCError | None = last_seen_contact.protocol.ping(our_contact)
+                last_seen_contact: Contact = sorted(
+                    kbucket.contacts, key=lambda c: c.last_seen)[0]
+                error: RPCError | None = last_seen_contact.protocol.ping(
+                    our_contact)
                 if error:
                     if self.DHT:  # tests may not initialise a DHT
                         self.DHT.delay_eviction(last_seen_contact, contact)
@@ -661,6 +677,7 @@ class BucketList:
                 contacts.append(contact)
         return contacts
 
+
 class Router:
     """
     TODO: Talk about what this does.
@@ -676,7 +693,10 @@ class Router:
         self.further_contacts: list[Contact] = []
         # self.lock = WithLock(Lock())
 
-    def lookup(self, key: ID, rpc_call: Callable, give_me_all: bool = False) -> QueryReturn:
+    def lookup(self,
+               key: ID,
+               rpc_call: Callable,
+               give_me_all: bool = False) -> QueryReturn:
         """
         Performs main Kademlia Lookup.
         :param key: Key to be looked up
@@ -690,7 +710,8 @@ class Router:
         # closer_uncontacted_nodes = []
         # further_uncontacted_nodes = []
 
-        all_nodes = self.node.bucket_list.get_close_contacts(key, self.node.our_contact.id)[0:Constants.K]
+        all_nodes = self.node.bucket_list.get_close_contacts(
+            key, self.node.our_contact.id)[0:Constants.K]
 
         nodes_to_query: list[Contact] = all_nodes[0:Constants.A]
 
@@ -709,26 +730,31 @@ class Router:
                 contacted_nodes.append(i)
 
         # In the spec they then send parallel async find_node RPC commands
-        query_result: QueryReturn = (
-            self.query(key, nodes_to_query, rpc_call, self.closer_contacts, self.further_contacts))
+        query_result: QueryReturn = (self.query(key, nodes_to_query, rpc_call,
+                                                self.closer_contacts,
+                                                self.further_contacts))
 
         if query_result["found"]:  # if a node responded
             return query_result
 
         # add any new closer contacts
         for i in self.closer_contacts:
-            if i.id not in [j.id for j in ret]:  # if id does not already exist inside list
+            if i.id not in [j.id for j in ret
+                            ]:  # if id does not already exist inside list
                 ret.append(i)
 
         while len(ret) < Constants.K and have_work:
-            closer_uncontacted_nodes = [i for i in self.closer_contacts if i not in contacted_nodes]
-            further_uncontacted_nodes = [i for i in self.further_contacts if i not in contacted_nodes]
+            closer_uncontacted_nodes = [
+                i for i in self.closer_contacts if i not in contacted_nodes
+            ]
+            further_uncontacted_nodes = [
+                i for i in self.further_contacts if i not in contacted_nodes
+            ]
 
             # If we have uncontacted nodes, we still have work to be done.
             have_closer: bool = len(closer_uncontacted_nodes) > 0
             have_further: bool = len(further_uncontacted_nodes) > 0
             have_work = have_closer or have_further
-
             """
             Spec: of the k nodes the initiator has heard of closest to the target,
             it picks the 'a' that it has not yet queried and resends the FIND_NODE RPC
@@ -740,8 +766,9 @@ class Router:
                     if i not in contacted_nodes:
                         contacted_nodes.append(i)
 
-                query_result = (
-                    self.query(key, new_nodes_to_query, rpc_call, self.closer_contacts, self.further_contacts))
+                query_result = (self.query(key, new_nodes_to_query, rpc_call,
+                                           self.closer_contacts,
+                                           self.further_contacts))
 
                 if query_result["found"]:
                     return query_result
@@ -752,8 +779,9 @@ class Router:
                     if i not in contacted_nodes:
                         contacted_nodes.append(i)
 
-                query_result = (
-                    self.query(key, new_nodes_to_query, rpc_call, self.closer_contacts, self.further_contacts))
+                query_result = (self.query(key, new_nodes_to_query, rpc_call,
+                                           self.closer_contacts,
+                                           self.further_contacts))
 
                 if query_result["found"]:
                     return query_result
@@ -761,7 +789,12 @@ class Router:
         # return k closer nodes sorted by distance,
 
         contacts = sorted(ret[:Constants.K], key=(lambda x: x.id ^ key))
-        return {"found": False, "contacts": contacts, "val": None, "found_by": None}
+        return {
+            "found": False,
+            "contacts": contacts,
+            "val": None,
+            "found_by": None
+        }
 
     def find_closest_nonempty_kbucket(self, key: ID) -> KBucket:
         """
@@ -773,9 +806,11 @@ class Router:
             b for b in self.node.bucket_list.buckets if (len(b.contacts) != 0)
         ]
         if len(non_empty_buckets) == 0:
-            raise AllKBucketsAreEmptyError("No non-empty buckets can be found.")
+            raise AllKBucketsAreEmptyError(
+                "No non-empty buckets can be found.")
 
-        return sorted(non_empty_buckets, key=(lambda b: b.id.value ^ key.value))[0]
+        return sorted(non_empty_buckets,
+                      key=(lambda b: b.id.value ^ key.value))[0]
 
     @staticmethod
     def get_closest_nodes(key: ID, bucket: KBucket) -> list[Contact]:
@@ -783,7 +818,8 @@ class Router:
 
     def rpc_find_nodes(self, key: ID, contact: Contact):
         # what is node??
-        new_contacts, timeout_error = contact.protocol.find_node(self.node.our_contact, key)
+        new_contacts, timeout_error = contact.protocol.find_node(
+            self.node.our_contact, key)
 
         # dht?.handle_error(timeoutError, contact)
 
@@ -794,7 +830,8 @@ class Router:
         pass
 
     def get_closer_nodes(self, key: ID, node_to_query: Contact, rpc_call,
-                         closer_contacts: list[Contact], further_contacts: list[Contact]) -> bool:
+                         closer_contacts: list[Contact],
+                         further_contacts: list[Contact]) -> bool:
 
         contacts: list[Contact]
         found_by: Contact
@@ -802,10 +839,10 @@ class Router:
         contacts, found_by, val = rpc_call(key, node_to_query)
         peers_nodes = []
         for contact in contacts:
-            if contact.id.value not in [self.node.our_contact.id.value,
-                                        node_to_query.id.value,
-                                        closer_contacts,
-                                        further_contacts]:
+            if contact.id.value not in [
+                    self.node.our_contact.id.value, node_to_query.id.value,
+                    closer_contacts, further_contacts
+            ]:
                 peers_nodes.append(contact)
 
         nearest_node_distance = node_to_query.id.value ^ key.value
@@ -828,7 +865,8 @@ class Router:
 
         return val is not None  # Can you use "is not" between empty strings and None?
 
-    def query(self, key, new_nodes_to_query, rpc_call, closer_contacts, further_contacts) -> QueryReturn:
+    def query(self, key, new_nodes_to_query, rpc_call, closer_contacts,
+              further_contacts) -> QueryReturn:
         pass
 
 
@@ -846,7 +884,8 @@ class RPCError(Exception):
         pass
 
 
-class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
+class VirtualProtocol(IProtocol
+                      ):  # TODO: what is IProtocol in code listing 40?
     """
     For unit testing, doesn't really do much
     """
@@ -859,9 +898,12 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
         if self.responds:
             self.node.ping(sender)
         else:
-            return RPCError("Time out while pinging contact - VirtualProtocol does not respond.")
+            return RPCError(
+                "Time out while pinging contact - VirtualProtocol does not respond."
+            )
 
-    def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact], RPCError | None]:
+    def find_node(self, sender: Contact,
+                  key: ID) -> tuple[list[Contact], RPCError | None]:
         """
         Finds K close contacts to a given ID, while excluding the sender.
         It also adds the sender if it hasn't seen it before.
@@ -871,7 +913,8 @@ class VirtualProtocol(IProtocol):  # TODO: what is IProtocol in code listing 40?
         """
         return self.node.find_node(sender=sender, key=key)[0], None
 
-    def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact], str, RPCError | None]:
+    def find_value(self, sender: Contact,
+                   key: ID) -> tuple[list[Contact], str, RPCError | None]:
         """
         Returns either contacts or None if the value is found.
         """
@@ -948,11 +991,8 @@ class VirtualStorage(IStorage):
 
 class DHT:
 
-    def __init__(self,
-                 id: ID,
-                 protocol: IProtocol,
-                 storage_factory: Callable[[], IStorage],
-                 router: Router):
+    def __init__(self, id: ID, protocol: IProtocol,
+                 storage_factory: Callable[[], IStorage], router: Router):
         self._router = None
         self._originator_storage = storage_factory()
         self.our_id = id
@@ -995,21 +1035,24 @@ class DHT:
             found = True
             val = our_val
         else:
-            lookup: QueryReturn = self._router.lookup(key, self._router.rpc_find_value)
+            lookup: QueryReturn = self._router.lookup(
+                key, self._router.rpc_find_value)
             if lookup["found"]:
                 found = True
                 val = lookup["val"]
                 # Find the closest contact (other than the one the value was found by)
                 # in which to "cache" the key-value.
-                close_contacts: list[Contact] = [i for i in lookup["contacts"] if i != lookup["found_by"]]
+                close_contacts: list[Contact] = [
+                    i for i in lookup["contacts"] if i != lookup["found_by"]
+                ]
 
                 if close_contacts:  # if a close contact exists.
-                    store_to: Contact = sorted(close_contacts, key=lambda i: i.id ^ key)[0]
-                    separating_nodes: int = self.get_separating_nodes_count(self.our_contact, store_to)
-                    store_to.protocol.store(self._node.our_contact,
-                                            key,
-                                            lookup["val"],
-                                            True,
+                    store_to: Contact = sorted(close_contacts,
+                                               key=lambda i: i.id ^ key)[0]
+                    separating_nodes: int = self.get_separating_nodes_count(
+                        self.our_contact, store_to)
+                    store_to.protocol.store(self._node.our_contact, key,
+                                            lookup["val"], True,
                                             Constants.EXPIRATION_TIME_SEC)
 
         return found, contacts, val
@@ -1039,7 +1082,8 @@ class DHT:
         # it does.
 
         # finds K close contacts to self.our_id, excluding self.our_contact
-        contacts, error = known_peer.protocol.find_node(sender=self.our_contact, key=self.our_id)
+        contacts, error = known_peer.protocol.find_node(
+            sender=self.our_contact, key=self.our_id)
         # handle_error(error, known_peer)
         if not error:
             # print("NO ERROR")
@@ -1048,15 +1092,21 @@ class DHT:
             for contact in contacts:
                 self._node.bucket_list.add_contact(contact)
 
-            known_peers_bucket: KBucket = self._node.bucket_list.get_kbucket(known_peer.id)
+            known_peers_bucket: KBucket = self._node.bucket_list.get_kbucket(
+                known_peer.id)
 
             if ID.max() in [c.id for c in known_peers_bucket.contacts]:
                 print("somethings gone wrong")
             # Resolve the list now, so we don't include additional contacts
             # as we add to our bucket additional contacts.
-            other_buckets: list[KBucket] = [i for i in self._node.bucket_list.buckets if i != known_peers_bucket]
+            other_buckets: list[KBucket] = [
+                i for i in self._node.bucket_list.buckets
+                if i != known_peers_bucket
+            ]
             for other_bucket in other_buckets:
-                self._refresh_bucket(other_bucket)  # UNITTEST Notes: one of these should contain the correct contact
+                self._refresh_bucket(
+                    other_bucket
+                )  # UNITTEST Notes: one of these should contain the correct contact
         else:
             raise error
 
@@ -1085,9 +1135,11 @@ class DHT:
         contacts: list[Contact] = bucket.contacts
         for contact in contacts:
             # print(contact.id, contact.protocol.node.bucket_list.contacts())
-            if contact.id == ID.max():  # For unit testing, This should trigger!
+            if contact.id == ID.max(
+            ):  # For unit testing, This should trigger!
                 print("IMPORTANT")
-            new_contacts, timeout_error = contact.protocol.find_node(self.our_contact, random_id)
+            new_contacts, timeout_error = contact.protocol.find_node(
+                self.our_contact, random_id)
             # print(contacts.index(contact) + 1, "new contacts", new_contacts)
             # handle_error(timeout_error, contact)
             if new_contacts:
@@ -1110,8 +1162,3 @@ def random_node():
 
 def select_random(arr: list, freq: int) -> list:
     return random.sample(arr, freq)
-
-
-
-
-
