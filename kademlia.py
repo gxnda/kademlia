@@ -97,10 +97,10 @@ class Constants:
     its entire database
     tRepublish = 86400s, the time after which the original publisher must republish a key/value pair
     """
-    K = 20
-    B = 160
-    A = 10
-    EXPIRATION_TIME_SEC = 86400  # TODO: Give this a proper number.
+    K: int = 20
+    B: int = 160
+    A: int = 3
+    EXPIRATION_TIME_SEC: int = 86400  # TODO: Give this a proper number.
 
 class ID:
 
