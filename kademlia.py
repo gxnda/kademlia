@@ -459,7 +459,7 @@ class KBucket:
     def __init__(self,
                  initial_contacts: list[Contact] | None = None,
                  low: int = 0,
-                 high: int = 2**160):
+                 high: int = 2 ** 160):
         """
         Initialises a k-bucket with a specific ID range, 
         initially from 0 to 2**160.
