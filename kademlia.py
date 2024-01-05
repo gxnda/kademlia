@@ -871,6 +871,9 @@ class Router:
 
 
 class IProtocol:
+    # TODO: Create this!!
+    # It shouldn't be too hard, it's just making skeletons
+    # for type hinting all protocol methods.
     pass
 
 
@@ -885,7 +888,7 @@ class RPCError(Exception):
 
 
 class VirtualProtocol(IProtocol
-                      ):  # TODO: what is IProtocol in code listing 40?
+                      ):
     """
     For unit testing, doesn't really do much
     """
@@ -945,7 +948,7 @@ class VirtualStorage(IStorage):
     """
 
     def __init__(self):
-        self._store: dict = {}
+        self._store: dict[int, str] = {}
 
     def contains(self, key: ID) -> bool:
         """
@@ -953,15 +956,15 @@ class VirtualStorage(IStorage):
         """
         return key.value in list(self._store.keys())
 
-    def get(self, key):
+    def get(self, key: ID | int) -> str:
         """
         Returns stored value, associated with given key value.
         :param key: Type ID or Integer, key value to be searched.
         :return:
         """
-        if type(key) == ID:
+        if isinstance(type(key), ID):
             return self._store[key.value]
-        elif type(key) == int:
+        elif isinstance(type(key), int):
             return self._store[key]
         else:
             raise TypeError("'get()' parameter 'key' must be type ID or int.")
