@@ -947,31 +947,38 @@ class VirtualStorage(IStorage):
 
 
 class DHT:
+    """
+    This is the main entry point for our peer to interact with other peers.
 
+    This has multiple purposes:
+     - One is to propagate key-values to other close peers on the network using a lookup algorithm.
+     - Another is to use the same lookup algorithm to search for other close nodes that might have a value that we don’t have.
+     - It is also used for bootstrapping our peer into a pre-existing network.
+
+    """
     def __init__(self,
                  id: ID,
                  protocol: IProtocol,
                  storage_factory: Callable[[], IStorage],
                  router: Router):
-        self._router = None
         self._originator_storage = storage_factory()
         self.our_id = id
         self.our_contact = Contact(id=id, protocol=protocol)
-        self._node = Node(self.our_contact, storage=VirtualStorage())
-        self._node.DHT = self
-        self._node.bucket_list.DHT = self
+        self.node = Node(self.our_contact, storage=VirtualStorage())
+        self.node.DHT = self
+        self.node.bucket_list.DHT = self
         self._protocol = protocol
-        self._router = router
-        self._router.node = self._node
+        self._router: Router = router
+        self._router.node = self.node
         self._router.DHT = self
 
-    def router(self):
+    def router(self) -> Router:
         return self._router
 
-    def protocol(self):
+    def protocol(self) -> IProtocol:
         return self._protocol
 
-    def originator_storage(self):
+    def originator_storage(self) -> IStorage:
         return self._originator_storage
 
     def store(self, key: ID, val: str) -> None:
@@ -1006,7 +1013,7 @@ class DHT:
                 if close_contacts:  # if a close contact exists.
                     store_to: Contact = sorted(close_contacts, key=lambda i: i.id ^ key)[0]
                     separating_nodes: int = self.get_separating_nodes_count(self.our_contact, store_to)
-                    store_to.protocol.store(self._node.our_contact,
+                    store_to.protocol.store(self.node.our_contact,
                                             key,
                                             lookup["val"],
                                             True,
@@ -1031,7 +1038,7 @@ class DHT:
         :return: RPC Error, not sure when it should be raised?
         """
         # print(f"Adding known peer with ID {known_peer.id}")
-        self._node.bucket_list.add_contact(known_peer)
+        self.node.bucket_list.add_contact(known_peer)
 
         # UNITTEST NOTES: This should return something in test_bootstrap_outside_bootstrapping_bucket,
         # it isn't at the moment.
@@ -1046,15 +1053,15 @@ class DHT:
 
             # add all contacts the known peer DIRECTLY knows
             for contact in contacts:
-                self._node.bucket_list.add_contact(contact)
+                self.node.bucket_list.add_contact(contact)
 
-            known_peers_bucket: KBucket = self._node.bucket_list.get_kbucket(known_peer.id)
+            known_peers_bucket: KBucket = self.node.bucket_list.get_kbucket(known_peer.id)
 
             if ID.max() in [c.id for c in known_peers_bucket.contacts]:
                 print("somethings gone wrong")
             # Resolve the list now, so we don't include additional contacts
             # as we add to our bucket additional contacts.
-            other_buckets: list[KBucket] = [i for i in self._node.bucket_list.buckets if i != known_peers_bucket]
+            other_buckets: list[KBucket] = [i for i in self.node.bucket_list.buckets if i != known_peers_bucket]
             for other_bucket in other_buckets:
                 self._refresh_bucket(other_bucket)  # UNITTEST Notes: one of these should contain the correct contact
         else:
@@ -1093,7 +1100,7 @@ class DHT:
             if new_contacts:
                 print("NEW CONTACTS")
                 for other_contact in new_contacts:
-                    self._node.bucket_list.add_contact(other_contact)
+                    self.node.bucket_list.add_contact(other_contact)
 
 
 def empty_node():
