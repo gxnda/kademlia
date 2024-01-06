@@ -1021,7 +1021,7 @@ class DHT:
 
         return found, contacts, val
 
-    def touch_bucket_with_key(self, key: ID):
+    def touch_bucket_with_key(self, key: ID) -> None:
         pass
 
     def store_on_closer_contacts(self, key: ID, val: str):
@@ -1067,7 +1067,7 @@ class DHT:
         else:
             raise error
 
-    def _refresh_bucket(self, bucket: KBucket):
+    def _refresh_bucket(self, bucket: KBucket) -> None:
         """
         Refreshes the given Kademlia KBucket by updating its last-touch timestamp,
         obtaining a random ID within the bucket's range, and attempting to find
