@@ -1,7 +1,67 @@
 import unittest
 
 from kademlia import BucketList, VirtualProtocol, \
-    Constants, Contact, ID, KBucket, TooManyContactsError, Node, Router, VirtualStorage, DHT
+    Constants, Contact, ID, KBucket, TooManyContactsError, Node, \
+    Router, VirtualStorage, DHT
+
+
+def setup_split_failure(bucket_list = None):
+    # force host node ID to < 2 ** 159 so the node ID is not in the
+    # 2 ** 159 ... 2 ** 160 range.
+
+    # May be incorrect - book does some weird byte manipulation.
+    host_ID: ID = ID.random_id(2 ** 158, 2 ** 159 - 1)
+
+    dummy_contact: Contact = Contact(host_ID, VirtualProtocol())
+    dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
+
+    if not bucket_list:
+        bucket_list = BucketList(our_id=host_ID, dummy_contact)
+
+    # Also add a contact in this 0 - 2 ** 159 range
+    # This ensures that only 1 bucket split will occur after 20 nodes with ID >= 2 ** 159 are added.
+    dummy_contact = Contact(ID(1), VirtualProtocol())
+    dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
+    bucket_list.add_contact(Contact(ID(1), dummy_contact.protocol))
+
+    assert len(bucket_list.buckets) == 1  # Bucket split should not have occurred.
+    assert len(bucket_list.buckets[0].contacts) == 1  # Expected 1 contact in bucket 0.
+
+    # Make sure contact IDs all have the same 5-bit prefix and are 
+    # in the 2 ** 159 ... 2 ** 160 - 1 space.
+
+    b_contact_id: bytearray = bytearray()
+    b_contact_id[19] = 0x80
+
+    # 1000 xxxx prefix, xxxx starts at 1000 (8)
+    # this ensures that all the contacts in a bucket match only the  
+    # prefix as only the first 5 bits are shared.
+    # |----| shared range
+    # 1000 1000 ...
+    # 1000 1100 ...
+    # 1000 1110 ...
+    shifter = 0x08
+    pos: int = 19
+
+    for _ in range(Constants.K):
+        b_contact_id[pos] |= shifter  # |= is Bitwise OR.
+        contact_id: ID = ID(
+            int.from_bytes(b_contact_id, byteorder="big")
+        )
+        dummy_contact = Contact(ID(1), VirtualProtocol())
+        dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
+        bucket_list.add_contact(
+            Contact(contact_id, dummy_contact.protocol)
+        )
+        shifter >>= 1  # Right shift (Halves the shift value.)
+        if shifter == 0:
+            shifter = 0x80
+            pos -= 1
+
+    return bucket_list
+
+
+    
 
 
 class KBucketTest(unittest.TestCase):
@@ -785,5 +845,104 @@ class BootstrappingTests(unittest.TestCase):
                         f"Expected our peer to have 31 contacts, {sum_of_contacts} were given.")
 
 
+class BucketManagementTests(unittest.TestCase):
+    def test_non_responding_contact_evicted(self):
+        """
+        Tests that a nonresponding contact is evicted after 
+        Constants.EVICTION_LIMIT tries.
+        """
+        dht = DHT(ID(0), VirtualProtocol(), None, Router())
+        bucket_list: BucketList = setup_split_failure(dht.node.bucket_list)
+        self.assertTrue(len(bucket_list.buckets) == 2, 
+                       "Bucket split should have occurred.")
+        self.assertTrue(len(bucket_list.buckets[0].contacts) == 1, 
+                       "Expected 1 contact in bucket 0.")
+        self.assertTrue(len(bucket_list.buckets[1].contacts) == 20, 
+                        "Expected 20 contacts in bucket 1.")
+
+        # The bucket is now full. Pick the first contact, as it is last 
+        # seen (they are added in chronological order.)
+
+        non_responding_contact: Contact = bucket_list.buckets[1].contacts[0]
+        # Since the protocols are shared, we need to assign 
+        # a unique protocol for this node for testing.
+        vp_unresponding: VirtualProtocol = VirtualProtocol(
+            non_responding_contact.protocol.node,
+            False
+        )
+
+        next_new_contact = Contact(
+            ID(2 ** 159),
+            dht.our_contact.protocol
+        )
+
+        # Hit the nonresponding contact EVICTION_LIMIT times
+        # Which will trigger the eviction algorithm.
+
+        for _ in range(Constants.EVICTION_LIMIT):
+            bucket_list.add_contact(non_responding_contact)
+        
+        self.assertTrue(len(bucket_list.buckets[1].contacts) == 20, 
+                        "Expected 20 contacts in bucket 1.")
+
+        # Verify can_split -> pending eviction happened
+        self.assertTrue(len(dht.pending_contacts) == 0, 
+                        "Pending contact list should now be empty.")
+        self.assertFalse(non_responding_contact in bucket_list.contacts(), 
+                         "Expected bucket to NOT contain non-responding contact.")
+
+        self.assertTrue(next_new_contact in bucket_list.contacts(), 
+                       "Expected bucket to contain new contact.")
+
+        self.assertTrue(len(dht.eviction_count) == 0, 
+                        "Expected no contacts to be pending eviction.")
+
+    def test_non_responding_contact_delayed_eviction(self):
+        """
+        Tests that a nonresponding contact puts the new contact into a pending list.
+        """
+        dht = DHT(ID(0), VirtualProtocol(), None, Router())
+        bucket_list: BucketList = setup_split_failure(dht.node.bucket_list)
+
+        self.assertTrue(len(bucket_list.buckets) == 2,
+                        "Bucket split should have occurred.")
+
+        self.assertTrue(len(bucket_list.buckets[0].contacts) == 1,
+                        "Expected 1 contact in bucket 0.")
+
+        self.assertTrue(len(bucket_list.buckets[1].contacts) == 20,
+                        "Expected 20 contacts in bucket 1.")
+
+        # The bucket is now full. pick the first contact,
+        # as it is last seen (they are added chronologically.)
+        non_responding_contact: Contact = bucket_list.buckets[1].contacts[0]
+
+        # Since the protocols are shared, we assign a unique protocol for this node for testing.
+        vp_unresponding = VirtualProtocol(
+            node=non_responding_contact.protocol.node,
+            responds=False
+        )
+        non_responding_contact.protocol = vp_unresponding
+
+        # set up the next new contact (it can respond.)
+        next_new_contact = Contact(
+            id=ID(2 ** 159),
+            protocol=dht.our_contact.protocol
+        )
+        bucket_list.add_contact(next_new_contact)
+
+        self.assertTrue(len(bucket_list.buckets[1].contacts) == 20,
+                       "Expecting 20 contacts in bucket 1."
+                       )
+        # Verify can_split -> Evict happened.
+        self.assertTrue(len(dht.pending_contacts) == 1,
+                        "Expected one pending contact.")
+        self.assertTrue(next_new_contact in dht.pending_contacts, 
+                       "Expected pending contact to be the 21st contact.")
+        self.assertTrue(len(dht.eviction_count) == 1, 
+                        "Expected one contact to be pending eviction.")
+
+        
+        
 if __name__ == '__main__':
     unittest.main()

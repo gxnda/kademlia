@@ -97,6 +97,7 @@ class Constants:
     its entire database
     tRepublish = 86400s, the time after which the original publisher must republish a key/value pair
     """
+    EVICTION_LIMIT: int  # TODO: create.
     K: int = 20
     B: int = 160
     A: int = 3
