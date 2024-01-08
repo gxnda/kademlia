@@ -1068,7 +1068,11 @@ class DHT:
         return found, contacts, val
 
     def touch_bucket_with_key(self, key: ID) -> None:
-        pass
+        """
+        Touches a KBucket with a given key from the bucket list.
+        :return: Returns nothing.
+        """
+        self.node.bucket_list.get_kbucket(key).touch()
 
     def store_on_closer_contacts(self, key: ID, val: str):
         pass
