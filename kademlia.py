@@ -752,12 +752,13 @@ class Router:
             # If we have uncontacted nodes, we still have work to be done.
             have_closer: bool = len(closer_uncontacted_nodes) > 0
             have_further: bool = len(further_uncontacted_nodes) > 0
-            have_work = have_closer or have_further
+            have_work: bool = have_closer or have_further
 
             """
-            Spec: of the k nodes the initiator has heard of closest to the target,
-            it picks the 'a' that it has not yet queried and resends the FIND_NODE RPC
-            to them.
+            Spec: of the k nodes the initiator has heard of closest 
+            to the target,
+            it picks the 'a' that it has not yet queried and resends 
+            the FIND_NODE RPC to them.
             """
             if have_closer:
                 new_nodes_to_query = closer_uncontacted_nodes[:Constants.A]
@@ -1004,9 +1005,25 @@ class DHT:
     def __init__(self,
                  id: ID,
                  protocol: IProtocol,
-                 storage_factory: Callable[[], IStorage],
+                 storage_factory: Callable[[], IStorage] | None,
+                 originator_storage: IStorage | None,
+                 republish_storage: IStorage | None,
+                 cache_storage: IStorage | None,
                  router: Router):
-        self._originator_storage = storage_factory()
+        
+        if isinstance(storage_factory, Callable[[], IStorage]):
+            self._originator_storage: IStorage = storage_factory()
+            self._republish_storage: IStorage = storage_factory()
+            self._cache_storage: IStorage = storage_factory()
+        elif originator_storage and republish_storage and cache_storage:
+            self._originator_storage: IStorage = originator_storage
+            self._republish_storage: IStorage = republish_storage
+            self._cache_storage: IStorage = cache_storage
+        else:
+            raise ValueError("storage_factory or (originator_storage, " \
+                            "republish_storage, cache_storage) must be provided.")
+        
+        
         self.our_id = id
         self.our_contact = Contact(id=id, protocol=protocol)
         self.node = Node(self.our_contact, storage=VirtualStorage())
@@ -1016,6 +1033,10 @@ class DHT:
         self._router: Router = router
         self._router.node = self.node
         self._router.DHT = self
+
+        # TODO: Does this go here?
+        self._republish_storage: IStorage
+        self._cache_storage: IStorage
 
     def router(self) -> Router:
         return self._router
@@ -1032,7 +1053,7 @@ class DHT:
         self._originator_storage.set(key, val)
         self.store_on_closer_contacts(key, val)
 
-    def find_value(self, key: id) -> tuple[bool, list[Contact], str]:
+    def find_value(self, key: id) -> tuple[bool, list[Contact], str | None]:
         self.touch_bucket_with_key(key)
         contacts_queried: list[Contact] = []
 
@@ -1173,7 +1194,23 @@ class DHT:
         for b in current_buckets:
             self._refresh_bucket(b)
         
+    def _key_value_republish_elapsed(self, sender: object, e) -> None:
+        """
+        Replicate key values if the key value hasn't been touched within 
+        the republish interval. Also don't do a FindNode lookup if the
+        bucket containing the key has been refresed within the refresh 
+        interval.
+        """
+        now: datetime = datetime.now()
+        
+        rep_keys = [k for k in self._republish_storage.get_keys() if 
+                    now - self._republish_storage.get_timestamp(k) >= 
+                    Constants.KEY_VALUE_REPUBLISH_INTERVAL]
 
+        for k in rep_keys:
+            key: ID = ID(k)
+            # TODO: fix
+            self.store_on_closer_contacts(key, self._republish_storage.get(key))
 
 def empty_node():
     """
