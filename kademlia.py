@@ -3,6 +3,7 @@ from abc import abstractmethod
 from datetime import datetime
 from statistics import median_high
 from typing import Callable, TypedDict
+from dataclasses import dataclass
 
 # from threading import Lock
 
@@ -74,6 +75,7 @@ class SenderIsSelfError(Exception):
 #         self.lock.release()
 
 
+@dataclass
 class Constants:
     """
     https://xlattice.sourceforge.net/components/protocol/kademlia/specs.html
