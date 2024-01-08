@@ -1072,16 +1072,26 @@ class DHT:
         self.store_on_closer_contacts(key, val)
 
     def find_value(self, key: id) -> tuple[bool, list[Contact], str | None]:
+        """
+        Attempts to find a given value.
+        First it checks our originator storage. If the given key does not have a value in our storage,
+        it will use Router.lookup() to attempt to find it. If there is no value found from router.lookup(), the value
+        returned will be None.
+        If there is a value found from router.lookup(), the value will be stored on the closest contact to us, if
+        one exists.
+        :param key: Key to search for value pair.
+        :return: Found: bool (If it is found or not), contacts: list[Contact], val: str | None (value returned
+        """
         self.touch_bucket_with_key(key)
         contacts_queried: list[Contact] = []
 
         # ret (found: False, contacts: None, val: None)
         found: bool = False
-        contacts: list[Contact] | None = None
+        contacts: list[Contact] | None = None  # TODO: This is never called again?? - Add to docstring when finished
         val: str | None = None
 
         # TODO: Talk about what this does - I haven't made it yet so IDK.
-        our_val: str = self._originator_storage.try_get_value(key)[1]
+        our_val: str | None = self._originator_storage.try_get_value(key)[1]
         if our_val:
             found = True
             val = our_val
