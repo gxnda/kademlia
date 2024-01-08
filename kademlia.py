@@ -101,6 +101,7 @@ class Constants:
     B: int = 160
     A: int = 3
     EXPIRATION_TIME_SEC: int = 86400  # TODO: Give this a proper number.
+    BUCKET_REFRESH_INTERVAL: int = 3600  # seconds in an hour.
 
 
 class ID:
