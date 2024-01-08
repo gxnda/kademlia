@@ -12,6 +12,7 @@ DEBUG: bool = True
 if DEBUG:
     random.seed(1)  # For consistent testing
 
+
 # Errors
 
 
@@ -115,7 +116,7 @@ class ID:
             value: (int) ID denary value
         """
 
-        self.MAX_ID = 2**160
+        self.MAX_ID = 2 ** 160
         self.MIN_ID = 0
         if not (self.MAX_ID > value >= self.MIN_ID):
             # TODO: check if value >= self.MIN_ID is valid.
@@ -403,7 +404,7 @@ class KBucket:
     def __init__(self,
                  initial_contacts: list[Contact] = None,
                  low: int = 0,
-                 high: int = 2**160):
+                 high: int = 2 ** 160):
         """
         Initialises a k-bucket with a specific ID range, 
         initially from 0 to 2**160.
@@ -577,7 +578,7 @@ class BucketList:
         Returns the first k-bucket in the bucket list
         which has a given ID in range. Raises an error if none are found
          - this should never happen!
-        :param other_id:  ID to used to determine range.
+        :param other_id: ID to used to determine range.
         :return: the first k-bucket which is in range.
         """
 
@@ -670,6 +671,10 @@ class BucketList:
         return contacts
 
     def contacts(self) -> list[Contact]:
+        """
+        Returns a list of all contacts in the bucket list.
+        :return: All contacts in the bucket list.
+        """
         contacts = []
         for bucket in self.buckets:
             for contact in bucket.contacts:
@@ -687,7 +692,7 @@ class Router:
         TODO: what is self.node?
         :param node:
         """
-        self.node = node
+        self.node: Node = node
         self.closer_contacts: list[Contact] = []
         self.further_contacts: list[Contact] = []
         # self.lock = WithLock(Lock())
@@ -812,9 +817,12 @@ class Router:
         return sorted(non_empty_buckets,
                       key=(lambda b: b.id.value ^ key.value))[0]
 
+    # TODO: Remove.
+    """
     @staticmethod
     def get_closest_nodes(key: ID, bucket: KBucket) -> list[Contact]:
         return sorted(bucket.contacts, key=lambda c: c.id.value ^ key.value)
+    """
 
     def rpc_find_nodes(self, key: ID, contact: Contact):
         # what is node??
@@ -829,7 +837,7 @@ class Router:
         # TODO: Create.
         pass
 
-    def get_closer_nodes(self, key: ID, node_to_query: Contact, rpc_call,
+    def get_closer_nodes(self, key: ID, node_to_query: Contact, rpc_call: Callable,
                          closer_contacts: list[Contact],
                          further_contacts: list[Contact]) -> bool:
 
@@ -840,8 +848,8 @@ class Router:
         peers_nodes = []
         for contact in contacts:
             if contact.id.value not in [
-                    self.node.our_contact.id.value, node_to_query.id.value,
-                    closer_contacts, further_contacts
+                self.node.our_contact.id.value, node_to_query.id.value,
+                closer_contacts, further_contacts
             ]:
                 peers_nodes.append(contact)
 
@@ -887,8 +895,7 @@ class RPCError(Exception):
         pass
 
 
-class VirtualProtocol(IProtocol
-                      ):
+class VirtualProtocol(IProtocol):
     """
     For unit testing, doesn't really do much
     """
@@ -1002,6 +1009,7 @@ class DHT:
      - It is also used for bootstrapping our peer into a pre-existing network.
 
     """
+
     def __init__(self,
                  id: ID,
                  protocol: IProtocol,
@@ -1010,20 +1018,34 @@ class DHT:
                  republish_storage: IStorage | None,
                  cache_storage: IStorage | None,
                  router: Router):
-        
-        if isinstance(storage_factory, Callable[[], IStorage]):
-            self._originator_storage: IStorage = storage_factory()
-            self._republish_storage: IStorage = storage_factory()
-            self._cache_storage: IStorage = storage_factory()
-        elif originator_storage and republish_storage and cache_storage:
-            self._originator_storage: IStorage = originator_storage
-            self._republish_storage: IStorage = republish_storage
-            self._cache_storage: IStorage = cache_storage
+
+        """
+        Supports different concrete storage types.
+        For example, you may want the cache_storage to be an in-memory store,
+        the originator_storage to be a SQL database, and the republish store to be a key-value database.
+        :param id: ID associated with the DHT. TODO: More info.
+        :param protocol: Protocol used by the DHT. TODO: More info - I'm not even sure if this is correct.
+        :param storage_factory: Storage to be used for all storage mechanisms - if specific mechanisms are not provided.
+        :param originator_storage: Pre-existing storage object to be used for main storage. TODO: Is this right?
+        :param republish_storage: Storage used when republishing data to peers TODO: Is this right?
+        :param cache_storage: Short term storage.
+        :param router: Router object associated with the DHT. TODO: Is this right?
+        """
+        if originator_storage:
+            self._originator_storage = originator_storage
         else:
-            raise ValueError("storage_factory or (originator_storage, " \
-                            "republish_storage, cache_storage) must be provided.")
-        
-        
+            self._originator_storage = storage_factory()
+
+        if republish_storage:
+            self._republish_storage = republish_storage
+        else:
+            self._republish_storage = storage_factory()
+
+        if cache_storage:
+            self._cache_storage = cache_storage
+        else:
+            self._cache_storage = storage_factory()
+
         self.our_id = id
         self.our_contact = Contact(id=id, protocol=protocol)
         self.node = Node(self.our_contact, storage=VirtualStorage())
@@ -1033,10 +1055,6 @@ class DHT:
         self._router: Router = router
         self._router.node = self.node
         self._router.DHT = self
-
-        # TODO: Does this go here?
-        self._republish_storage: IStorage
-        self._cache_storage: IStorage
 
     def router(self) -> Router:
         return self._router
@@ -1182,18 +1200,18 @@ class DHT:
         """
         bucket_refresh_timer = Timer(Constants.BUCKET_REFRESH_INTERVAL)
         bucket_refresh_timer.auto_reset = True
-        bucket_refresh_timer.elapsed += bucket_refresh_timer_elapsed
+        bucket_refresh_timer.elapsed += self.bucket_refresh_timer_elapsed
         bucket_refresh_timer.start()
 
     def _bucket_refresh_timer_elapsed(self, sender: object, e):
         now: datetime = datetime.now()
         # Put into a separate list as bucket collections may be modified.
-        current_buckets: list[KBucket] = [b for b in self.node.bucket_list.buckets 
+        current_buckets: list[KBucket] = [b for b in self.node.bucket_list.buckets
                                           if (now - b.time_stamp).seconds >= Constants.BUCKET_REFRESH_INTERVAL]
 
         for b in current_buckets:
             self._refresh_bucket(b)
-        
+
     def _key_value_republish_elapsed(self, sender: object, e) -> None:
         """
         Replicate key values if the key value hasn't been touched within 
@@ -1202,15 +1220,16 @@ class DHT:
         interval.
         """
         now: datetime = datetime.now()
-        
-        rep_keys = [k for k in self._republish_storage.get_keys() if 
-                    now - self._republish_storage.get_timestamp(k) >= 
+
+        rep_keys = [k for k in self._republish_storage.get_keys() if
+                    now - self._republish_storage.get_timestamp(k) >=
                     Constants.KEY_VALUE_REPUBLISH_INTERVAL]
 
         for k in rep_keys:
             key: ID = ID(k)
             # TODO: fix
             self.store_on_closer_contacts(key, self._republish_storage.get(key))
+
 
 def empty_node():
     """
