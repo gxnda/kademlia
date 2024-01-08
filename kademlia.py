@@ -1142,16 +1142,35 @@ class DHT:
         contacts: list[Contact] = bucket.contacts
         for contact in contacts:
             # print(contact.id, contact.protocol.node.bucket_list.contacts())
-            if contact.id == ID.max():  # For unit testing, This should trigger!
-                print("IMPORTANT")
             new_contacts, timeout_error = contact.protocol.find_node(
                 self.our_contact, random_id)
             # print(contacts.index(contact) + 1, "new contacts", new_contacts)
             # handle_error(timeout_error, contact)
             if new_contacts:
-                print("NEW CONTACTS")
                 for other_contact in new_contacts:
                     self.node.bucket_list.add_contact(other_contact)
+
+    def _setup_bucket_refresh_timer(self) -> None:
+        """
+        Sets up the refresh timer to re-ping KBuckets.
+
+        From the spec:
+        “Buckets are generally kept fresh by the traffic of requests traveling through nodes. To handle pathological cases in which there are no lookups for a particular ID range, each node refreshes any bucket to which it has not performed a node lookup in the past hour. Refreshing means picking a random ID in the bucket’s range and performing a node search for that ID.”
+        """
+        bucket_refresh_timer = Timer(Constants.BUCKET_REFRESH_INTERVAL)
+        bucket_refresh_timer.auto_reset = True
+        bucket_refresh_timer.elapsed += bucket_refresh_timer_elapsed
+        bucket_refresh_timer.start()
+
+    def _bucket_refresh_timer_elapsed(self, sender: object, e):
+        now: datetime = datetime.now()
+        # Put into a separate list as bucket collections may be modified.
+        current_buckets: list[KBucket] = [b for b in self.node.bucket_list.buckets 
+                                          if (now - b.time_stamp).seconds >= Constants.BUCKET_REFRESH_INTERVAL]
+
+        for b in current_buckets:
+            self._refresh_bucket(b)
+        
 
 
 def empty_node():
