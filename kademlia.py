@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from statistics import median_high
 from typing import Callable, TypedDict
 from dataclasses import dataclass
+from typing_extensions import override
 
 # from threading import Lock
 
@@ -11,7 +12,6 @@ DEBUG: bool = True
 
 if DEBUG:
     random.seed(1)  # For consistent testing
-
 
 # Errors
 
@@ -116,7 +116,7 @@ class ID:
             value: (int) ID denary value
         """
 
-        self.MAX_ID = 2 ** 160
+        self.MAX_ID = 2**160
         self.MIN_ID = 0
         if not (self.MAX_ID > value >= self.MIN_ID):
             # TODO: check if value >= self.MIN_ID is valid.
@@ -196,7 +196,7 @@ class ID:
         Returns max ID.
         :return: max ID.
         """
-        return ID(2 ** 160 - 1)
+        return ID(2**160 - 1)
 
     @classmethod
     def mid(cls):
@@ -204,7 +204,7 @@ class ID:
         returns middle of the road ID
         :return: middle ID.
         """
-        return ID(2 ** 159)
+        return ID(2**159)
 
     @classmethod
     def min(cls):
@@ -224,10 +224,11 @@ class ID:
         :param bucket: bucket to be searched
         :return: random ID in bucket.
         """
-        return ID(bucket.low() + random.randint(0, bucket.high() - bucket.low()))
+        return ID(bucket.low() + random.randint(0,
+                                                bucket.high() - bucket.low()))
 
     @classmethod
-    def random_id(cls, low=0, high=2 ** 160, seed=None):
+    def random_id(cls, low=0, high=2**160, seed=None):
         """
         Generates a random ID, including both endpoints.
 
@@ -385,10 +386,54 @@ class Node:
         else:
             return self.bucket_list.get_close_contacts(key, sender.id), None
 
-    def send_key_values_if_new_contact(self, sender: Contact):
-        # TODO: Complete this.
-        pass
+    def send_key_values_if_new_contact(self, sender: Contact) -> None:
+        """
+        Spec: "When a new node joins the system, it must store any 
+        key-value pair to which it is one of the k closest. Existing 
+        nodes, by similarly exploiting complete knowledge of their 
+        surrounding subtrees, will know which key-value pairs the new 
+        node should store. Any node learning of a new node therefore 
+        issues STORE RPCs to transfer relevant key-value pairs to the 
+        new node. To avoid redundant STORE RPCs, however, a node only 
+        transfers a key-value pair if it’s own ID is closer to the key 
+        than are the IDs of other nodes."
 
+        For a new contact, we store values to that contact whose keys 
+        XOR our_contact are less than the stored keys XOR other_contacts.
+        """
+        if self._is_new_contact(sender):
+            # with self.bucket_list.lock:
+            # Clone so we can release the lock.
+            contacts: list[Contact] = self.bucket_list.contacts()
+            if len(contacts) > 0:
+                # and our distance to the key < any other contact's distance
+                # to the key
+                for k in self._storage.get_keys():
+                    # our minimum distance to the contact.
+                    distance = min([c.id ^ k for c in contacts])
+                    # If our contact is closer, store the contact on its
+                    # node.
+                    if k ^ self.our_contact.id < distance:
+                        error: RPCError | None = sender.protocol.store(
+                            sender=self.our_contact,
+                            key=ID(k),
+                            val=self._storage.get(k)
+                        )
+                        # if self.DHT: self.DHT.handle_error(error, sender)
+
+    def _is_new_contact(self, sender: Contact) -> bool:
+        ret: bool
+        # with self.bucket_list.lock:
+        ret: bool = self.bucket_list.contact_exists(sender)
+        # end lock
+        if self.DHT:  # May be None in unit testing
+            # with self.DHT.pending_contacts.lock:
+            ret |= (sender.id in [c.id for c in self.DHT.pending_contacts])
+            # end lock
+
+        return not ret
+        
+        
     def simply_store(self, key, val) -> None:
         """
         For unit testing.
@@ -404,7 +449,7 @@ class KBucket:
     def __init__(self,
                  initial_contacts: list[Contact] = None,
                  low: int = 0,
-                 high: int = 2 ** 160):
+                 high: int = 2**160):
         """
         Initialises a k-bucket with a specific ID range, 
         initially from 0 to 2**160.
@@ -624,12 +669,16 @@ class BucketList:
                 self.buckets[index] = k1  # Replaces original KBucket
                 self.buckets.insert(index + 1, k2)  # Adds a new one after it
                 # print(self.buckets)
-                self.add_contact(contact)  # Unless k <= 0, This should never cause a recursive loop
+                self.add_contact(
+                    contact
+                )  # Unless k <= 0, This should never cause a recursive loop
 
             else:
                 # TODO: Ping the oldest contact to see if it's still around and replace it if not.
-                last_seen_contact: Contact = sorted(kbucket.contacts, key=lambda c: c.last_seen)[0]
-                error: RPCError | None = last_seen_contact.protocol.ping(our_contact)
+                last_seen_contact: Contact = sorted(
+                    kbucket.contacts, key=lambda c: c.last_seen)[0]
+                error: RPCError | None = last_seen_contact.protocol.ping(
+                    our_contact)
                 if error:
                     if self.DHT:  # tests may not initialise a DHT
                         self.DHT.delay_eviction(last_seen_contact, contact)
@@ -680,6 +729,9 @@ class BucketList:
             for contact in bucket.contacts:
                 contacts.append(contact)
         return contacts
+
+    def contact_exists(self, contact: Contact) -> bool:
+        return contact in self.contacts()
 
 
 class Router:
@@ -743,7 +795,8 @@ class Router:
 
         # add any new closer contacts
         for i in self.closer_contacts:
-            if i.id not in [j.id for j in ret]:  # if id does not already exist inside list
+            if i.id not in [j.id for j in ret
+                            ]:  # if id does not already exist inside list
                 ret.append(i)
 
         while len(ret) < Constants.K and have_work:
@@ -758,7 +811,6 @@ class Router:
             have_closer: bool = len(closer_uncontacted_nodes) > 0
             have_further: bool = len(further_uncontacted_nodes) > 0
             have_work: bool = have_closer or have_further
-
             """
             Spec: of the k nodes the initiator has heard of closest 
             to the target,
@@ -837,8 +889,8 @@ class Router:
         # TODO: Create.
         pass
 
-    def get_closer_nodes(self, key: ID, node_to_query: Contact, rpc_call: Callable,
-                         closer_contacts: list[Contact],
+    def get_closer_nodes(self, key: ID, node_to_query: Contact,
+                         rpc_call: Callable, closer_contacts: list[Contact],
                          further_contacts: list[Contact]) -> bool:
 
         contacts: list[Contact]
@@ -848,8 +900,8 @@ class Router:
         peers_nodes = []
         for contact in contacts:
             if contact.id.value not in [
-                self.node.our_contact.id.value, node_to_query.id.value,
-                closer_contacts, further_contacts
+                    self.node.our_contact.id.value, node_to_query.id.value,
+                    closer_contacts, further_contacts
             ]:
                 peers_nodes.append(contact)
 
@@ -1018,7 +1070,6 @@ class DHT:
                  originator_storage: IStorage | None = None,
                  republish_storage: IStorage | None = None,
                  cache_storage: IStorage | None = None):
-
         """
 
         We use a wrapper Dht class, which will become the main entry point for our peer,
@@ -1054,30 +1105,33 @@ class DHT:
         
         :param router: Router object associated with the DHT. TODO: Is this right?
         """
-        
+
         if originator_storage:
             self._originator_storage = originator_storage
         elif storage_factory:
             self._originator_storage = storage_factory()
         else:
-            raise TypeError("Originator storage must take parameter originator_storage,"
-            " or be generated by generated by parameter storage_factory.")
+            raise TypeError(
+                "Originator storage must take parameter originator_storage,"
+                " or be generated by generated by parameter storage_factory.")
 
         if republish_storage:
             self._republish_storage = republish_storage
         elif storage_factory:
             self._republish_storage = storage_factory()
         else:
-            raise TypeError("Republish storage must take parameter republish_storage,"
-            " or be generated by generated by parameter storage_factory.")
+            raise TypeError(
+                "Republish storage must take parameter republish_storage,"
+                " or be generated by generated by parameter storage_factory.")
 
         if cache_storage:
             self._cache_storage = cache_storage
         elif storage_factory:
             self._cache_storage = storage_factory()
         else:
-            raise TypeError("Cache storage must take parameter cache_storage,"
-            " or be generated by generated by parameter storage_factory.")
+            raise TypeError(
+                "Cache storage must take parameter cache_storage,"
+                " or be generated by generated by parameter storage_factory.")
         self.our_id = id
         self.our_contact = Contact(id=id, protocol=protocol)
         self.node = Node(self.our_contact, storage=VirtualStorage())
@@ -1103,7 +1157,7 @@ class DHT:
         self._originator_storage.set(key, val)
         self.store_on_closer_contacts(key, val)
 
-    def find_value(self, key: ID) -> tuple[bool, list[Contact], str | None]:
+    def find_value(self, key: ID) -> tuple[bool, list[Contact] | None, str | None]:
         """
         Attempts to find a given value.
         First it checks our originator storage. If the given key does not have a value in our storage,
@@ -1119,7 +1173,9 @@ class DHT:
 
         # ret (found: False, contacts: None, val: None)
         found: bool = False
-        contacts: list[Contact] | None = None  # TODO: This is never called again?? - Add to docstring when finished
+        contacts: list[Contact] | None = None  
+        # TODO: This is never called again?? 
+        # - Add to docstring when finished
         val: str | None = None
 
         # TODO: Talk about what this does - I haven't made it yet so IDK.
@@ -1132,21 +1188,24 @@ class DHT:
                 key, self._router.rpc_find_value)
             if lookup["found"]:
                 found = True
+                contacts = None
                 val = lookup["val"]
                 # Find the closest contact (other than the one the value was found by)
                 # in which to "cache" the key-value.
-                close_contacts: list[Contact] = [
-                    i for i in lookup["contacts"] if i != lookup["found_by"]
-                ]
+                store_to: Contact | None = [
+                    c for c in lookup["contacts"] 
+                    if c != lookup["found_by"]
+                ][0]
 
-                if close_contacts:  # if a close contact exists.
-                    store_to: Contact = sorted(close_contacts, key=lambda i: i.id ^ key)[0]
-                    separating_nodes: int = self.get_separating_nodes_count(self.our_contact, store_to)
-                    store_to.protocol.store(self.node.our_contact,
-                                            key,
-                                            lookup["val"],
-                                            True,
-                                            Constants.EXPIRATION_TIME_SEC)
+                if store_to:
+                    separating_nodes: int = self._get_separating_nodes_count(self.our_contact, store_to)
+                    exp_time_sec: int = int(
+                        Constants.EXPIRATION_TIME_SEC / (2 ** separating_nodes)
+                    )
+                    error: RPCError = store_to.protocol.store(self.node.our_contact, key, lookup["val"])
+                    self.handle_error(error, store_to)
+        
+                
 
         return found, contacts, val
 
@@ -1161,20 +1220,19 @@ class DHT:
         now: datetime = datetime.now()
         kbucket: KBucket = self.node.bucket_list.get_kbucket(key)
         contacts: list[Contact]
-        if (now - kbucket.time_stamp) < timedelta(seconds=Constants.BUCKET_REFRESH_INTERVAL):
+        if (now - kbucket.time_stamp) < timedelta(
+                seconds=Constants.BUCKET_REFRESH_INTERVAL):
             # Bucket has been refreshed recently, so don't do a lookup as we
             # have the k closest contacts.
-            contacts: list[Contact] = self.node.bucket_list.get_close_contacts(key=key,
-                                                                exclude=self.node.our_contact.id)
+            contacts: list[Contact] = self.node.bucket_list.get_close_contacts(
+                key=key, exclude=self.node.our_contact.id)
         else:
-            contacts: list[Contact] = self._router(key, self._router.rpc_find_nodes)["contacts"]
+            contacts: list[Contact] = self._router(
+                key, self._router.rpc_find_nodes)["contacts"]
 
         for c in contacts:
             error: RPCError | None = c.protocol.store(
-                sender=self.node.our_contact,
-                key=key,
-                val=val
-            )
+                sender=self.node.our_contact, key=key, val=val)
             # handle_error(error, c)
 
     def bootstrap(self, known_peer: Contact) -> None:
@@ -1196,7 +1254,8 @@ class DHT:
         # it does.
 
         # finds K close contacts to self.our_id, excluding self.our_contact
-        contacts, error = known_peer.protocol.find_node(sender=self.our_contact, key=self.our_id)
+        contacts, error = known_peer.protocol.find_node(
+            sender=self.our_contact, key=self.our_id)
         # handle_error(error, known_peer)
         if not error:
             # print("NO ERROR")
@@ -1205,15 +1264,21 @@ class DHT:
             for contact in contacts:
                 self.node.bucket_list.add_contact(contact)
 
-            known_peers_bucket: KBucket = self.node.bucket_list.get_kbucket(known_peer.id)
+            known_peers_bucket: KBucket = self.node.bucket_list.get_kbucket(
+                known_peer.id)
 
             if ID.max() in [c.id for c in known_peers_bucket.contacts]:
                 print("somethings gone wrong")
             # Resolve the list now, so we don't include additional contacts
             # as we add to our bucket additional contacts.
-            other_buckets: list[KBucket] = [i for i in self.node.bucket_list.buckets if i != known_peers_bucket]
+            other_buckets: list[KBucket] = [
+                i for i in self.node.bucket_list.buckets
+                if i != known_peers_bucket
+            ]
             for other_bucket in other_buckets:
-                self._refresh_bucket(other_bucket)  # UNITTEST Notes: one of these should contain the correct contact
+                self._refresh_bucket(
+                    other_bucket
+                )  # UNITTEST Notes: one of these should contain the correct contact
         else:
             raise error
 
@@ -1265,8 +1330,11 @@ class DHT:
     def _bucket_refresh_timer_elapsed(self, sender: object, e):
         now: datetime = datetime.now()
         # Put into a separate list as bucket collections may be modified.
-        current_buckets: list[KBucket] = [b for b in self.node.bucket_list.buckets
-                                          if (now - b.time_stamp).seconds >= Constants.BUCKET_REFRESH_INTERVAL]
+        current_buckets: list[KBucket] = [
+            b for b in self.node.bucket_list.buckets
+            if (now -
+                b.time_stamp).seconds >= Constants.BUCKET_REFRESH_INTERVAL
+        ]
 
         for b in current_buckets:
             self._refresh_bucket(b)
@@ -1280,16 +1348,84 @@ class DHT:
         """
         now: datetime = datetime.now()
 
-        rep_keys = [k for k in self._republish_storage.get_keys() if
-                    now - self._republish_storage.get_timestamp(k) >=
-                    Constants.KEY_VALUE_REPUBLISH_INTERVAL]
+        rep_keys = [
+            k for k in self._republish_storage.get_keys()
+            if now - self._republish_storage.get_timestamp(k) >=
+            Constants.KEY_VALUE_REPUBLISH_INTERVAL
+        ]
 
         for k in rep_keys:
             key: ID = ID(k)
             # TODO: fix
-            self.store_on_closer_contacts(key, self._republish_storage.get(key))
+            self.store_on_closer_contacts(key,
+                                          self._republish_storage.get(key))
             self._republish_storage.touch(k)
 
+    def _expire_keys_elapsed(self, sender: object, e) -> None:
+        """
+        Expired key-values are removed from the republish and
+        cache storage.
+        """
+        self._remove_expired_data(cache_storage)
+        self._remove_expired_data(republish_storage)
+
+    def _remove_expired_data(self, store: IStorage) -> None:
+        now: datetime = datetime.now()
+        # to list so our key list is resolved now as we remove keys
+        expired: list[int] = [
+            key for key in store.get_keys()
+            if (now - store.get_timestamp(key)) >= timedelta(
+                seconds=store.get_expiration_time_sec(key))
+        ]
+
+        # expired is a list of all expired keys in the given storage.
+        for key in expired:
+            store.remove(key)
+
+    def _originator_republish_elapsed(self, sender: object, e) -> None:
+        """
+        Spec: “For Kademlia’s current application (file sharing), 
+        we also require the original publisher of a (key,value) 
+        pair to republish it every 24 hours. Otherwise, (key,value) 
+        pairs expire 24 hours after publication, so as to limit stale 
+        index information in the system. For other applications, such 
+        as digital certificates or cryptographic hash to value mappings, 
+        longer expiration times may be appropriate.”
+        """
+        now: datetime = datetime.now()
+
+        keys_pending_republish = [
+            key for key in self._originator_storage.get_keys()
+            if (now -
+                self._originator_storage.get_timestamp(key)) >= timedelta(
+                    seconds=Constants.ORIGINATOR_REPUBLISH_INTERVAL)
+        ]
+
+        for k in keys_pending_republish:
+            key: ID = ID(k)
+            # Just use close contacts, don't do a lookup TODO: why?
+            contacts = self.node.bucket_list.get_close_contacts(
+                key, self.node.our_contact.id)
+
+            for c in contacts:
+                error: RPCError | None = c.protocol.store(
+                    sender=self.our_contact,
+                    key=key,
+                    val=self._originator_storage.get(key)
+                )
+                # handle_error(error, c)
+
+            self._originator_storage.touch(k)
+
+
+def DHTSubclass(DHT):
+    def __init__(self):
+        DHT.__init__(self)
+    
+    @override
+    def expire_keys_elapsed(self, sender: object, e) -> None:
+        self.remove_expired_data(self.cache_storage)
+        # self.remove_expired_data(self.republish_storage)
 
 def empty_node():
     """
