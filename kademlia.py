@@ -152,37 +152,37 @@ class ID:
         return big_endian
 
     def __xor__(self, val) -> int:
-        if type(val) == ID:
+        if isinstance(val, ID):
             return self.value ^ val.value
         else:
             return self.value ^ val
 
     def __eq__(self, val) -> bool:
-        if type(val) == ID:
+        if isinstance(val, ID):
             return self.value == val.value
         else:
             return self.value == val
 
     def __ge__(self, val):
-        if type(val) == ID:
+        if isinstance(val, ID):
             return self.value >= val.value
         else:
             return self.value >= val
 
     def __le__(self, val):
-        if type(val) == ID:
+        if isinstance(val, ID):
             return self.value <= val.value
         else:
             return self.value <= val
 
     def __lt__(self, val):
-        if type(val) == ID:
+        if isinstance(val, ID):
             return self.value < val.value
         else:
             return self.value < val
 
     def __gt__(self, val):
-        if type(val) == ID:
+        if isinstance(val, ID):
             return self.value > val.value
         else:
             return self.value > val
