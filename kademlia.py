@@ -1,6 +1,6 @@
 import random
 from abc import abstractmethod
-from datetime import datetime
+from datetime import datetime, timedelta
 from statistics import median_high
 from typing import Callable, TypedDict
 from dataclasses import dataclass
@@ -1035,16 +1035,23 @@ class DHT:
         For example, you may want the cache_storage to be an in-memory store,
         the originator_storage to be a SQL database, and the republish store to be a 
         key-value database.
+        
         :param id: ID associated with the DHT. TODO: More info.
+        
         :param protocol: Protocol used by the DHT. TODO: More info - I'm not even sure 
         if this is correct.
+        
         :param storage_factory: Storage to be used for all storage mechanisms - 
         if specific mechanisms are not provided.
+        
         :param originator_storage: Pre-existing storage object to be used for main 
         storage. TODO: Is this right?
-        :param republish_storage: Storage used when republishing data to 
-        peers TODO: Is this right?
+        
+        :param republish_storage: This contains key-values that have been republished 
+        by other peers. TODO: Is this right?
+        
         :param cache_storage: Short term storage.
+        
         :param router: Router object associated with the DHT. TODO: Is this right?
         """
         
@@ -1150,8 +1157,25 @@ class DHT:
         """
         self.node.bucket_list.get_kbucket(key).touch()
 
-    def store_on_closer_contacts(self, key: ID, val: str):
-        pass
+    def store_on_closer_contacts(self, key: ID, val: str) -> None:
+        now: datetime = datetime.now()
+        kbucket: KBucket = self.node.bucket_list.get_kbucket(key)
+        contacts: list[Contact]
+        if (now - kbucket.time_stamp) < timedelta(seconds=Constants.BUCKET_REFRESH_INTERVAL):
+            # Bucket has been refreshed recently, so don't do a lookup as we
+            # have the k closest contacts.
+            contacts: list[Contact] = self.node.bucket_list.get_close_contacts(key=key,
+                                                                exclude=self.node.our_contact.id)
+        else:
+            contacts: list[Contact] = self._router(key, self._router.rpc_find_nodes)["contacts"]
+
+        for c in contacts:
+            error: RPCError | None = c.protocol.store(
+                sender=self.node.our_contact,
+                key=key,
+                val=val
+            )
+            # handle_error(error, c)
 
     def bootstrap(self, known_peer: Contact) -> None:
         """
@@ -1264,6 +1288,7 @@ class DHT:
             key: ID = ID(k)
             # TODO: fix
             self.store_on_closer_contacts(key, self._republish_storage.get(key))
+            self._republish_storage.touch(k)
 
 
 def empty_node():
