@@ -4,67 +4,56 @@ from kademlia import ID
 from typing import TypedDict
 
 
-@dataclass
-class BaseRequest:
+class BaseRequest(TypedDict):
     protocol: object
     protocol_name: str
     sender: int
-    random_id: int = ID.random_id().value
+    random_id: int
 
 
-@dataclass
-class FindNodeRequest(BaseRequest):
+class FindNodeRequest(BaseRequest, TypedDict):
     key: int
 
 
-@dataclass
-class FindValueRequest(BaseRequest):
+class FindValueRequest(BaseRequest, TypedDict):
     key: int
 
 
-@dataclass
-class PingRequest(BaseRequest):
+class PingRequest(BaseRequest, TypedDict):
     pass
 
 
-@dataclass
-class StoreRequest(BaseRequest):
+class StoreRequest(BaseRequest, TypedDict):
     key: int
     value: str
     is_cached: bool
     expiration_time_sec: int
 
 
-@dataclass
-class ITCPSubnet:
+class ITCPSubnet(TypedDict):
     """
     Interface used for TCP.
     """
     subnet: int
 
 
-@dataclass
-class FindNodeSubnetRequest(FindNodeRequest, ITCPSubnet):
+class FindNodeSubnetRequest(FindNodeRequest, ITCPSubnet, TypedDict):
     subnet: int
 
 
-@dataclass
-class FindValueSubnetRequest(FindValueRequest, ITCPSubnet):
+class FindValueSubnetRequest(FindValueRequest, ITCPSubnet, TypedDict):
     subnet: int
 
 
-@dataclass
-class PingSubnetRequest(PingRequest, ITCPSubnet):
+class PingSubnetRequest(PingRequest, ITCPSubnet, TypedDict):
     subnet: int
 
 
-@dataclass
-class StoreSubnetRequest(StoreRequest, ITCPSubnet):
+class StoreSubnetRequest(StoreRequest, ITCPSubnet, TypedDict):
     subnet: int
 
 
-@dataclass
-class CommonRequest:
+class CommonRequest(TypedDict):
     """
     For passing to Node handlers with common parameters.
     """
