@@ -109,6 +109,8 @@ class Constants:
     BUCKET_REFRESH_INTERVAL: int = 3600  # seconds in an hour.
     KEY_VALUE_REPUBLISH_INTERVAL: int = 86400  # Seconds in a day.
 
+    DHT_SERIALISED_SUFFIX = "dht"
+
 
 class ID:
 

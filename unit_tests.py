@@ -1129,9 +1129,9 @@ class DHTSerialisationTests(unittest.TestCase):
         )
         # Add this other contact to our peer list.
         dht.node.bucket_list.add_contact(other_contact)
-        dht.save("dht.pickle")
+        dht.save(f"dht.{Constants.DHT_SERIALISED_SUFFIX}")
 
-        new_dht: DHT = DHT.load("dht.pickle")
+        new_dht: DHT = DHT.load(f"dht.{DHT_SERIALISED_SUFFIX}")
         self.assertTrue(
             new_dht.node.bucket_list.contacts() == 1,
             "Expected our node to have 1 contact."
