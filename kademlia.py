@@ -8,6 +8,8 @@ from dataclasses import dataclass
 # from typing_extensions import override
 import pickle
 
+from kademlia_requests import CommonRequest
+
 # from threading import Lock
 
 DEBUG: bool = True
@@ -449,6 +451,8 @@ class Node:
         """
         self._storage.set(key, val)
 
+    # REQUEST HANDLERS - TODO: I think they go here?
+    def server_ping(self):
 
 class KBucket:
 
@@ -1441,92 +1445,20 @@ class DHT:
         with open(filename, "rb") as input_file:
             return pickle.load(file=input_file)
 
+    # REQUEST HANDLERS: TODO: I think they go here?
 
-class BaseRequest:
-
-    def __init__(self):
-        self.protocol: object | None = None
-        self.protocol_name: str | None = None
-        self.random_id: int = ID.random_id().value
-        self.sender: int | None = None
-
-
-class FindNodeRequest(BaseRequest):
-    def __init__(self):
-        super().__init__()
-        self.key: int | None = None
-
-
-class FindValueRequest(BaseRequest):
-    def __init__(self):
-        super().__init__()
-        self.key: int | None = None
-
-
-class PingRequest(BaseRequest):
-    pass
-
-
-class StoreRequest(BaseRequest):
-    def __init__(self):
-        super().__init__()
-        self.key: int | None = None
-        self.value: str | None = None
-        self.is_cached: bool | None = None
-        self.expiration_time_sec: int | None = None
-
-
-class ITCPSubnet:
-    """
-    Interface used for TCP.
-    """
-    def __init__(self):
-        self.subnet: int | None = None
-
-
-class FindNodeSubnetRequest(FindNodeRequest, ITCPSubnet):
-    def __init__(self):
-        super().__init__()
-        self.subnet: int | None = None
-
-
-class FindValueSubnetRequest(FindValueRequest, ITCPSubnet):
-    def __init__(self):
-        super().__init__()
-        self.subnet: int | None = None
-
-
-class PingSubnetRequest(PingRequest, ITCPSubnet):
-    def __init__(self):
-        super().__init__()
-        self.subnet: int | None = None
-
-
-class StoreSubnetRequest(StoreRequest, ITCPSubnet):
-    def __init__(self):
-        super().__init__()
-        self.subnet: int | None = None
-
-
-class CommonRequest:
-    """
-    For passing to Node handlers with common parameters.
-    """
-    def __init__(self):
-        self.protocol: object | None = None
-        self.protocol_name: str | None = None
-        self.random_id: int | None = None
-        self.sender: int | None = None
-        self.key: int | None = None
-        self.value: int | None = None
-        self.is_cached: bool | None = None
-        self.expiration_time_sec: int | None = None
-
-
-# TODO: Where does this go?
-def server_ping(request: CommonRequest) -> object:
-    protocol: IProtocol = request.protocol
-
+    def server_ping(self, request: CommonRequest):
+        protocol: IProtocol = self._protocol.instantiate_protocol(
+            request.protocol,
+            request.protocol_name
+        )
+        ping(
+            Contact(
+                protocol=self.protocol,
+                id=ID(request.sender)
+            )
+        )
+        return new
 
 # class DHTSubclass(DHT):
 #     def __init__(self):
