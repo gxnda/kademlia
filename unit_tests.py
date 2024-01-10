@@ -16,7 +16,7 @@ def setup_split_failure(bucket_list = None):
     dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
 
     if not bucket_list:
-        bucket_list = BucketList(our_id=host_ID, dummy_contact)
+        bucket_list = BucketList(our_id=host_ID) # dummy_contact)
 
     # Also add a contact in this 0 - 2 ** 159 range
     # This ensures that only 1 bucket split will occur after 20 nodes with ID >= 2 ** 159 are added.
@@ -942,7 +942,208 @@ class BucketManagementTests(unittest.TestCase):
         self.assertTrue(len(dht.eviction_count) == 1, 
                         "Expected one contact to be pending eviction.")
 
+
+class Chapter10Tests(unittest.TestCase):
+    def TestNewContactGetsStoredContacts(self):
+        """
+        Storing key-values onto the new node when a new node registers.
+
+        There’s a lot of setup here for creating two existing contacts and two 
+        key-values whose IDs have been specifically set. See the comments for 
+        the XOR distance “math.”
+        """
+        existing: Node = Node(
+            contact=Contact(
+                id=ID.mid(),
+                protocol=None
+            ),
+            storage=VirtualStorage()
+        )
         
+        val_1: str = "Value 1"
+        val_mid: str = "Value mid"
+
+        # The existing node stores two items, one with an ID "hash" of 1, the other
+        # with ID.max
+
+        # simple storage, rather than executing the code for store.
+        existing.simply_store(ID(1), val_1)
+        existing.simply_store(ID.mid(), val_mid)
+
+        self.assertTrue(
+            len(existing._storage.get_keys()) == 2,
+            "Expected the existing node to have 2 key-values."
+        )
+
+        # Create a contact in the existing node's bucket list that is 
+        # closer to one of the values.
+        # The contact has prefix 01000...
+        other_contact: Contact = Contact(
+            # TODO: should this be 2 ** 159?
+            id=ID(0).set_bit(158),
+            protocol=None
+        )
+        other: Node = Node(
+            contact=other_contact,
+            storage=VirtualStorage()
+        )
+        existing.bucket_list.buckets[0].contacts.append(other_contact)
+        # The unseen contact has a prefix 0110000...
+        unseenvp: VirtualProtocol = VirtualProtocol()
+
+        unseen_contact: Contact = Contact(
+            id=ID(0).set_bit(157),
+            protocol=unseenvp
+        )
+
+        unseen: Node = Node(
+            contact=unseen_contact,
+            storage=VirtualStorage()
+        )
+
+        unseenvp.node = unseen  # final fixup
+
+        self.assertTrue(
+            len(unseen._storage.get_keys()) == 0,
+            "The unseen node shouldn't have any key-values."
+        )
+        # An unseen node pings, and we should get back val_min only.
+        # as ID(1) ^ ID.mid() < ID.max ^ ID.mid()
+        self.assertTrue(
+            ID(1) ^ ID.mid() < ID.max ^ ID.mid(),
+            "ID XORing is not working as intended."
+        )
+
+        existing.ping(sender=unseen_contact)
+        # Contacts   V1        V2
+        # 1000000 00...0001 10...0000
+        # 0100000
+        # maths:
+        # c1 ^ v1    c1 ^ v2    c2 ^ v1    c2 ^ v2
+        # 100...001  000...000  010...001  110...000
+        # c1 ^ v1 > c1 ^ v2, so v1 doesn't get send to the unseen node.
+        # c1 ^ v2 < c2 ^ v2, so it does get sent.
+
+        self.assertTrue(
+            len(unseen._storage.get_keys()) == 1,
+            "Expected 1 value stored in our new node."
+        )
+
+        self.assertTrue(
+            unseen._storage.contains(ID.mid()),
+            "Expected val_mid to be stored."
+        )
+
+        self.assertTrue(
+            unseen._storage.get(ID.mid()) == val_mid,
+            "Expected val_mid value to match."
+        )
+
+
+class DHTSerialisationTests(unittest.TestCase):
+    def test_serialisation(self):
+        dht: DHT = DHT(
+            id=ID.random_id(),
+            protocol=VirtualProtocol(),
+            router=Router(),
+            storage_factory=VirtualStorage
+        )
+        dht.save("dht.pickle")
         
+        new_dht = DHT.load("dht.pickle")
+
+        self.assertTrue(
+            type(dht) == type(new_dht),
+            "Saved and loaded DHT are not the same type. " \
+            f"{type(dht)} vs {type(new_dht)}"
+        )
+        self.assertTrue(
+            dht.our_id == new_dht.our_id,
+            "Saved and loaded DHT is not identical to the original."
+        )
+
+    def test_circular_serialisation(self):
+        dht: DHT = DHT(
+            id=ID.random_id(),
+            protocol=VirtualProtocol(),
+            router=Router(),
+            storage_factory=VirtualStorage
+        )
+        
+        node = Node(
+            Contact(dht.our_id), 
+            storage=VirtualStorage()
+        )
+        dht._router.node = node
+        
+        dht.save("dht.pickle")
+    
+        new_dht = DHT.load("dht.pickle")
+    
+        self.assertTrue(
+            type(dht) == type(new_dht),
+            "Saved and loaded DHT are not the same type. " \
+            f"{type(dht)} vs {type(new_dht)}"
+        )
+        
+        self.assertTrue(
+            dht._router.node.our_contact.id == new_dht._router.node.our_contact.id,
+            "Saved and loaded DHT is not identical to the original."
+        )
+
+    def second_dht_serialisation_test(self):
+        p1: TCPSubnetProtocol = TCPSubnetProtocol(
+            "http://127.0.0.1", 
+            2720, 
+            1
+        )
+
+        p2: TCPSubnetProtocol = TCPSubnetProtocol(
+            "http://127.0.0.1",
+            2720,
+            1
+        )
+
+        store1: VirtualStorage = VirtualStorage()
+        store2: VirtualStorage = VirtualStorage()
+
+        # Ensures that all nodes are closer, becuase ID.max() ^ n < ID.max()
+        # When n > 0
+        dht: DHT = DHT(
+            id=ID.max(),
+            protocol=p1,
+            router=Router(),
+            originator_storage=store1,
+            republish_storage=store1,
+            cache_storage=VirtualStorage()
+        )
+
+        contact_id: ID = ID.mid()
+        other_contact: Contact = Contact(
+            id=contact_id,
+            protocol=p2
+        )
+        other_node: Node = Node(
+            contact=other_contact,
+            storage=store2
+        )
+        # Add this other contact to our peer list.
+        dht.node.bucket_list.add_contact(other_contact)
+        dht.save("dht.pickle")
+
+        new_dht: DHT = DHT.load("dht.pickle")
+        self.assertTrue(
+            new_dht.node.bucket_list.contacts() == 1,
+            "Expected our node to have 1 contact."
+        )
+        self.assertTrue(
+            new_dht.node.bucket_list.contact_exists(other_contact),
+            "Expected our contact to have the other contact."
+        )
+        self.assertTrue(
+            new_dht._router.node == new_dht.node,
+            "Router node not initialised."
+        )
+
 if __name__ == '__main__':
     unittest.main()

@@ -4,7 +4,8 @@ from datetime import datetime, timedelta
 from statistics import median_high
 from typing import Callable, TypedDict
 from dataclasses import dataclass
-from typing_extensions import override
+# from typing_extensions import override
+import pickle
 
 # from threading import Lock
 
@@ -56,19 +57,19 @@ class SenderIsSelfError(Exception):
 #     https://www.bogotobogo.com/python/Multithread/python_multithreading_Synchronization_Lock_Objects_Acquire_Release.php
 #     https://www.geeksforgeeks.org/with-statement-in-python/
 #     """
-#
+
 #     def __init__(self, lock: Lock) -> None:
 #         """
 #         Creates lock object to be used in __enter__ and __exit__.
 #         """
 #         self.lock = lock
-#
+
 #     def __enter__(self) -> None:
 #         """
 #         Change the state to locked and returns immediately.
 #         """
 #         self.lock.acquire()
-#
+
 #     def __exit__(self, exc_type, exc_value, traceback) -> None:
 #         """
 #         Changes the state to unlocked; this is called from another thread.
@@ -166,25 +167,25 @@ class ID:
         else:
             return self.value == val
 
-    def __ge__(self, val):
+    def __ge__(self, val) -> bool:
         if isinstance(val, ID):
             return self.value >= val.value
         else:
             return self.value >= val
 
-    def __le__(self, val):
+    def __le__(self, val) -> bool:
         if isinstance(val, ID):
             return self.value <= val.value
         else:
             return self.value <= val
 
-    def __lt__(self, val):
+    def __lt__(self, val) -> bool:
         if isinstance(val, ID):
             return self.value < val.value
         else:
             return self.value < val
 
-    def __gt__(self, val):
+    def __gt__(self, val) -> bool:
         if isinstance(val, ID):
             return self.value > val.value
         else:
@@ -295,7 +296,7 @@ class Contact:
         self.id = id
         self.last_seen: datetime = datetime.now()
 
-    def touch(self):
+    def touch(self) -> None:
         """Updates the last time the contact was seen."""
         self.last_seen = datetime.now()
 
@@ -449,7 +450,7 @@ class Node:
 class KBucket:
 
     def __init__(self,
-                 initial_contacts: list[Contact] = None,
+                 initial_contacts: list[Contact] | None = None,
                  low: int = 0,
                  high: int = 2**160):
         """
@@ -1422,13 +1423,31 @@ class DHT:
     def _get_separating_nodes_count(self, our_contact, store_to):
         pass
 
+    def save(self, filename: str) -> None:
+        """
+        Saves DHT to file.
+        """
+        with open(filename, "wb") as output_file:
+            pickle.dump(self, file=output_file)
+
+    @classmethod
+    def load(cls, filename):
+        """
+        Loads DHT from file.
+        """
+        with open(filename, "rb") as input_file:
+            return pickle.load(file=input_file)
+
 
 def DHTSubclass(DHT):
     def __init__(self):
         DHT.__init__(self)
     
-    @override
+    # @override
     def expire_keys_elapsed(self, sender: object, e) -> None:
+        """
+        Allows for never expiring republished key values.
+        """
         self.remove_expired_data(self.cache_storage)
         # self.remove_expired_data(self.republish_storage)
 
