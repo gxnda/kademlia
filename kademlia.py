@@ -1,3 +1,4 @@
+import abc
 import random
 from abc import abstractmethod
 from datetime import datetime, timedelta
@@ -1441,17 +1442,85 @@ class DHT:
             return pickle.load(file=input_file)
 
 
-def DHTSubclass(DHT):
+class BaseRequest:
+
     def __init__(self):
-        DHT.__init__(self)
-    
-    # @override
-    def expire_keys_elapsed(self, sender: object, e) -> None:
-        """
-        Allows for never expiring republished key values.
-        """
-        self.remove_expired_data(self.cache_storage)
-        # self.remove_expired_data(self.republish_storage)
+        self.protocol: object
+        self.protocol_name: str
+        self.random_id = ID.random_id().value
+        self.sender: int
+
+
+class FindNodeRequest(BaseRequest):
+    def __init__(self):
+        super().__init__()
+        self.key: int
+
+
+class FindValueRequest(BaseRequest):
+    def __init__(self):
+        super().__init__()
+        self.key: int
+
+
+class PingRequest(BaseRequest):
+    pass
+
+
+class StoreRequest(BaseRequest):
+    def __init__(self):
+        super().__init__()
+        self.key: int
+        self.value: str
+        self.is_cached: bool
+        self.expiration_time_sec: int
+
+
+class ITCPSubnet:
+    """
+    Interface used for TCP.
+    """
+    def __init__(self):
+        self.subnet: int
+
+
+class FindNodeSubnetRequest(FindNodeRequest, ITCPSubnet):
+    def __init__(self):
+        super().__init__()
+        self.subnet: int
+
+
+class FindValueSubnetRequest(FindValueRequest, ITCPSubnet):
+    def __init__(self):
+        super().__init__()
+        self.subnet: int
+
+
+class PingSubnetRequest(PingRequest, ITCPSubnet):
+    def __init__(self):
+        super().__init__()
+        self.subnet: int
+
+
+class StoreSubnetRequest(StoreRequest, ITCPSubnet):
+    def __init__(self):
+        super().__init__()
+        self.subnet: int
+
+
+
+# class DHTSubclass(DHT):
+#     def __init__(self):
+#         super().__init__()
+#
+#     # @override
+#     def expire_keys_elapsed(self, sender: object, e) -> None:
+#         """
+#         Allows for never expiring republished key values.
+#         """
+#         self.remove_expired_data(self.cache_storage)
+#         # self.remove_expired_data(self.republish_storage)
+
 
 def empty_node():
     """
