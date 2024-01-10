@@ -1445,22 +1445,22 @@ class DHT:
 class BaseRequest:
 
     def __init__(self):
-        self.protocol: object
-        self.protocol_name: str
-        self.random_id = ID.random_id().value
-        self.sender: int
+        self.protocol: object | None = None
+        self.protocol_name: str | None = None
+        self.random_id: int = ID.random_id().value
+        self.sender: int | None = None
 
 
 class FindNodeRequest(BaseRequest):
     def __init__(self):
         super().__init__()
-        self.key: int
+        self.key: int | None = None
 
 
 class FindValueRequest(BaseRequest):
     def __init__(self):
         super().__init__()
-        self.key: int
+        self.key: int | None = None
 
 
 class PingRequest(BaseRequest):
@@ -1470,10 +1470,10 @@ class PingRequest(BaseRequest):
 class StoreRequest(BaseRequest):
     def __init__(self):
         super().__init__()
-        self.key: int
-        self.value: str
-        self.is_cached: bool
-        self.expiration_time_sec: int
+        self.key: int | None = None
+        self.value: str | None = None
+        self.is_cached: bool | None = None
+        self.expiration_time_sec: int | None = None
 
 
 class ITCPSubnet:
@@ -1481,32 +1481,51 @@ class ITCPSubnet:
     Interface used for TCP.
     """
     def __init__(self):
-        self.subnet: int
+        self.subnet: int | None = None
 
 
 class FindNodeSubnetRequest(FindNodeRequest, ITCPSubnet):
     def __init__(self):
         super().__init__()
-        self.subnet: int
+        self.subnet: int | None = None
 
 
 class FindValueSubnetRequest(FindValueRequest, ITCPSubnet):
     def __init__(self):
         super().__init__()
-        self.subnet: int
+        self.subnet: int | None = None
 
 
 class PingSubnetRequest(PingRequest, ITCPSubnet):
     def __init__(self):
         super().__init__()
-        self.subnet: int
+        self.subnet: int | None = None
 
 
 class StoreSubnetRequest(StoreRequest, ITCPSubnet):
     def __init__(self):
         super().__init__()
-        self.subnet: int
+        self.subnet: int | None = None
 
+
+class CommonRequest:
+    """
+    For passing to Node handlers with common parameters.
+    """
+    def __init__(self):
+        self.protocol: object | None = None
+        self.protocol_name: str | None = None
+        self.random_id: int | None = None
+        self.sender: int | None = None
+        self.key: int | None = None
+        self.value: int | None = None
+        self.is_cached: bool | None = None
+        self.expiration_time_sec: int | None = None
+
+
+# TODO: Where does this go?
+def server_ping(request: CommonRequest) -> object:
+    protocol: IProtocol = request.protocol
 
 
 # class DHTSubclass(DHT):
