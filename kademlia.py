@@ -451,8 +451,89 @@ class Node:
         """
         self._storage.set(key, val)
 
-    # REQUEST HANDLERS - TODO: I think they go here?
-    def server_ping(self):
+    # REQUEST HANDLERS: TODO: I think they go here?
+
+    def server_ping(self, request: CommonRequest) -> dict:
+        protocol: IProtocol = self._protocol.instantiate_protocol(
+            request["protocol"],
+            request["protocol_name"]
+        )
+        self.ping(
+            Contact(
+                protocol=self._protocol,
+                id=ID(request.sender)
+            )
+        )
+        return {"random_id": request["random_id"]}
+
+    def server_store(self, request: CommonRequest) -> dict:
+        protocol: IProtocol = self._protocol.instantiate_protocol(
+            request["protocol"],
+            request["protocol_name"]
+        )
+        self.store(
+            Contact(
+                id=ID(request["sender"]),
+                protocol=protocol
+            ),
+            key=ID(request["key"]),
+            val=request["value"],
+            is_cached=request["is_cached"],
+            expiration_time_sec=request["expiration_time_sec"]
+        )
+        return {"random_id": request["random_id"]}
+
+    def server_find_node(self, request: CommonRequest) -> dict:
+        protocol: IProtocol = self._protocol.instantiate_protocol(
+            request["protocol"],
+            request["protocol_name"]
+        )
+
+        contacts, val = self.find_node(
+            Contact(
+                protocol=protocol,
+                id=ID(request["sender"])
+            ),
+            ID(request["key"])
+        )
+
+        contact_dict: list[dict] = []
+        for c in self.contacts:
+            contact_info = {
+                "contact": c.id.value,
+                "protocol": c.protocol,
+                "protocol_name": type(c.protocol)
+            }
+
+            contact_dict.append(contact_info)
+
+        return {"contacts": contact_dict, "random_id": request["random_id"]}
+
+    def server_find_value(self, request: CommonRequest) -> dict:
+        protocol: IProtocol = self._protocol.instantiate_protocol(
+            request["protocol"],
+            request["protocol_name"]
+        )
+        contacts, val = self.find_value(
+            Contact(
+                protocol=protocol,
+                id=ID(request["sender"])
+            ),
+            ID(request["key"])
+        )
+        contact_dict: list[dict] = []
+        if contacts:
+            for c in contacts:
+                contact_info = {
+                    "contact": c.id.value,
+                    "protocol": c.protocol,
+                    "protocol_name": type(c.protocol)
+                }
+                contact_dict.append(contact_info)
+        return {"contacts": contact_dict,
+                "random_id": request["random_id"],
+                "value": val}
+
 
 class KBucket:
 
@@ -1445,20 +1526,6 @@ class DHT:
         with open(filename, "rb") as input_file:
             return pickle.load(file=input_file)
 
-    # REQUEST HANDLERS: TODO: I think they go here?
-
-    def server_ping(self, request: CommonRequest):
-        protocol: IProtocol = self._protocol.instantiate_protocol(
-            request.protocol,
-            request.protocol_name
-        )
-        ping(
-            Contact(
-                protocol=self.protocol,
-                id=ID(request.sender)
-            )
-        )
-        return new
 
 # class DHTSubclass(DHT):
 #     def __init__(self):

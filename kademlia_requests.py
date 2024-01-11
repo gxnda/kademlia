@@ -38,19 +38,23 @@ class ITCPSubnet(TypedDict):
 
 
 class FindNodeSubnetRequest(FindNodeRequest, ITCPSubnet, TypedDict):
-    subnet: int
+    # subnet: int
+    pass
 
 
 class FindValueSubnetRequest(FindValueRequest, ITCPSubnet, TypedDict):
-    subnet: int
+    # subnet: int
+    pass
 
 
 class PingSubnetRequest(PingRequest, ITCPSubnet, TypedDict):
-    subnet: int
+    # subnet: int
+    pass
 
 
 class StoreSubnetRequest(StoreRequest, ITCPSubnet, TypedDict):
-    subnet: int
+    # subnet: int
+    pass
 
 
 class CommonRequest(TypedDict):
