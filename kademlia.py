@@ -1,13 +1,9 @@
-import abc
 import random
 from abc import abstractmethod
 from datetime import datetime, timedelta
-from statistics import median_high
 from typing import Callable, TypedDict
 from dataclasses import dataclass
-# from typing_extensions import override
 import pickle
-
 from kademlia_requests import CommonRequest
 
 # from threading import Lock
@@ -314,6 +310,18 @@ class QueryReturn(TypedDict):
     val: str | None
     found: bool
     found_by: Contact | None
+
+
+class BaseRouter:
+    def lookup(self, key: ID, rpc_call: Callable, give_me_all=False) -> QueryReturn | None:
+        pass
+
+
+class ContactQueueItem:
+    def __init__(self):
+        key: ID
+        contact: ID
+        rpc_call
 
 
 class Node:
