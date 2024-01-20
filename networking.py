@@ -102,7 +102,17 @@ class StoreResponse(BaseResponse):
     pass
 
 
+# TODO: What class is this associated with?
 def process_request(context: BaseHTTPRequestHandler):
+    """
+    I don't know much about HTTP Servers.
+    "The server is a straightforward HttpListener implemented as a C# HttpListenerContext
+    object, but note how the subnet ID is used to route the request to the specific node
+    associated with the subnet." - Marc Clifton
+
+    :param context:
+    :return:
+    """
     data: str = context.request
     print(context.request, context.command)
     if context.command == "POST":
