@@ -4,9 +4,8 @@ from datetime import datetime, timedelta
 from typing import Callable, TypedDict
 from dataclasses import dataclass
 import pickle
-from kademlia_requests import CommonRequest
-
-# from threading import Lock
+from networking import CommonRequest
+import threading
 
 DEBUG: bool = True
 
@@ -101,15 +100,14 @@ class Constants:
 
     ORIGINATOR_REPUBLISH_INTERVAL: int  # TODO: Create.
     EVICTION_LIMIT: int  # TODO: create.
+    MAX_THREADS: int # TODO: Create
     K: int = 20
     B: int = 160
     A: int = 3
     EXPIRATION_TIME_SEC: int = 86400  # Seconds in a day.
     BUCKET_REFRESH_INTERVAL: int = 3600  # seconds in an hour.
     KEY_VALUE_REPUBLISH_INTERVAL: int = 86400  # Seconds in a day.
-
     DHT_SERIALISED_SUFFIX = "dht"
-
 
 class ID:
 
@@ -317,11 +315,13 @@ class BaseRouter:
         pass
 
 
-class ContactQueueItem:
-    def __init__(self):
-        key: ID
-        contact: ID
-        rpc_call
+class ContactQueueItem(TypedDict):
+    key: ID
+    contact: Contact
+    rpc_call: Callable
+    closer_contacts: list[Contact]
+    further_contacts: list[Contact]
+    find_result: FindResult
 
 
 class Node:
@@ -1562,3 +1562,135 @@ def random_node():
 
 def select_random(arr: list, freq: int) -> list:
     return random.sample(arr, freq)
+
+
+class ParallelRouter(BaseRouter):
+    def __init__(self):
+        # TODO: Should these be empty?
+        self.contact_queue = []  # TODO: Make protected
+        self.semaphore = threading.Semaphore()  # TODO: Make protected
+        self.now: datetime
+
+    def initialise_thread_pool(self):  # TODO: Make protected.
+        threads: list[threading.Thread]
+        for _ in Constants.MAX_THREADS:
+            thread = threading.Thread(target=self.thread_start(rpc_caller))
+            # thread.is_background = True
+            thread.start()
+
+    def queue_work(self,
+                   key: ID,
+                   contact: Contact,
+                   rpc_call: Callable,
+                   closer_contacts: list[Contact],
+                   further_contacts: list[Contact],
+                   find_result: FindResult) -> None:
+
+        self.contact_queue.enqueue(
+            ContactQueueItem(
+                key=key,
+                contact=contact,
+                rpc_call=rpc_call,
+                closer_contacts=closer_contacts,
+                further_contacts=further_contacts,
+                find_result=find_result)
+        )
+
+        self.semaphore.release()
+
+    def rpc_caller(self) -> None:
+        """
+        "when a value is found, it takes a snapshot of the current closer contacts and stores
+        all the information about a closer contact in fields belonging to the ParallelLookup class."
+        :return:
+        """
+        flag = True
+        while flag:  # I hate this.
+            self.semaphore.wait_one()  # dont think this is real
+            item: ContactQueueItem = self.contact_queue.try_dequeue()
+            if item:
+                val, found_by = self.get_closer_nodes(item["key"],
+                                            item["contact"],
+                                            item["rpc_call"],
+                                            item["closer_contacts"],
+                                            item["further_contacts"]
+                                            )
+                if val or found_by:
+                    if not stop_work:
+                        # Possible multiple "found"
+                        # lock(locker)
+                        item["find_result"]["found"] = True
+                        item["find_result"]["found_by"] = found_by
+                        item["find_result"]["found_value"] = val
+                        item["find_result"]["found_contacts"] = item["closer_contacts"]
+
+    def set_query_time(self) -> None:
+        self.now = datetime.now()
+
+    def query_time_expired(self) -> bool:
+        """
+        Returns true if the query time has expired.
+        :return:
+        """
+        return (datetime.now() - self.now).total_seconds() > Constants.QUERY_TIME
+
+    def lookup(self):  # TODO: Very much incomplete
+        ...
+        for c in closer_contacts:
+            if c.ID != [r.ID for r in ret]:
+                ret.append(a)
+
+        # The lookup terminates when the initiator has queried and
+        # received responses from the k closest nodes it has seen.
+        while len(ret) < Constants.K and have_work:
+            thread.sleep(Constants.RESPONSE_WAIT_TIME)
+
+        found_return = self.parallel_found(find_result)
+        if found_return:
+            self.stop_remaining_work()
+            return found_return
+
+        closer_uncontacted_nodes = [c for c in closer_contacts if c not in contacted_nodes]
+        further_uncontacted_nodes = [c for c in further_contacts if c not in further_nodes]
+
+        have_closer = len(closer_uncontacted_nodes) > 0
+        have_further = len(further_uncontacted_nodes) > 0
+
+        have_work = have_closer or have_further or not self.query_time_expired()
+
+        # for the k nodes the initiator has heard of closest to the target...
+        alpha_nodes = None
+
+        if have_closer:
+            # we're about to contact these nodes.
+            if len(closer_uncontacted_nodes) >= Constants.A:
+                alpha_nodes = closer_uncontacted_nodes[0: Constants.A - 1]
+            else:
+                alpha_nodes = closer_uncontacted_nodes
+
+        elif have_further:
+            if len(further_uncontacted_nodes) >= Constants.A:
+                alpha_nodes = further_uncontacted_nodes[0: Constants.A - 1]
+            else:
+                alpha_nodes = further_uncontacted_nodes
+
+        if alpha_nodes:
+            for a in alpha_nodes:
+                if a.ID not in [c.id for c in contacted_nodes]:
+                    contacted_nodes.append(a)
+                self.queue_work(
+                    key=key,
+                    contact=a,
+                    rpc_call=rpc_call,
+                    closer_contacts=closer_contacts,
+                    further_contacts=further_contacts,
+                    find_result=find_result
+                )
+
+                self.set_query_time()
+
+
+
+
+
+
