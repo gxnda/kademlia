@@ -506,7 +506,7 @@ class Node:
         )
 
         contact_dict: list[dict] = []
-        for c in self.contacts:
+        for c in contacts:
             contact_info = {
                 "contact": c.id.value,
                 "protocol": c.protocol,
@@ -1039,6 +1039,13 @@ class RPCError(Exception):
     """
     Errors for RPC commands.
     """
+    def __init__(self, protocol_error, error_message: str):
+        super().__init__(error_message)
+        self.protocol_error = protocol_error
+        self.error_message = error_message
+
+    def __str__(self):
+        return self.error_message
 
     @staticmethod
     def no_error():
@@ -1690,6 +1697,41 @@ class ParallelRouter(BaseRouter):
                 self.set_query_time()
 
 
+# class ContactListAndError(TypedDict):
+#     contacts: list[Contact]
+#     error: RPCError
+
+
+class TCPSubnetProtocol:  # TODO: does this exist?
+
+    def __init__(self):
+        pass
+
+    def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact], RPCError]:
+        id: ID = ID.random_id()
+        ret, error, timeout_error = self.rest_call.post(
+            self.url + ":" + self.port + "//find_node",
+            FindNodeSubnetRequest(
+                protocol=sender.protocol,
+                protocol_name=sender.protocol.get_type(),
+                subnet=self.subnet,
+                sender=sender.id.value,
+                key=key.value,
+                random_id=id.value)
+            )
+        try:
+            contacts = []
+            if ret:
+                if ret["contacts"]:  # TODO: Is ret a dictionary?
+                    contacts = [
+                        Contact(Protocol.instantiate_protocol(c.protocol, val["protocol_name"])
+                                for c in ret["contacts"]
+                                ]
+                    # Return only contacts with supported protocols.
+                    if contacts:
+                        return [c for c in contacts if c.protocol is not None], get_rpc_error(id, ret, timeout_error, error)
+        except Exception as e:
+            return None, RPCError(protocol_error=True)
 
 
 
