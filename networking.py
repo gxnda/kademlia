@@ -1,4 +1,3 @@
-from kademlia import ID
 from typing import TypedDict
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json

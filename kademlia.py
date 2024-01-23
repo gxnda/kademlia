@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 from typing import Callable, TypedDict
 from dataclasses import dataclass
 import pickle
-from networking import CommonRequest
 import threading
+from networking import CommonRequest
 
 DEBUG: bool = True
 
