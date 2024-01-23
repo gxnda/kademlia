@@ -832,7 +832,7 @@ class BucketList:
         return contact in self.contacts()
 
 
-class Router:
+class Router(BaseRouter):
     """
     TODO: Talk about what this does.
     """
@@ -1163,7 +1163,7 @@ class DHT:
     def __init__(self,
                  id: ID,
                  protocol: IProtocol,
-                 router: Router,
+                 router: BaseRouter,
                  storage_factory: Callable[[], IStorage] | None = None,
                  originator_storage: IStorage | None = None,
                  republish_storage: IStorage | None = None,

@@ -2,7 +2,7 @@ import unittest
 
 from kademlia import BucketList, VirtualProtocol, \
     Constants, Contact, ID, KBucket, TooManyContactsError, Node, \
-    Router, VirtualStorage, DHT
+    Router, VirtualStorage, DHT, ParallelRouter
 
 
 def setup_split_failure(bucket_list = None):
@@ -633,6 +633,180 @@ class DHTTest(unittest.TestCase):
         cache3 = VirtualStorage()
 
         dht: DHT = DHT(id=ID.max(), protocol=vp1, router=Router(), storage_factory=lambda: store1)
+
+        vp1.node = dht._router.node
+
+        # setup node 2
+        contact_id_2 = ID.mid()
+        other_contact_2 = Contact(contact_id_2, vp2)
+        other_node_2 = Node(other_contact_2, store2)
+        vp2.node = other_node_2
+        # add the second contact to our peer list.
+        dht._router.node.bucket_list.add_contact(other_contact_2)
+        # node 2 has the value
+        key = ID(0)
+        val = "Test"
+        other_node_2._storage.set(key, val)
+
+        # setup node 3
+        contact_id_3 = ID(2 ** 158)  # I think this is the same as ID.Zero.SetBit(158)?
+        other_contact_3 = Contact(contact_id_3, vp3)
+        other_node_3 = Node(other_contact_3, store3, cache_storage=cache3)
+        vp3.node = other_node_3
+        # add the third contact to our peer list
+        dht._router.node.bucket_list.add_contact(other_contact_3)
+
+        self.assertFalse(store1.contains(key),
+                         "Obviously we don't have the key-value yet.")
+
+        self.assertFalse(store3.contains(key),
+                         "And equally obvious, the third peer doesn't have the key-value yet either.")
+
+        ret_found, ret_contacts, ret_val = dht.find_value(key)
+
+        self.assertTrue(ret_found, "Expected value to be found.")
+        self.assertFalse(store3.contains(key), "Key should not be in the republish store.")
+        self.assertTrue(cache3.contains(key), "Key should be in the cache store.")
+        self.assertTrue(cache3.get_expiration_time_sec(key.value) == Constants.EXPIRATION_TIME_SEC / 2,
+                        "Expected 12 hour expiration.")
+
+
+class DHTParallelTest(unittest.TestCase):
+    """
+    The exact same as DHTTest, but with the asynchronous router instead of the normal router.
+    """
+    def test_local_store_find_value(self):
+        vp = VirtualProtocol()
+        # Below line should contain VirtualStorage(), which I don't have?
+        dht = DHT(id=ID.random_id(),
+                  protocol=vp,
+                  storage_factory=VirtualStorage,
+                  router=ParallelRouter())
+        vp.node = dht._router.node
+        key = ID.random_id()
+        dht.store(key, "Test")
+        return_val = dht.find_value(key)
+
+        self.assertTrue(return_val == "Test",
+                        "Expected to get back what we stored.")
+
+    def test_value_stored_in_closer_node(self):
+        """
+        This test creates a single contact and stores the value in that contact. We set up the IDs so that the
+        contact’s ID is less (XOR metric) than our peer’s ID, and we use a key of ID.Zero to prevent further
+        complexities when computing the distance. Most of the code here is to set up the conditions to make this test!
+        - "The Kademlia Protocol Succinctly" by Marc Clifton
+        :return: None
+        """
+
+        vp1 = VirtualProtocol()
+        vp2 = VirtualProtocol()
+        store1 = VirtualStorage()
+        store2 = VirtualStorage()
+
+        # Ensures that all nodes are closer, because id.max ^ n < id.max when n > 0.
+        # (the distance between a node and max id is always closer than the furthest possible)
+        # TODO: Why are there 6 arguments? im tired i sleep now
+        dht = DHT(id=ID.max(), router=ParallelRouter(), storage_factory=lambda: store1, protocol=VirtualProtocol())
+
+        vp1.node = dht._router.node
+        contact_id: ID = ID.mid()  # middle ID
+        other_contact: Contact = Contact(id=contact_id, protocol=vp2)
+        other_node = Node(contact=other_contact, storage=store2)
+        vp2.node = other_node
+
+        # add this other contact to our peer list
+        dht._router.node.bucket_list.add_contact(other_contact)
+        # we want an integer distance, not an XOR distance.
+        key: ID = ID.min()
+        val = "Test"
+        other_node.simply_store(key, val)
+        self.assertFalse(store1.contains(key),
+                         "Expected our peer to NOT have cached the key-value.")
+
+        self.assertTrue(store2.contains(key),
+                        "Expected other node to HAVE cached the key-value.")
+
+        # Try and find the value, given our Dht knows about the other contact.
+        _, _, retval = dht.find_value(key)
+        self.assertTrue(retval == val,
+                        "Expected to get back what we stored")
+
+    def test_value_stored_in_further_node(self):
+        vp1 = VirtualProtocol()
+        vp2 = VirtualProtocol()
+        store1 = VirtualStorage()
+        store2 = VirtualStorage()
+
+        # Ensures that all nodes are closer, because max id ^ n < max id when n > 0.
+
+        dht: DHT = DHT(id=ID.min(), protocol=vp1, router=ParallelRouter(), storage_factory=lambda: store1)
+
+        vp1.node = dht._router.node
+        contact_id = ID.max()
+        other_contact = Contact(contact_id, vp2)
+        other_node = Node(other_contact, store2)
+        vp2.node = other_node
+        # Add this other contact to our peer list.
+        dht._router.node.bucket_list.add_contact(other_contact)
+        key = ID(1)
+        val = "Test"
+        other_node.simply_store(key, val)
+
+        self.assertFalse(store1.contains(key),
+                         "Expected our peer to have NOT cached the key-value.")
+
+        self.assertTrue(store2.contains(key),
+                        "Expected other node to HAVE cached the key-value.")
+
+        retval: str = dht.find_value(key)[2]
+        self.assertTrue(retval == val,
+                        "Expected to get back what we stored.")
+
+    def test_value_stored_gets_propagated(self):
+        vp1 = VirtualProtocol()
+        vp2 = VirtualProtocol()
+        store1 = VirtualStorage()
+        store2 = VirtualStorage()
+
+        dht: DHT = DHT(id=ID.min(), protocol=vp1, router=ParallelRouter(), storage_factory=lambda: store1)
+        vp1.node = dht._router.node
+        contact_id = ID.mid()
+        other_contact = Contact(contact_id, vp2)
+        other_node = Node(other_contact, store2)
+        vp2.node = other_node
+        dht._router.node.bucket_list.add_contact(other_contact)
+
+        key = ID(0)
+        val = "Test"
+
+        self.assertFalse(store1.contains(key),
+                         "Obviously we don't have the key-value yet.")
+
+        self.assertFalse(store2.contains(key),
+                         "And equally obvious, the other peer doesn't have the key-value yet either.")
+
+        dht.store(key, val)
+
+        self.assertTrue(store1.contains(key),
+                        "Expected our peer to have stored the key-value.")
+
+        self.assertTrue(store2.contains(key),
+                        "Expected the other peer to have stored the key-value.")
+
+    def test_value_propagates_to_closer_node(self):
+
+        vp1 = VirtualProtocol()
+        vp2 = VirtualProtocol()
+        vp3 = VirtualProtocol()
+
+        store1 = VirtualStorage()
+        store2 = VirtualStorage()
+        store3 = VirtualStorage()
+
+        cache3 = VirtualStorage()
+
+        dht: DHT = DHT(id=ID.max(), protocol=vp1, router=ParallelRouter(), storage_factory=lambda: store1)
 
         vp1.node = dht._router.node
 
