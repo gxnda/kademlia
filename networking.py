@@ -3,6 +3,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 
 
+
 class BaseRequest(TypedDict):
     protocol: object
     protocol_name: str
@@ -101,43 +102,46 @@ class StoreResponse(BaseResponse):
     pass
 
 
-# TODO: What class is this associated with?
-def process_request(context: BaseHTTPRequestHandler):
-    """
-    I don't know much about HTTP Servers.
-    "The server is a straightforward HttpListener implemented as a C# HttpListenerContext
-    object, but note how the subnet ID is used to route the request to the specific node
-    associated with the subnet." - Marc Clifton
+class TCPServer:  # TODO: Create.
+    def __init__(self):
+        pass
 
-    :param context:
-    :return:
-    """
-    data: str = context.request
-    print(context.request, context.command)
-    if context.command == "POST":
-        request_type: type
-        path: str = context.path
-        # Remove "//"
-        # Prefix our call with "server" so that the method name is unambiguous.
-        method_name: str = "Server" + path[2:]  # path.substring(2)
-        if route_packets.try_get_value(path, request_type):
-            commonrequest: CommonRequest = json.load(data)
-            subnet: int = json.load(data, request_type)["subnet"]
+    def process_request(context: BaseHTTPRequestHandler):
+        """
+        I don't know much about HTTP Servers.
+        "The server is a straightforward HttpListener implemented as a C# HttpListenerContext
+        object, but note how the subnet ID is used to route the request to the specific node
+        associated with the subnet." - Marc Clifton
 
-            node: INode
-            if subnets.try_get_value(subnet, node):
-                # await Task.run()
-                Task.run(lambda: CommonRequestHandler(
-                    method_name,
-                    commonrequest,
-                    node,
-                    context
+        :param context:
+        :return:
+        """
+        data: str = context.request
+        print(context.request, context.command)
+        if context.command == "POST":
+            request_type: type
+            path: str = context.path
+            # Remove "//"
+            # Prefix our call with "server" so that the method name is unambiguous.
+            method_name: str = "Server" + path[2:]  # path.substring(2)
+            if route_packets.try_get_value(path, request_type):
+                commonrequest: CommonRequest = json.load(data)
+                subnet: int = json.load(data, request_type)["subnet"]
+
+                node: INode
+                if subnets.try_get_value(subnet, node):
+                    # await Task.run()
+                    Task.run(lambda: CommonRequestHandler(
+                        method_name,
+                        commonrequest,
+                        node,
+                        context
+                        )
                     )
-                )
-            else:
-                send_error_response(
-                    context,
-                    ErrorResponse("Subnet node not found.")
-                )
+                else:
+                    send_error_response(
+                        context,
+                        ErrorResponse("Subnet node not found.")
+                    )
 
-            context.response.close()
+                context.response.close()
