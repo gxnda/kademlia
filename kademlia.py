@@ -1093,7 +1093,9 @@ def get_rpc_error(id: ID,
 
 class VirtualProtocol(IProtocol):
     """
-    For unit testing, doesn't really do much
+    For unit testing, doesn't really do much in the main 
+    implementation, it's just used to make sure everything that 
+    doesn't involve networking works correctly.
     """
 
     def __init__(self, node: Node | None = None, responds=True) -> None:
