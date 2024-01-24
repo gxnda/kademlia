@@ -5,7 +5,7 @@ from typing import Callable, TypedDict
 from dataclasses import dataclass
 import pickle
 import threading
-from networking import CommonRequest
+from networking import CommonReque
 
 DEBUG: bool = True
 
@@ -1037,19 +1037,58 @@ class IProtocol:
 
 class RPCError(Exception):
     """
-    Errors for RPC commands.
+    Possible errors for RPC commands.
     """
-    def __init__(self, protocol_error, error_message: str):
+    def __init__(self, error_message: str | None = None):
         super().__init__(error_message)
-        self.protocol_error = protocol_error
-        self.error_message = error_message
+        self.protocol_error_message: str | None = error_message 
+        
+        if error_message:
+            self.protocol_error = True
+        else:
+            self.protocol_error = False
+        
+        self.timeout_error = False
+        self.id_mismatch_error = False
+        self.peer_error = False
+        self.peer_error_message: str | None = None
+        if not self.has_error():
+            raise ValueError("RPCError must be ")
+
+    def has_error(self) -> bool:
+        return self.timeout_error or \
+            self.protocol_error or \
+            self.id_mismatch_error or \
+            self.peer_error
 
     def __str__(self):
-        return self.error_message
+        if self.has_error():
+            if self.protocol_error:
+                return self.protocol_error_message
+            elif self.peer_error:
+                return self.peer_error_message
+        else:
+            return "No error."
+            
 
     @staticmethod
     def no_error():
         pass
+
+
+def get_rpc_error(id: ID, 
+              resp: BaseResponse, 
+              timeout_error: bool,
+              peer_error: ErrorResponse) -> RPCError:
+    error = RPCError()
+    error.id_mismatch_error = id != resp["random_id"]
+    error.timeout_error = timeout_error
+    error.peer_error = peer_error is not None
+    if peer_error:
+        error.peer_error_message = peer_error.error_message
+
+    return error
+    
 
 
 class VirtualProtocol(IProtocol):
@@ -1702,15 +1741,15 @@ class ParallelRouter(BaseRouter):
 #     error: RPCError
 
 
-class TCPSubnetProtocol:  # TODO: does this exist?
+class TCPSubnetProtocol(IProtocol):
 
     def __init__(self):
         pass
 
-    def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact], RPCError]:
+    def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
         id: ID = ID.random_id()
-        ret, error, timeout_error = self.rest_call.post(
-            self.url + ":" + self.port + "//find_node",
+        ret, error, timeout_error = rest_call.post(
+            f"{self.url}:{self.port}//find_node",
             FindNodeSubnetRequest(
                 protocol=sender.protocol,
                 protocol_name=sender.protocol.get_type(),
@@ -1732,6 +1771,110 @@ class TCPSubnetProtocol:  # TODO: does this exist?
                         return [c for c in contacts if c.protocol is not None], get_rpc_error(id, ret, timeout_error, error)
         except Exception as e:
             return None, RPCError(protocol_error=True)
+
+    def find_value(self, sender: Contact, key: ID) 
+        -> tuple[list[Contact] | None, str | None, RPCError]:
+            """
+            Attempt to find the value in the peer network.
+            
+            A null contact list is acceptable as it is a valid return
+            if the value is found.
+            The caller is responsible for checking the timeoutError flag
+            to make sure null contacts is not the result of a timeout
+            error.
+            """
+            random_id = ID.random_id()
+            try:
+                ret = rest_call.post(
+                    f"{self.url}:{port}//find_node",
+                    FindValueSubnetRequest(
+                        protocol=sender.protocol,
+                        protocol_name=sender.protocol,
+                        subnet=subnet,
+                        sender=sender.id.value,
+                        key=key.value,
+                        random_id = random_id.value
+                    ))
+                timeout_error = False
+                error = None
+            except TimeoutError as e:
+                # request timed out.
+                timeout_error = True
+                error = e
+
+            try:
+                contacts = []
+                if ret:
+                    if ret["contacts"]:
+                        for c in ret["contacts"]:
+                            new_contact = Contact(
+                                Protocol.instantiate_protocol(
+                                    c.protocol,
+                                    c.protocol_name,
+                                    ID(c.contact)
+                                ))
+                            contacts.append(new_contact)
+                            return [c for c in contacts if c.protocol != None], 
+                            ret["value"], 
+                            get_rpc_error(random_id, ret, timeout_error, error)
+            except Exception as ex:
+                rpc_error = RPCError(ex.message)
+                rpc_error.protocol_error = True
+                return None, None, rpc_error
+
+    def ping(sender: Contact) -> RPCError:
+        random_id = ID.random_id()
+        try:
+            ret = rest_call.post(
+                f"{self.url}:{port}//find_node",
+                FindValueSubnetRequest(
+                    protocol=sender.protocol,
+                    protocol_name=sender.protocol,
+                    subnet=subnet,
+                    sender=sender.id.value,
+                    key=key.value,
+                    random_id = random_id.value
+                ))
+            timeout_error = False
+            error = None
+        except TimeoutError as e:
+            # request timed out.
+            timeout_error = True
+            error = e
+
+        return get_rpc_error(random_id, ret, timeout_error, error)
+
+    def store(sender: Contact, 
+              key: ID, 
+              val: str, 
+              is_cached=False,
+              expiration_time_sec=0
+             ) -> RPCError:
+        
+        random_id = ID.random_id()
+        try:
+            ret = rest_call.post(
+                f"{self.url}:{port}//find_node",
+            StoreSubnetRequest(
+                protocol=sender.protocol,
+                protocol_name=sender.protocol.get_type(),
+                subnet=subnet,
+                sender=sender.id.value,
+                key=random_id.value,
+                value=val,
+                is_cached=is_cached,
+                expiration_time_sec=expiration_time_sec,
+                random_id=random_id.value
+            ))
+            timeout_error = False
+            error = None
+        except TimeoutError as e:
+            # request timed out.
+            timeout_error = True
+            error = e
+
+        return get_rpc_error(id, ret, timeout_error, error)
+
 
 
 
