@@ -334,7 +334,7 @@ class Node:
                  cache_storage=None):
 
         self.our_contact: Contact = contact
-        self._storage: IStorage = storage
+        self.storage: IStorage = storage
         self.cache_storage = cache_storage
         self.DHT: DHT | None = None
         self.bucket_list = BucketList(contact.id)
@@ -360,7 +360,7 @@ class Node:
             self.cache_storage.set(key, val, expiration_time_sec)
         else:
             self.send_key_values_if_new_contact(sender)
-            self._storage.set(key, val, Constants.EXPIRATION_TIME_SEC)
+            self.storage.set(key, val, Constants.EXPIRATION_TIME_SEC)
 
     def find_node(self, key: ID,
                   sender: Contact) -> tuple[list[Contact], str | None]:
@@ -388,7 +388,7 @@ class Node:
     def find_value(self, key: ID, sender: Contact) \
             -> tuple[list[Contact] | None, str | None]:
         """
-        Find value in self._storage, testing
+        Find value in self.storage, testing
         self.cache_storage if it is not in the former.
         If it is not in either, it gets K
         close contacts from the bucket list.
@@ -398,8 +398,8 @@ class Node:
 
         self.send_key_values_if_new_contact(sender)
 
-        if self._storage.contains(key):
-            return None, self._storage.get(key)
+        if self.storage.contains(key):
+            return None, self.storage.get(key)
         elif self.cache_storage.contains(key):
             return None, self.cache_storage.get(key)
         else:
@@ -427,7 +427,7 @@ class Node:
             if len(contacts) > 0:
                 # and our distance to the key < any other contact's distance
                 # to the key
-                for k in self._storage.get_keys():
+                for k in self.storage.get_keys():
                     # our minimum distance to the contact.
                     distance = min([c.id ^ k for c in contacts])
                     # If our contact is closer, store the contact on its
@@ -436,7 +436,7 @@ class Node:
                         error: RPCError | None = sender.protocol.store(
                             sender=self.our_contact,
                             key=ID(k),
-                            val=self._storage.get(k)
+                            val=self.storage.get(k)
                         )
                         # if self.DHT: self.DHT.handle_error(error, sender)
 
@@ -459,7 +459,7 @@ class Node:
         :param val:
         :return: None
         """
-        self._storage.set(key, val)
+        self.storage.set(key, val)
 
     # REQUEST HANDLERS: TODO: I think they go here?
 

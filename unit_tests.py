@@ -646,7 +646,7 @@ class DHTTest(unittest.TestCase):
         # node 2 has the value
         key = ID(0)
         val = "Test"
-        other_node_2._storage.set(key, val)
+        other_node_2.storage.set(key, val)
 
         # setup node 3
         contact_id_3 = ID(2 ** 158)  # I think this is the same as ID.Zero.SetBit(158)?
@@ -820,7 +820,7 @@ class DHTParallelTest(unittest.TestCase):
         # node 2 has the value
         key = ID(0)
         val = "Test"
-        other_node_2._storage.set(key, val)
+        other_node_2.storage.set(key, val)
 
         # setup node 3
         contact_id_3 = ID(2 ** 158)  # I think this is the same as ID.Zero.SetBit(158)?
@@ -1145,7 +1145,7 @@ class Chapter10Tests(unittest.TestCase):
         existing.simply_store(ID.mid(), val_mid)
 
         self.assertTrue(
-            len(existing._storage.get_keys()) == 2,
+            len(existing.storage.get_keys()) == 2,
             "Expected the existing node to have 2 key-values."
         )
 
@@ -1178,7 +1178,7 @@ class Chapter10Tests(unittest.TestCase):
         unseenvp.node = unseen  # final fixup
 
         self.assertTrue(
-            len(unseen._storage.get_keys()) == 0,
+            len(unseen.storage.get_keys()) == 0,
             "The unseen node shouldn't have any key-values."
         )
         # An unseen node pings, and we should get back val_min only.
@@ -1199,17 +1199,17 @@ class Chapter10Tests(unittest.TestCase):
         # c1 ^ v2 < c2 ^ v2, so it does get sent.
 
         self.assertTrue(
-            len(unseen._storage.get_keys()) == 1,
+            len(unseen.storage.get_keys()) == 1,
             "Expected 1 value stored in our new node."
         )
 
         self.assertTrue(
-            unseen._storage.contains(ID.mid()),
+            unseen.storage.contains(ID.mid()),
             "Expected val_mid to be stored."
         )
 
         self.assertTrue(
-            unseen._storage.get(ID.mid()) == val_mid,
+            unseen.storage.get(ID.mid()) == val_mid,
             "Expected val_mid value to match."
         )
 
@@ -1377,9 +1377,9 @@ class TCPSubnetTests(unittest.TestCase):
         test_value = "Test"
         p2.store(sender, test_id, test_value)
 
-        self.assertTrue(n2._storage.contains(test_id),
+        self.assertTrue(n2.storage.contains(test_id),
                        "Expected remote peer to have value.")
-        self.assertTrue(n2._storage.get(test_id) == test_value,
+        self.assertTrue(n2.storage.get(test_id) == test_value,
                         "Expected remote peer to contain stored value.")
 
     def test_find_nodes_route(self):
@@ -1426,8 +1426,26 @@ class TCPSubnetTests(unittest.TestCase):
                 "Expected find_node to return 1 contact, 0 were returned."
             )
 
-        
-        
+    def test_find_value_router(self):
+        p1 = TCPSubnetProtocol(url=self.local_ip, port=self.port, num=1)
+        p2 = TCPSubnetProtocol(url=self.local_ip, port=self.port, num=2)
+
+        our_id = ID.random_id()
+
+        c1 = Contact(id=our_id, protocol=p1)
+        c2 = Contact(id=ID.random_id(), protocol=p2)
+
+        n1 = Node(c1, VirtualStorage())
+        n2 = Node(c2, VirtualStorage())
+
+        # Node 2 knows about another contact that isn't us
+        # - this is what we are trying to find
+
+        test_id = ID.random_id()
+        test_value = "Test"
+        p2.store(test_id, test_value)
+
+        self.assertTrue(n2.storage)
 
 
 if __name__ == '__main__':
