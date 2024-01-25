@@ -10,13 +10,13 @@ def setup_split_failure(bucket_list = None):
     # 2 ** 159 ... 2 ** 160 range.
 
     # May be incorrect - book does some weird byte manipulation.
-    host_ID: ID = ID.random_id(2 ** 158, 2 ** 159 - 1)
+    host_id: ID = ID.random_id(2 ** 158, 2 ** 159 - 1)
 
-    dummy_contact: Contact = Contact(host_ID, VirtualProtocol())
+    dummy_contact: Contact = Contact(host_id, VirtualProtocol())
     dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
 
     if not bucket_list:
-        bucket_list = BucketList(our_id=host_ID) # dummy_contact)
+        bucket_list = BucketList(our_id=host_id) # dummy_contact)
 
     # Also add a contact in this 0 - 2 ** 159 range
     # This ensures that only 1 bucket split will occur after 20 nodes with ID >= 2 ** 159 are added.
@@ -61,9 +61,6 @@ def setup_split_failure(bucket_list = None):
     return bucket_list
 
 
-    
-
-
 class KBucketTest(unittest.TestCase):
 
     def test_too_many_contacts(self):
@@ -92,8 +89,7 @@ class AddContactTest(unittest.TestCase):
 
         dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
 
-        bucket_list: BucketList = BucketList(ID.random_id())  # ,
-                                             # dummy_contact)
+        bucket_list: BucketList = BucketList(ID.random_id())  # dummy_contact)
 
         for i in range(Constants.K):
             bucket_list.add_contact(Contact(ID.random_id()))
@@ -128,8 +124,7 @@ class AddContactTest(unittest.TestCase):
 
         # dummy_contact = Contact(VirtualProtocol(), ID(0))
         #  ((VirtualProtocol)dummyContact.Protocol).Node = new Node(dummyContact, new VirtualStorage());
-        bucket_list: BucketList = BucketList(ID.random_id()) # ,
-                                             # dummy_contact)
+        bucket_list: BucketList = BucketList(ID.random_id())  # , dummy_contact)
         for i in range(Constants.K):
             bucket_list.add_contact(Contact(ID.random_id()))
         bucket_list.add_contact(Contact(ID.random_id()))
@@ -256,7 +251,8 @@ class NodeLookupTests(unittest.TestCase):
             # n_other = [i for i in nodes if i != n]
 
             # From book:
-            # nodes.ForEach(n => nodes.Where(nOther => nOther != n).ForEach(nOther => n.BucketList.AddContact(nOther.OurContact)));
+            # nodes.ForEach(n => nodes.Where(nOther => nOther != n).
+            # ForEach(nOther => n.BucketList.AddContact(nOther.OurContact)));
             for other_node in n_other:
                 n.bucket_list.add_contact(other_node.our_contact)
 
@@ -330,14 +326,15 @@ class NodeLookupTests(unittest.TestCase):
         self.closer_contacts_alt_computation: list[Contact] = []
         self.further_contacts_alt_computation: list[Contact] = []
 
-        self.nearest_contact_node = sorted(self.contacts_to_query, key=lambda n: n.id ^ key)[0]
+        self.nearest_contact_node = sorted(self.contacts_to_query,
+                                           key=lambda contacts_to_query_nodes: contacts_to_query_nodes.id ^ key)[0]
         self.distance = self.nearest_contact_node.id ^ key
         
     def get_alt_close_and_far(self, contacts_to_query: list[Contact], 
                               closer: list[Contact], 
                               further: list[Contact],
                               nodes: list[Node],
-                              key: ID, # I think this is needed.
+                              key: ID,  # I think this is needed.
                               distance
                               ):
         """
@@ -353,7 +350,7 @@ class NodeLookupTests(unittest.TestCase):
             # by the get_close_contacts call are contacts we're querying, so they are
             # being excluded.
 
-            our_id = self.router.node.our_contact.id # our nodes ID
+            our_id = self.router.node.our_contact.id  # our nodes ID
 
             # all close contacts to us, excluding ourselves
             temp_list = contact_node.bucket_list.get_close_contacts(key, our_id)
@@ -371,8 +368,7 @@ class NodeLookupTests(unittest.TestCase):
                 elif close_contact.id ^ key >= distance and close_contact not in further:
                     further.append(close_contact)
     
-    def dont_test_lookup(self):
-
+    def test_lookup(self):
 
         for i in range(100):
             id = ID.random_id(seed=i)
@@ -380,7 +376,8 @@ class NodeLookupTests(unittest.TestCase):
             self.__setup()
 
             close_contacts: list[Contact] = self.router.lookup(
-                key=id, rpc_call=self.router.rpc_find_nodes, give_me_all=True)[1]
+                key=id, rpc_call=self.router.rpc_find_nodes, give_me_all=True)["contacts"]
+
             contacted_nodes: list[Contact] = close_contacts
 
             self.get_alt_close_and_far(self.contacts_to_query,
@@ -886,11 +883,11 @@ class BootstrappingTests(unittest.TestCase):
             vp.append(VirtualProtocol())
 
         # us
-        dht_us: DHT = DHT(ID.random_id(), vp[0], VirtualStorage, Router())
+        dht_us: DHT = DHT(ID.random_id(), vp[0], storage_factory=VirtualStorage, router=Router())
         vp[0].node = dht_us._router.node
 
         # our bootstrap peer
-        dht_bootstrap: DHT = DHT(ID.random_id(), vp[1], VirtualStorage, Router())
+        dht_bootstrap: DHT = DHT(ID.random_id(), vp[1], storage_factory=VirtualStorage, router=Router())
         vp[1].node = dht_bootstrap._router.node
 
         # stops pycharm saying it could be undefined later on. THIS LINE IS USELESS.
@@ -947,12 +944,12 @@ class BootstrappingTests(unittest.TestCase):
             vp.append(VirtualProtocol())
 
         # Us, ID doesn't matter.
-        dht_us: DHT = DHT(ID.random_id(), vp[0], VirtualStorage, Router())
+        dht_us: DHT = DHT(ID.random_id(), vp[0], storage_factory=VirtualStorage, router=Router())
         vp[0].node = dht_us._router.node
 
         # our bootstrap peer
         # all IDs are < 2 ** 159
-        dht_bootstrap: DHT = DHT(ID.random_id(0, 2 ** 159 - 1), vp[1], VirtualStorage, Router())
+        dht_bootstrap: DHT = DHT(ID.random_id(0, 2 ** 159 - 1), vp[1], storage_factory=VirtualStorage, router=Router())
         vp[1].node = dht_bootstrap._router.node
         # print(sum([len([c for c in b.contacts]) for b in dht_bootstrap._router.node.bucket_list.buckets]))
 
@@ -989,9 +986,11 @@ class BootstrappingTests(unittest.TestCase):
 
         self.assertTrue(n.our_contact.id == important_contact.protocol.node.our_contact.id == ID.max())
 
-        self.assertTrue(len(n.bucket_list.contacts()) == 10, f"contacts: {len(n.bucket_list.contacts())}")
+        self.assertTrue(len(n.bucket_list.contacts()) == 10,
+                        f"contacts: {len(n.bucket_list.contacts())}")
 
-        self.assertTrue(len(important_contact.protocol.node.bucket_list.contacts()) == 10, f"contacts: {len(n.bucket_list.contacts())}")
+        self.assertTrue(len(important_contact.protocol.node.bucket_list.contacts()) == 10,
+                        f"contacts: {len(n.bucket_list.contacts())}")
 
         self.assertTrue(important_contact.id == ID.max(), "What else could it be?")
 
@@ -1006,7 +1005,6 @@ class BootstrappingTests(unittest.TestCase):
 
         self.assertTrue([len(b.contacts) for b in n.bucket_list.buckets] == [10],
                         "Must have 10 contacts in node.")
-
 
         print("Starting bootstrap...")
         dht_us.bootstrap(dht_bootstrap._router.node.our_contact)
@@ -1025,7 +1023,7 @@ class BucketManagementTests(unittest.TestCase):
         Tests that a nonresponding contact is evicted after 
         Constants.EVICTION_LIMIT tries.
         """
-        dht = DHT(ID(0), VirtualProtocol(), None, Router())
+        dht = DHT(ID(0), VirtualProtocol(), storage_factory=None, router=Router())
         bucket_list: BucketList = setup_split_failure(dht.node.bucket_list)
         self.assertTrue(len(bucket_list.buckets) == 2, 
                        "Bucket split should have occurred.")
@@ -1075,7 +1073,7 @@ class BucketManagementTests(unittest.TestCase):
         """
         Tests that a nonresponding contact puts the new contact into a pending list.
         """
-        dht = DHT(ID(0), VirtualProtocol(), None, Router())
+        dht = DHT(ID(0), VirtualProtocol(), storage_factory=None, router=Router())
         bucket_list: BucketList = setup_split_failure(dht.node.bucket_list)
 
         self.assertTrue(len(bucket_list.buckets) == 2,
@@ -1106,13 +1104,12 @@ class BucketManagementTests(unittest.TestCase):
         bucket_list.add_contact(next_new_contact)
 
         self.assertTrue(len(bucket_list.buckets[1].contacts) == 20,
-                       "Expecting 20 contacts in bucket 1."
-                       )
+                        "Expecting 20 contacts in bucket 1.")
         # Verify can_split -> Evict happened.
         self.assertTrue(len(dht.pending_contacts) == 1,
                         "Expected one pending contact.")
-        self.assertTrue(next_new_contact in dht.pending_contacts, 
-                       "Expected pending contact to be the 21st contact.")
+        self.assertTrue(next_new_contact in dht.pending_contacts,
+                        "Expected pending contact to be the 21st contact.")
         self.assertTrue(len(dht.eviction_count) == 1, 
                         "Expected one contact to be pending eviction.")
 
