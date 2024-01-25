@@ -5,7 +5,8 @@ from typing import Callable, TypedDict
 from dataclasses import dataclass
 import pickle
 import threading
-from networking import CommonReque
+
+from networking import *
 
 DEBUG: bool = True
 
@@ -108,6 +109,7 @@ class Constants:
     BUCKET_REFRESH_INTERVAL: int = 3600  # seconds in an hour.
     KEY_VALUE_REPUBLISH_INTERVAL: int = 86400  # Seconds in a day.
     DHT_SERIALISED_SUFFIX = "dht"
+    REQUEST_TIMEOUT = 0.5  # 500ms
 
 class ID:
 
@@ -1745,9 +1747,10 @@ class ParallelRouter(BaseRouter):
 
 class TCPSubnetProtocol(IProtocol):
 
-    def __init__(self):
-        pass
-
+    def __init__(self, url, port, num):  # TODO: What is num?
+        self.url = url
+        self.port = port
+        
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
         id: ID = ID.random_id()
         ret, error, timeout_error = rest_call.post(
@@ -1770,7 +1773,9 @@ class TCPSubnetProtocol(IProtocol):
                                 ]
                     # Return only contacts with supported protocols.
                     if contacts:
-                        return [c for c in contacts if c.protocol is not None], get_rpc_error(id, ret, timeout_error, error)
+                        return [c for c in contacts if c.protocol is 
+                                not None], 
+                        get_rpc_error(id, ret, timeout_error, error)
         except Exception as e:
             return None, RPCError(protocol_error=True)
 
@@ -1788,7 +1793,7 @@ class TCPSubnetProtocol(IProtocol):
             random_id = ID.random_id()
             try:
                 ret = rest_call.post(
-                    f"{self.url}:{port}//find_node",
+                    f"{self.url}:{self.port}//find_node",
                     FindValueSubnetRequest(
                         protocol=sender.protocol,
                         protocol_name=sender.protocol,
@@ -1828,7 +1833,7 @@ class TCPSubnetProtocol(IProtocol):
         random_id = ID.random_id()
         try:
             ret = rest_call.post(
-                f"{self.url}:{port}//find_node",
+                f"{self.url}:{self.port}//find_node",
                 FindValueSubnetRequest(
                     protocol=sender.protocol,
                     protocol_name=sender.protocol,
@@ -1856,7 +1861,7 @@ class TCPSubnetProtocol(IProtocol):
         random_id = ID.random_id()
         try:
             ret = rest_call.post(
-                f"{self.url}:{port}//find_node",
+                f"{self.url}:{self.port}//find_node",
             StoreSubnetRequest(
                 protocol=sender.protocol,
                 protocol_name=sender.protocol.get_type(),
