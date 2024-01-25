@@ -1076,6 +1076,7 @@ class RPCError(Exception):
     def no_error():
         pass
 
+
 class IProtocol:
     """
     Interface for all protocols to follow.
