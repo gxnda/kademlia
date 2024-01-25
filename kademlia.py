@@ -293,7 +293,7 @@ class IStorage:
 class Contact:
 
     def __init__(self, id: ID, protocol=None):
-        self.protocol: VirtualProtocol | IProtocol = protocol
+        self.protocol: IProtocol = protocol
         self.id = id
         self.last_seen: datetime = datetime.now()
 
@@ -313,9 +313,24 @@ class QueryReturn(TypedDict):
 
 
 class BaseRouter:
+    def __init__(self):
+        self.closer_contacts: list[Contact]
+        self.further_contacts: list[Contact]
+        self.node: Node
+        self.dht: DHT
+        # self.locker
+
+    @abstractmethod
     def lookup(self, key: ID, rpc_call: Callable, give_me_all=False) -> QueryReturn | None:
         pass
 
+    def find_closest_nonempty_kbucket(self, key: ID) -> KBucket:
+        closest: KBucket = [b for b in self.node.bucket_list.buckets if len(b.contacts) > 0][0]
+        if closest is None:
+            raise AllKBucketsAreEmptyError(
+                "No non-empty buckets exist. You must first register a peer and add that peer to your bucketlist.")
+
+        return closest
 
 class ContactQueueItem(TypedDict):
     key: ID
@@ -1086,14 +1101,18 @@ class IProtocol:
     def ping(self, sender: Contact) -> RPCError:
         pass
 
+    @abstractmethod
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact], RPCError]:
         pass
 
+    @abstractmethod
     def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact], str, RPCError]:
         pass
 
+    @abstractmethod
     def store(self, sender: Contact, key: ID, val: str, is_cached: bool) -> RPCError:
         pass
+
 
 def get_rpc_error(id: ID, 
               resp: BaseResponse, 
@@ -1104,10 +1123,9 @@ def get_rpc_error(id: ID,
     error.timeout_error = timeout_error
     error.peer_error = peer_error is not None
     if peer_error:
-        error.peer_error_message = peer_error.error_message
+        error.peer_error_message = peer_error["error_message"]
 
     return error
-    
 
 
 class VirtualProtocol(IProtocol):
@@ -1120,6 +1138,7 @@ class VirtualProtocol(IProtocol):
     def __init__(self, node: Node | None = None, responds=True) -> None:
         self.responds = responds
         self.node = node
+        self.type = "VirtualProtocol"
 
     def ping(self, sender: Contact) -> RPCError | None:
         if self.responds:
@@ -1254,8 +1273,7 @@ class DHT:
         
         :param id: ID associated with the DHT. TODO: More info.
         
-        :param protocol: Protocol used by the DHT. TODO: More info - I'm not even sure 
-        if this is correct.
+        :param protocol: Protocol implemented by the DHT.
         
         :param storage_factory: Storage to be used for all storage mechanisms - 
         if specific mechanisms are not provided.
@@ -1769,7 +1787,7 @@ class TCPSubnetProtocol(IProtocol):
         self.port = port
         self.responds = True
         self.subnet = None
-        self.type = getattr(self, "__name__", str(self))
+        self.type = "TCPSubnetProtocol"
 
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
         id: ID = ID.random_id()
@@ -1853,7 +1871,7 @@ class TCPSubnetProtocol(IProtocol):
                 f"{self.url}:{self.port}//ping",
                 FindValueSubnetRequest(
                     protocol=sender.protocol,
-                    protocol_name=sender.protocol,
+                    protocol_name=sender.protocol.type,
                     subnet=self.subnet,
                     sender=sender.id.value,
                     key=key.value,
