@@ -1,6 +1,7 @@
 import random
 from abc import abstractmethod
 from datetime import datetime, timedelta
+from math import ceil, log
 from typing import Callable, TypedDict
 from dataclasses import dataclass
 import pickle
@@ -111,6 +112,7 @@ class Constants:
     DHT_SERIALISED_SUFFIX = "dht"
     REQUEST_TIMEOUT = 0.5  # 500ms
 
+
 class ID:
 
     def __init__(self, value: int):
@@ -121,10 +123,9 @@ class ID:
             value: (int) ID denary value
         """
 
-        self.MAX_ID = 2**160
+        self.MAX_ID = 2 ** Constants.B
         self.MIN_ID = 0
-        if not (self.MAX_ID > value >= self.MIN_ID):
-            # TODO: check if value >= self.MIN_ID is valid.
+        if not (self.MAX_ID > value >= self.MIN_ID):  # ID can be 0, this is used in unit tests.
             raise ValueError(
                 f"ID {value} is out of range - must a positive integer less than 2^160."
             )
@@ -138,23 +139,36 @@ class ID:
 
     def bin(self) -> str:
         """
-        Returns value in binary - this does not include a 0b tag at the start.
+        Returns big-endian value in binary - this does not include a 0b tag at the start.
+        :return: Returns the binary value as a string, with length Constants.B by default
         """
-        return bin(self.value)[2:]
+
+        binary = bin(self.value)[2:]
+        number_of_zeroes_to_add = ceil(log(self.MAX_ID, 2)) - len(binary)
+        padded_binary = number_of_zeroes_to_add * "0" + binary
+        return padded_binary
+
+    def set_bit(self, bit: int):
+        """
+        Sets a given bit to 1, Little endian. (set_bit(0) sets smallest bit to 0)
+        :param bit: bit to be set.
+        :return: Nothing
+        """
+        bits = self.little_endian_bytes()
+        bits[bit] = "1"
+        return None
 
     def big_endian_bytes(self) -> list[str]:
         """
-        Returns the ID in big-endian binary - largest bit is at index 0.
+        Returns the padded ID in big-endian binary - largest bit is at index 0.
         """
-        big_endian = [x for x in self.bin()[2:]]
-        return big_endian
+        return [x for x in self.bin()]
 
     def little_endian_bytes(self) -> list[str]:
         """
-        Returns the ID in little-endian binary - smallest bit is at index 0.
+        Returns the padded ID in little-endian binary - smallest bit is at index 0.
         """
-        big_endian = [x for x in self.bin()[2:]][::-1]
-        return big_endian
+        return self.big_endian_bytes()[::-1]
 
     def __xor__(self, val) -> int:
         if isinstance(val, ID):
@@ -459,20 +473,20 @@ class Node:
     # REQUEST HANDLERS: TODO: I think they go here?
 
     def server_ping(self, request: CommonRequest) -> dict:
-        protocol: IProtocol = self._protocol.instantiate_protocol(
+        protocol: IProtocol = Protocol.instantiate_protocol(
             request["protocol"],
             request["protocol_name"]
         )
         self.ping(
             Contact(
-                protocol=self._protocol,
-                id=ID(request.sender)
+                protocol=protocol,
+                id=ID(request["sender"])
             )
         )
         return {"random_id": request["random_id"]}
 
     def server_store(self, request: CommonRequest) -> dict:
-        protocol: IProtocol = self._protocol.instantiate_protocol(
+        protocol: IProtocol = Protocol.instantiate_protocol(
             request["protocol"],
             request["protocol_name"]
         )
@@ -489,7 +503,7 @@ class Node:
         return {"random_id": request["random_id"]}
 
     def server_find_node(self, request: CommonRequest) -> dict:
-        protocol: IProtocol = self._protocol.instantiate_protocol(
+        protocol: IProtocol = Protocol.instantiate_protocol(
             request["protocol"],
             request["protocol_name"]
         )
@@ -515,7 +529,7 @@ class Node:
         return {"contacts": contact_dict, "random_id": request["random_id"]}
 
     def server_find_value(self, request: CommonRequest) -> dict:
-        protocol: IProtocol = self._protocol.instantiate_protocol(
+        protocol: IProtocol = Protocol.instantiate_protocol(
             request["protocol"],
             request["protocol_name"]
         )
@@ -1098,6 +1112,10 @@ class IProtocol:
     """
     Interface for all protocols to follow.
     """
+    @property
+    @abstractmethod
+    def node(self):
+        pass
 
     @abstractmethod
     def ping(self, sender: Contact) -> RPCError:
@@ -1902,8 +1920,8 @@ class TCPSubnetProtocol(IProtocol):
                 f"{self.url}:{self.port}//store",
             StoreSubnetRequest(
                 protocol=sender.protocol,
-                protocol_name=sender.protocol.get_type(),
-                subnet=subnet,
+                protocol_name=sender.protocol.type,
+                subnet=self.subnet,
                 sender=sender.id.value,
                 key=random_id.value,
                 value=val,
@@ -1918,7 +1936,7 @@ class TCPSubnetProtocol(IProtocol):
             timeout_error = True
             error = e
 
-        return get_rpc_error(id, ret, timeout_error, error)
+        return get_rpc_error(random_id, ret, timeout_error, error)
 
 
 
