@@ -1764,11 +1764,12 @@ class ParallelRouter(BaseRouter):
 
 class TCPSubnetProtocol(IProtocol):
 
-    def __init__(self, url, port, num,):  # TODO: What is num?
+    def __init__(self, url: str, port: int, subnet: int):
         self.url = url
         self.port = port
         self.responds = True
-        self.subnet = None  # TODO: Implement. (Is num subnet?)
+        self.subnet = None
+        self.type = getattr(self, "__name__", str(self))
 
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
         id: ID = ID.random_id()
@@ -1873,7 +1874,7 @@ class TCPSubnetProtocol(IProtocol):
               val: str, 
               is_cached=False,
               expiration_time_sec=0
-             ) -> RPCError:
+              ) -> RPCError:
         
         random_id = ID.random_id()
         try:

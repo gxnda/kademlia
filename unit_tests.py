@@ -1336,8 +1336,8 @@ class TCPSubnetTests(unittest.TestCase):
         """
         Makes sure no exceptions are thrown when pinging a contact.
         """
-        p1 = TCPSubnetProtocol(url=self.local_ip, port=self.port, num=1)
-        p2 = TCPSubnetProtocol(url=self.local_ip, port=self.port, num=2)
+        p1 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=1)
+        p2 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=2)
         
         our_id = ID.random_id()
         
@@ -1355,8 +1355,8 @@ class TCPSubnetTests(unittest.TestCase):
         p2.ping(c1)
 
     def test_store_route(self):
-        p1 = TCPSubnetProtocol(url=self.local_ip, port=self.port, num=1)
-        p2 = TCPSubnetProtocol(url=self.local_ip, port=self.port, num=2)
+        p1 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=1)
+        p2 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=2)
 
         our_id = ID.random_id()
 
@@ -1383,8 +1383,8 @@ class TCPSubnetTests(unittest.TestCase):
                         "Expected remote peer to contain stored value.")
 
     def test_find_nodes_route(self):
-        p1 = TCPSubnetProtocol(url=self.local_ip, port=self.port, num=1)
-        p2 = TCPSubnetProtocol(url=self.local_ip, port=self.port, num=2)
+        p1 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=1)
+        p2 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=2)
 
         our_id = ID.random_id()
 
@@ -1427,8 +1427,8 @@ class TCPSubnetTests(unittest.TestCase):
             )
 
     def test_find_value_router(self):
-        p1 = TCPSubnetProtocol(url=self.local_ip, port=self.port, num=1)
-        p2 = TCPSubnetProtocol(url=self.local_ip, port=self.port, num=2)
+        p1 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=1)
+        p2 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=2)
 
         our_id = ID.random_id()
 
@@ -1466,8 +1466,8 @@ class TCPSubnetTests(unittest.TestCase):
         )
 
     def test_unresponsive_node(self):
-        p1 = TCPSubnetProtocol(url=self.local_ip, port=self.port, num=1)
-        p2 = TCPSubnetProtocol(url=self.local_ip, port=self.port, num=2)
+        p1 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=1)
+        p2 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=2)
         p2.responds = False
         our_id = ID.random_id()
 
