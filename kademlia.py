@@ -1121,7 +1121,6 @@ class IProtocol:
     def node(self, new_node):
         self.node = new_node
 
-
     @abstractmethod
     def ping(self, sender: Contact) -> RPCError:
         pass
