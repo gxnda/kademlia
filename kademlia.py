@@ -1030,18 +1030,17 @@ class Router(BaseRouter):
         pass
 
 
-class IProtocol:
-    # TODO: Create this!!
-    # It shouldn't be too hard, it's just making skeletons
-    # for type hinting all protocol methods.
-    pass
-
-
 class RPCError(Exception):
     """
     Possible errors for RPC commands.
     """
-    def __init__(self, error_message: str | None = None):
+    def __init__(self,
+                 error_message: str | None = None,
+                 timeout_error: bool = False,
+                 id_mismatch_error: bool = False,
+                 peer_error: bool = False,
+                 peer_error_message: str | None = None
+                 ):
         super().__init__(error_message)
         self.protocol_error_message: str | None = error_message 
         
@@ -1050,12 +1049,13 @@ class RPCError(Exception):
         else:
             self.protocol_error = False
         
-        self.timeout_error = False
-        self.id_mismatch_error = False
-        self.peer_error = False
-        self.peer_error_message: str | None = None
-        if not self.has_error():
-            raise ValueError("RPCError must be ")
+        self.timeout_error = timeout_error
+        self.id_mismatch_error = id_mismatch_error
+        self.peer_error = peer_error
+        self.peer_error_message: str | None = peer_error_message
+
+        if self.peer_error_message and not self.peer_error:
+            raise ValueError("Parameter peer error message requires a peer error.")
 
     def has_error(self) -> bool:
         return self.timeout_error or \
@@ -1071,12 +1071,28 @@ class RPCError(Exception):
                 return self.peer_error_message
         else:
             return "No error."
-            
 
     @staticmethod
     def no_error():
         pass
 
+class IProtocol:
+    """
+    Interface for all protocols to follow.
+    """
+
+    @abstractmethod
+    def ping(self, sender: Contact) -> RPCError:
+        pass
+
+    def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact], RPCError]:
+        pass
+
+    def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact], str, RPCError]:
+        pass
+
+    def store(self, sender: Contact, key: ID, val: str, is_cached: bool) -> RPCError:
+        pass
 
 def get_rpc_error(id: ID, 
               resp: BaseResponse, 
@@ -1747,10 +1763,12 @@ class ParallelRouter(BaseRouter):
 
 class TCPSubnetProtocol(IProtocol):
 
-    def __init__(self, url, port, num):  # TODO: What is num?
+    def __init__(self, url, port, num,):  # TODO: What is num?
         self.url = url
         self.port = port
-        
+        self.responds = True
+        self.subnet = None  # TODO: Implement. (Is num subnet?)
+
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
         id: ID = ID.random_id()
         ret, error, timeout_error = rest_call.post(
@@ -1767,20 +1785,17 @@ class TCPSubnetProtocol(IProtocol):
             contacts = []
             if ret:
                 if ret["contacts"]:  # TODO: Is ret a dictionary?
-                    contacts = [
-                        Contact(Protocol.instantiate_protocol(c.protocol, val["protocol_name"])
-                                for c in ret["contacts"]
-                                ]
+                    contacts = []
+                    for c in ret["contacts"]:
+                        new_c = Contact(Protocol.instantiate_protocol(c.protocol, val["protocol_name"]))
+                        contacts.append(new_c)
                     # Return only contacts with supported protocols.
                     if contacts:
-                        return [c for c in contacts if c.protocol is 
-                                not None], 
-                        get_rpc_error(id, ret, timeout_error, error)
+                        return [c for c in contacts if c.protocol is not None], get_rpc_error(id, ret, timeout_error, error)
         except Exception as e:
             return None, RPCError(protocol_error=True)
 
-    def find_value(self, sender: Contact, key: ID) 
-        -> tuple[list[Contact] | None, str | None, RPCError]:
+    def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, str | None, RPCError]:
             """
             Attempt to find the value in the peer network.
             
@@ -1793,7 +1808,7 @@ class TCPSubnetProtocol(IProtocol):
             random_id = ID.random_id()
             try:
                 ret = rest_call.post(
-                    f"{self.url}:{self.port}//find_node",
+                    f"{self.url}:{self.port}//find_value",
                     FindValueSubnetRequest(
                         protocol=sender.protocol,
                         protocol_name=sender.protocol,
@@ -1829,15 +1844,15 @@ class TCPSubnetProtocol(IProtocol):
                 rpc_error.protocol_error = True
                 return None, None, rpc_error
 
-    def ping(sender: Contact) -> RPCError:
+    def ping(self, sender: Contact) -> RPCError:
         random_id = ID.random_id()
         try:
             ret = rest_call.post(
-                f"{self.url}:{self.port}//find_node",
+                f"{self.url}:{self.port}//ping",
                 FindValueSubnetRequest(
                     protocol=sender.protocol,
                     protocol_name=sender.protocol,
-                    subnet=subnet,
+                    subnet=self.subnet,
                     sender=sender.id.value,
                     key=key.value,
                     random_id = random_id.value
@@ -1851,7 +1866,8 @@ class TCPSubnetProtocol(IProtocol):
 
         return get_rpc_error(random_id, ret, timeout_error, error)
 
-    def store(sender: Contact, 
+    def store(self,
+              sender: Contact,
               key: ID, 
               val: str, 
               is_cached=False,
@@ -1861,7 +1877,7 @@ class TCPSubnetProtocol(IProtocol):
         random_id = ID.random_id()
         try:
             ret = rest_call.post(
-                f"{self.url}:{self.port}//find_node",
+                f"{self.url}:{self.port}//store",
             StoreSubnetRequest(
                 protocol=sender.protocol,
                 protocol_name=sender.protocol.get_type(),

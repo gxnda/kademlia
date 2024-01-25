@@ -2,7 +2,7 @@ import unittest
 
 from kademlia import BucketList, VirtualProtocol, \
     Constants, Contact, ID, KBucket, TooManyContactsError, Node, \
-    Router, VirtualStorage, DHT, ParallelRouter, TCPSubnetProtocol
+    Router, VirtualStorage, DHT, ParallelRouter, TCPSubnetProtocol, RPCError
 
 
 def setup_split_failure(bucket_list = None):
@@ -1445,7 +1445,52 @@ class TCPSubnetTests(unittest.TestCase):
         test_value = "Test"
         p2.store(test_id, test_value)
 
-        self.assertTrue(n2.storage)
+        self.assertTrue(
+            n2.storage.contains(test_id),
+            "Expected remote peer to have value."
+        )
+
+        self.assertTrue(
+            n2.storage.get(test_id) == test_value,
+            "Expected node to store the correct value."
+        )
+
+        ret = p2.find_value(c1, test_id)
+
+        self.assertTrue(
+            ret["contacts"] is None, "Expected to find value."  # huh?
+        )
+
+        self.assertTrue(
+            ret["val"] == test_value, "Value does not match expected value from peer."
+        )
+
+    def test_unresponsive_node(self):
+        p1 = TCPSubnetProtocol(url=self.local_ip, port=self.port, num=1)
+        p2 = TCPSubnetProtocol(url=self.local_ip, port=self.port, num=2)
+        p2.responds = False
+        our_id = ID.random_id()
+
+        c1 = Contact(our_id, p1)
+        c2 = Contact(ID.random_id(), p2)
+
+        n1 = Node(c1, VirtualStorage())
+        n2 = Node(c2, VirtualStorage())
+
+        self.server.register_protocol(p1.subnet, n1)
+        self.server.register_protocol(p2.subnet, n2)
+        self.server.start()
+
+        test_id = ID.random_id()
+        test_value = "Test"
+
+        error: RPCError = p2.store(c1, test_id, test_value)
+
+        self.assertTrue(
+            error.timeout_error,
+            "Expected timeout when contacting unresponsive node."
+        )
+
 
 
 if __name__ == '__main__':
