@@ -312,26 +312,6 @@ class QueryReturn(TypedDict):
     found_by: Contact | None
 
 
-class BaseRouter:
-    def __init__(self):
-        self.closer_contacts: list[Contact]
-        self.further_contacts: list[Contact]
-        self.node: Node
-        self.dht: DHT
-        # self.locker
-
-    @abstractmethod
-    def lookup(self, key: ID, rpc_call: Callable, give_me_all=False) -> QueryReturn | None:
-        pass
-
-    def find_closest_nonempty_kbucket(self, key: ID) -> KBucket:
-        closest: KBucket = [b for b in self.node.bucket_list.buckets if len(b.contacts) > 0][0]
-        if closest is None:
-            raise AllKBucketsAreEmptyError(
-                "No non-empty buckets exist. You must first register a peer and add that peer to your bucketlist.")
-
-        return closest
-
 class ContactQueueItem(TypedDict):
     key: ID
     contact: Contact
@@ -691,6 +671,28 @@ class KBucket:
         index = contact_ids.index(contact.id)
         self.contacts[index] = contact
         contact.touch()
+
+
+class BaseRouter:
+    def __init__(self):
+        self.closer_contacts: list[Contact]
+        self.further_contacts: list[Contact]
+        self.node: Node
+        self.dht: DHT
+        # self.locker
+
+    @abstractmethod
+    def lookup(self, key: ID, rpc_call: Callable, give_me_all=False) -> QueryReturn | None:
+        pass
+
+    def find_closest_nonempty_kbucket(self, key: ID) -> KBucket:
+        closest: KBucket = [b for b in self.node.bucket_list.buckets if len(b.contacts) > 0][0]
+        if closest is None:
+            raise AllKBucketsAreEmptyError(
+                "No non-empty buckets exist. You must first register a peer and add that peer to your bucketlist.")
+
+        return closest
+
 
 
 class BucketList:
