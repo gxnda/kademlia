@@ -107,8 +107,13 @@ class StoreResponse(BaseResponse):
     pass
 
 
-class TCPServer:  # TODO: Create.
+class TCPServer(HTTPServer):  # TODO: Create.
     def __init__(self, node):
+        server_address: tuple[str, int] = (node.our_contact.protocol.ip, node.our_contact.protocol.port)
+        super().__init__(
+            server_address=server_address,
+            RequestHandlerClass=BaseHTTPRequestHandler
+        )
         self.route_packets = {
             "//Ping": PingRequest,
             "//Store": StoreRequest,
@@ -119,12 +124,11 @@ class TCPServer:  # TODO: Create.
 
 
 class TCPSubnetServer(HTTPServer):
-    def __init__(self, server_address=tuple[str, int]):
+    def __init__(self, server_address: tuple[str, int]):
         super().__init__(
             server_address=server_address,
             RequestHandlerClass=BaseHTTPRequestHandler
         )
-
 
         # TODO: Should these be double slashed?
         self.route_packets: dict[str: type] = {
