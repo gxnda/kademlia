@@ -209,7 +209,6 @@ class ID:
     def __str__(self) -> str:
         return str(self.denary())
 
-    
     @classmethod
     def max(cls):
         """
@@ -309,9 +308,12 @@ class Contact:
 
     def __init__(self, id: ID, protocol=None):
 <<<<<<< HEAD
+<<<<<<< HEAD
         self.protocol: IProtocol = protocol
 =======
         # The only protocol should not be 
+=======
+>>>>>>> 32e4c21 (Revert "misc: changes from replit")
         self.protocol: VirtualProtocol | IProtocol = protocol
 >>>>>>> 1335945 (misc: changes from replit)
         self.id = id
@@ -497,7 +499,7 @@ class Node:
             request["protocol_name"]
         )
         self.store(
-            sender=Contact(
+            Contact(
                 id=ID(request["sender"]),
                 protocol=protocol
             ),
