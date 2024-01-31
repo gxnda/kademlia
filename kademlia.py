@@ -1949,8 +1949,3 @@ class TCPSubnetProtocol(IProtocol):
             error = e
 
         return get_rpc_error(random_id, ret, timeout_error, error)
-
-
-
-
-
