@@ -37,7 +37,7 @@ class StoreRequest(BaseRequest, TypedDict):
 
 class ITCPSubnet(TypedDict):
     """
-    Interface used for TCP.
+    Interface used for TCP calls.
     """
     subnet: int
 

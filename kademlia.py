@@ -209,6 +209,7 @@ class ID:
     def __str__(self) -> str:
         return str(self.denary())
 
+    
     @classmethod
     def max(cls):
         """
@@ -307,7 +308,12 @@ class IStorage:
 class Contact:
 
     def __init__(self, id: ID, protocol=None):
+<<<<<<< HEAD
         self.protocol: IProtocol = protocol
+=======
+        # The only protocol should not be 
+        self.protocol: VirtualProtocol | IProtocol = protocol
+>>>>>>> 1335945 (misc: changes from replit)
         self.id = id
         self.last_seen: datetime = datetime.now()
 
@@ -491,7 +497,7 @@ class Node:
             request["protocol_name"]
         )
         self.store(
-            Contact(
+            sender=Contact(
                 id=ID(request["sender"]),
                 protocol=protocol
             ),
