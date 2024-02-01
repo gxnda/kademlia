@@ -1143,9 +1143,33 @@ class Router(BaseRouter):
 
         return val is not None  # Can you use "is not" between empty strings and None?
 
-    def query(self, key, new_nodes_to_query, rpc_call, closer_contacts,
-              further_contacts) -> QueryReturn:
-        pass
+    def query(self,
+              key: ID,
+              nodes_to_query: list[Contact],
+              rpc_call: Callable,
+              closer_contacts: list[Contact],
+              further_contacts: list[Contact]) -> QueryReturn:
+        found: bool = False
+        found_by: Optional[Contact] = None
+        val: str = ""
+
+        for n in nodes_to_query:
+            found, val, found_by = self.get_closer_nodes(
+                key=key,
+                node_to_query=n,
+                rpc_call=rpc_call,
+                closer_contacts=closer_contacts,
+                further_contacts=further_contacts
+            )
+            if found:
+                break
+
+        return QueryReturn(
+            found=found,
+            contacts=closer_contacts,
+            found_by=found_by,
+            val=val
+        )
 
 
 class RPCError(Exception):
