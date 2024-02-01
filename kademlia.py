@@ -2,7 +2,7 @@ import random
 from abc import abstractmethod
 from datetime import datetime, timedelta
 from math import ceil, log
-from typing import Callable, TypedDict
+from typing import Callable, TypedDict, Optional
 from dataclasses import dataclass
 import pickle
 import threading
@@ -307,15 +307,7 @@ class IStorage:
 class Contact:
 
     def __init__(self, id: ID, protocol=None):
-<<<<<<< HEAD
-<<<<<<< HEAD
-        self.protocol: IProtocol = protocol
-=======
-        # The only protocol should not be 
-=======
->>>>>>> 32e4c21 (Revert "misc: changes from replit")
-        self.protocol: VirtualProtocol | IProtocol = protocol
->>>>>>> 1335945 (misc: changes from replit)
+        self.protocol: Optional[IProtocol] = protocol
         self.id = id
         self.last_seen: datetime = datetime.now()
 
@@ -332,6 +324,13 @@ class QueryReturn(TypedDict):
     val: str | None
     found: bool
     found_by: Contact | None
+
+
+class FindResult(TypedDict):
+    found: bool
+    found_by: Contact  # TODO: Add type hinting
+    found_value: str
+    found_contacts: list[Contact]
 
 
 class ContactQueueItem(TypedDict):
