@@ -1459,7 +1459,7 @@ class DHT:
         for c in contacts:
             error: RPCError | None = c.protocol.store(
                 sender=self.node.our_contact, key=key, val=val)
-            handle_error(error, c)
+            self.handle_error(error, c)
 
     def bootstrap(self, known_peer: Contact) -> None:
         """
