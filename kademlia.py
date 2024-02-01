@@ -513,34 +513,28 @@ class Node:
         return {"random_id": request["random_id"]}
 
     def server_store(self, request: CommonRequest) -> dict:
-        protocol: IProtocol = Protocol.instantiate_protocol(
-            request["protocol"],
-            request["protocol_name"]
-        )
+        protocol: IProtocol = request["protocol"]
         self.store(
-            Contact(
+            sender=Contact(
                 id=ID(request["sender"]),
                 protocol=protocol
             ),
             key=ID(request["key"]),
-            val=request["value"],
+            val=str(request["value"]),
             is_cached=request["is_cached"],
             expiration_time_sec=request["expiration_time_sec"]
         )
         return {"random_id": request["random_id"]}
 
     def server_find_node(self, request: CommonRequest) -> dict:
-        protocol: IProtocol = Protocol.instantiate_protocol(
-            request["protocol"],
-            request["protocol_name"]
-        )
+        protocol: IProtocol = request["protocol"]
 
         contacts, val = self.find_node(
-            Contact(
+            sender=Contact(
                 protocol=protocol,
                 id=ID(request["sender"])
             ),
-            ID(request["key"])
+            key=ID(request["key"])
         )
 
         contact_dict: list[dict] = []
@@ -556,16 +550,13 @@ class Node:
         return {"contacts": contact_dict, "random_id": request["random_id"]}
 
     def server_find_value(self, request: CommonRequest) -> dict:
-        protocol: IProtocol = Protocol.instantiate_protocol(
-            request["protocol"],
-            request["protocol_name"]
-        )
+        protocol: IProtocol = request["protocol"]
         contacts, val = self.find_value(
-            Contact(
+            sender=Contact(
                 protocol=protocol,
                 id=ID(request["sender"])
             ),
-            ID(request["key"])
+            key=ID(request["key"])
         )
         contact_dict: list[dict] = []
         if contacts:
