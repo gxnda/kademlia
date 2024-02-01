@@ -500,10 +500,7 @@ class Node:
     # REQUEST HANDLERS: TODO: I think they go here?
 
     def server_ping(self, request: CommonRequest) -> dict:
-        protocol: IProtocol = Protocol.instantiate_protocol(
-            request["protocol"],
-            request["protocol_name"]
-        )
+        protocol: IProtocol = request["protocol"]
         self.ping(
             Contact(
                 protocol=protocol,
