@@ -1128,14 +1128,6 @@ class IProtocol:
     """
     Interface for all protocols to follow.
     """
-    @property
-    @abstractmethod
-    def node(self):
-        pass
-
-    @node.setter
-    def node(self, new_node):
-        self.node = new_node
 
     @abstractmethod
     def ping(self, sender: Contact) -> RPCError:
