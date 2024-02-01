@@ -356,8 +356,19 @@ class Node:
         self.bucket_list = BucketList(contact.id)
 
     def ping(self, sender: Contact) -> Contact:
-        # TODO: Complete.
-        pass
+        """
+        Someone is pinging us. 
+        Register the contact and respond with our contact.
+        """
+        if sender.id.value == self.our_contact.id.value:
+            raise SendingQueryToSelfError(
+                "Sender of ping RPC cannot be ourself."
+            )
+        self.send_key_values_if_new_contact(sender)
+        self.bucket_list.add_contact(sender)
+
+        return self.our_contact
+
 
     def store(self,
               key: ID,
