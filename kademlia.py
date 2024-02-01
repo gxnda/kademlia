@@ -349,10 +349,15 @@ class Node:
                  storage: IStorage,
                  cache_storage=None):
 
+        if not cache_storage and not DEBUG:
+            raise ValueError(
+                "cache_storage must be supplied to type node if debug mode is not enabled."
+            )
+        
         self.our_contact: Contact = contact
         self.storage: IStorage = storage
-        self.cache_storage = cache_storage
-        self.DHT: DHT | None = None
+        self.cache_storage: Optional[IStorage] = cache_storage
+        self.DHT: Optional[DHT] = None
         self.bucket_list = BucketList(contact.id)
 
     def ping(self, sender: Contact) -> Contact:
