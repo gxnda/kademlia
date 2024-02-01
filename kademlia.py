@@ -307,6 +307,8 @@ class IStorage:
 class Contact:
 
     def __init__(self, id: ID, protocol=None):
+        
+        # Protocol should only be None if DEBUG? TODO: Is this true?
         self.protocol: Optional[IProtocol] = protocol
         self.id = id
         self.last_seen: datetime = datetime.now()
@@ -356,8 +358,10 @@ class Node:
         
         self.our_contact: Contact = contact
         self.storage: IStorage = storage
-        self.cache_storage: Optional[IStorage] = cache_storage
-        self.DHT: Optional[DHT] = None
+
+        # VirtualStorage will only be created by
+        self.cache_storage: IStorage = cache_storage if cache_storage else VirtualStorage()
+        self.DHT: Optional[DHT] = None  # This should never be None
         self.bucket_list = BucketList(contact.id)
 
     def ping(self, sender: Contact) -> Contact:
@@ -1191,9 +1195,11 @@ class VirtualProtocol(IProtocol):
         if self.responds:
             self.node.ping(sender)
         else:
-            return RPCError(
-                "Time out while pinging contact - VirtualProtocol does not respond."
+            error = RPCError(
+                "Time out while pinging contact - VirtualProtocol does not respond.",
+                timeout_error = not self.responds
             )
+            return error
 
     def find_node(self, sender: Contact,
                   key: ID) -> tuple[list[Contact], RPCError | None]:
