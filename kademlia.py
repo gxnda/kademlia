@@ -90,38 +90,29 @@ class ValueCannotBeNoneError(Exception):
 @dataclass
 class Constants:
     """
-    https://xlattice.sourceforge.net/components/protocol/kademlia/specs.html
-
-    A Kademlia network is characterized by three constants, which we call alpha, B, and k.
-    The first and last are standard terms. The second is introduced because some Kademlia implementations use a
-    different key length.
-
-    alpha is a small number representing the degree of parallelism in network calls, usually 3
-    [[[B is the size in bits of the keys used to identify nodes and store and retrieve data; in basic Kademlia
-    this is 160, the length of an SHA1 digest (hash)]]] - i am not using this because Marc clifton uses it as the exclusion
-    of given nodes to limit a nodes understanding of the network.
-    k is the maximum number of contacts stored in a bucket; this is normally 20
-    It is also convenient to introduce several other constants not found in the original Kademlia papers.
-
-    tExpire = 86400s, the time after which a key/value pair expires; this is a time-to-live (TTL) from the
-    original publication date
-    tRefresh = 3600s, after which an otherwise un-accessed bucket must be refreshed
-    tReplicate = 3600s, the interval between Kademlia replication events, when a node is required to publish
-    its entire database
-    tRepublish = 86400s, the time after which the original publisher must republish a key/value pair
+    TODO: Add docstring here.
     """
-
-    ORIGINATOR_REPUBLISH_INTERVAL: int  # TODO: Create.
-    EVICTION_LIMIT: int  # TODO: create.
-    MAX_THREADS: int  # TODO: Create
-    K: int = 20
-    B: int = 5  # or 160 according to https://xlattice.sourceforge.net/components/protocol/kademlia/specs.html
-    A: int = 3
-    EXPIRATION_TIME_SEC: int = 86400  # Seconds in a day.
-    BUCKET_REFRESH_INTERVAL: int = 3600  # seconds in an hour.
-    KEY_VALUE_REPUBLISH_INTERVAL: int = 86400  # Seconds in a day.
-    DHT_SERIALISED_SUFFIX = "dht"
+    K = 20
+    B = 5  # or 160 according to https://xlattice.sourceforge.net/components/protocol/kademlia/specs.html
     REQUEST_TIMEOUT = 0.5  # 500ms
+    ID_LENGTH_BYTES = 20
+    ID_LENGTH_BITS = 160
+    MAX_THREADS = 20
+    QUERY_TIME = 500  # in ms
+    RESPONSE_WAIT_TIME = 10  # in ms
+    BUCKET_REFRESH_INTERVAL = 60 * 60 * 1000  # hourly
+    KEY_VALUE_REPUBLISH_INTERVAL = 60 * 60 * 1000  # hourly
+    KEY_VALUE_EXPIRE_INTERVAL = 60 * 60 * 1000  # hourly
+    ORIGINATOR_PUBLISH_INTERVAL = 24 * 60 * 60 * 1000  # every 24 hours in ms
+    EXPIRATION_TIME_SEC = 24 * 60 * 60  # every 24 hours in seconds
+    EVICTION_LIMIT = 5
+
+    DHT_SERIALISED_SUFFIX = "dht"
+
+    if DEBUG:
+        A: int = 3
+    else:
+        A: int = 20
 
 
 class ID:
