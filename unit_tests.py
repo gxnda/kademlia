@@ -5,9 +5,14 @@ from kademlia import BucketList, VirtualProtocol, \
     Router, VirtualStorage, DHT, ParallelRouter, TCPSubnetProtocol, RPCError
 
 
-def setup_split_failure(bucket_list = None):
+def setup_split_failure(bucket_list=None):
     # force host node ID to < 2 ** 159 so the node ID is not in the
     # 2 ** 159 ... 2 ** 160 range.
+
+    # b_host_id = bytearray()
+    # b_host_id.extend([0] * 20)
+    # b_host_id[19] = 0x7F
+
 
     # May be incorrect - book does some weird byte manipulation.
     host_id: ID = ID.random_id(2 ** 158, 2 ** 159 - 1)
@@ -31,6 +36,7 @@ def setup_split_failure(bucket_list = None):
     # in the 2 ** 159 ... 2 ** 160 - 1 space.
 
     b_contact_id: bytearray = bytearray()
+    b_contact_id.extend([0] * 20)
     b_contact_id[19] = 0x80
 
     # 1000 xxxx prefix, xxxx starts at 1000 (8)
@@ -46,7 +52,7 @@ def setup_split_failure(bucket_list = None):
     for _ in range(Constants.K):
         b_contact_id[pos] |= shifter  # |= is Bitwise OR.
         contact_id: ID = ID(
-            int.from_bytes(b_contact_id, byteorder="big")
+            int.from_bytes(b_contact_id, byteorder="little")
         )
         dummy_contact = Contact(ID(1), VirtualProtocol())
         dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
@@ -57,7 +63,6 @@ def setup_split_failure(bucket_list = None):
         if shifter == 0:
             shifter = 0x80
             pos -= 1
-
     return bucket_list
 
 
@@ -136,15 +141,14 @@ class AddContactTest(unittest.TestCase):
 
 
 class ForceFailedAddTest(unittest.TestCase):
-    """
     def test_force_failed_add(self):
-        dummy_contact = Contact(contact_ID=ID(0))
+        dummy_contact = Contact(id=ID(0))
         node = Node(contact=dummy_contact, storage=VirtualStorage())
 
-        bucket_list: BucketList = setup_split_failure() # TODO: THIS FUNCTION DOES NOT EXIST.
+        bucket_list: BucketList = setup_split_failure()  # TODO: THIS FUNCTION DOES NOT EXIST.
 
         self.assertTrue(len(bucket_list.buckets) == 2,
-                "Bucket split should have occured.")
+                f"Bucket split should have occured. Number of buckets should be 2, is {len(bucket_list.buckets)}.")
 
         self.assertTrue(len(bucket_list.buckets[0].contacts) == 1,
                 "Expected 1 contact in bucket 0.")
@@ -153,18 +157,23 @@ class ForceFailedAddTest(unittest.TestCase):
                 "Expected 20 contacts in bucket 1.")
 
         # This next contact should not split the bucket as
-        # depth == 5 and therfore adding the contact will fail.
+        # depth == 5 and therefore adding the contact will fail.
 
         # Any unique ID >= 2^159 will do.
 
         id = 2**159 + 4
 
-        new_contact = Contact(contact_ID=ID(id),
-                              protocol="dummy_contact.protocol")
+        new_contact = Contact(id=ID(id),
+                              protocol=dummy_contact.protocol)
+        # print(len(bucket_list.buckets), len(bucket_list.contacts()), [len(b.contacts) for b in bucket_list.buckets])
+        print(bucket_list.buckets[1].shared_bits())
+        print("\n".join([b.id.bin() for b in bucket_list.buckets[1].contacts]))
+        print("\n".join([b.id.bin() for b in bucket_list.buckets[0].contacts]))
         bucket_list.add_contact(new_contact)
+        # print(len(bucket_list.buckets), len(bucket_list.contacts()), [len(b.contacts) for b in bucket_list.buckets])
 
         self.assertTrue(len(bucket_list.buckets) == 2,
-                "Bucket split should have occured.")
+                f"Bucket split should have occured. Number of buckets should be 2, is {len(bucket_list.buckets)}.")
 
         self.assertTrue(len(bucket_list.buckets[0].contacts) == 1,
                 "Expected 1 contact in bucket 0.")
@@ -174,8 +183,6 @@ class ForceFailedAddTest(unittest.TestCase):
 
         self.assertTrue(new_contact not in bucket_list.buckets[1].contacts,
                 "Expected new contact NOT to replace an older contact.")
-    """
-    pass
 
 
 class NodeLookupTests(unittest.TestCase):

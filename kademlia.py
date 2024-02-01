@@ -6,6 +6,7 @@ import pickle
 import random
 import threading
 from typing import Callable, Optional, TypedDict
+from os.path import commonprefix
 
 from networking import *
 
@@ -87,8 +88,9 @@ class Constants:
     different key length.
 
     alpha is a small number representing the degree of parallelism in network calls, usually 3
-    B is the size in bits of the keys used to identify nodes and store and retrieve data; in basic Kademlia
-    this is 160, the length of an SHA1 digest (hash)
+    [[[B is the size in bits of the keys used to identify nodes and store and retrieve data; in basic Kademlia
+    this is 160, the length of an SHA1 digest (hash)]]] - i am not using this because Marc clifton uses it as the exclusion
+    of given nodes to limit a nodes understanding of the network.
     k is the maximum number of contacts stored in a bucket; this is normally 20
     It is also convenient to introduce several other constants not found in the original Kademlia papers.
 
@@ -102,9 +104,9 @@ class Constants:
 
     ORIGINATOR_REPUBLISH_INTERVAL: int  # TODO: Create.
     EVICTION_LIMIT: int  # TODO: create.
-    MAX_THREADS: int # TODO: Create
+    MAX_THREADS: int  # TODO: Create
     K: int = 20
-    B: int = 160
+    B: int = 5  # or 160 according to https://xlattice.sourceforge.net/components/protocol/kademlia/specs.html
     A: int = 3
     EXPIRATION_TIME_SEC: int = 86400  # Seconds in a day.
     BUCKET_REFRESH_INTERVAL: int = 3600  # seconds in an hour.
@@ -123,7 +125,7 @@ class ID:
             value: (int) ID denary value
         """
 
-        self.MAX_ID = 2 ** Constants.B
+        self.MAX_ID = 2 ** 160
         self.MIN_ID = 0
         if not (self.MAX_ID > value >= self.MIN_ID):  # ID can be 0, this is used in unit tests.
             raise ValueError(
@@ -647,28 +649,9 @@ class KBucket:
         Return the longest shared binary prefix between all 
         contacts in the kbucket. This does not "0b" before the binary.
         """
-
-        def longest_shared_prefix_str(a: str, b: str) -> str:
-            """Returns the longest common prefix between two strings."""
-
-            if len(a) < len(b):  # swap "a" and "b" if "a" is shorter
-                a, b = b, a
-
-            for i in range(len(b)):
-                if a[i] != b[i]:
-                    return a[:i]
-
-            return b
-
-        longest_prefix = self.contacts[0].id.bin()[2:]  # first node id
-        # print(self.contacts[0].id.bin()[2:], longest_prefix)
-        for contact in self.contacts[1:]:
-            id_bin = contact.id.bin()[2:]
-            # print(id_bin)
-            longest_prefix = longest_shared_prefix_str(id_bin, longest_prefix)
-            # print(longest_prefix)
-
-        return longest_prefix
+        shared_bits = commonprefix([i.id.bin() for i in self.contacts])
+        # print("shared bits", shared_bits)
+        return shared_bits
 
     def split(self) -> tuple:
         """
@@ -721,7 +704,6 @@ class BaseRouter:
                 "No non-empty buckets exist. You must first register a peer and add that peer to your bucketlist.")
 
         return closest
-
 
 
 class BucketList:
@@ -821,6 +803,7 @@ class BucketList:
                 )  # Unless k <= 0, This should never cause a recursive loop
 
             else:
+                # print("cannot split :(")
                 last_seen_contact: Contact = sorted(
                     kbucket.contacts, key=lambda c: c.last_seen)[0]
                 error: RPCError | None = last_seen_contact.protocol.ping(
