@@ -2,7 +2,7 @@ import unittest
 
 from kademlia import BucketList, VirtualProtocol, \
     Constants, Contact, ID, KBucket, TooManyContactsError, Node, \
-    Router, VirtualStorage, DHT, ParallelRouter
+    Router, VirtualStorage, DHT, ParallelRouter, TCPSubnetProtocol, RPCError
 
 
 def setup_split_failure(bucket_list = None):
@@ -10,13 +10,13 @@ def setup_split_failure(bucket_list = None):
     # 2 ** 159 ... 2 ** 160 range.
 
     # May be incorrect - book does some weird byte manipulation.
-    host_ID: ID = ID.random_id(2 ** 158, 2 ** 159 - 1)
+    host_id: ID = ID.random_id(2 ** 158, 2 ** 159 - 1)
 
-    dummy_contact: Contact = Contact(host_ID, VirtualProtocol())
+    dummy_contact: Contact = Contact(host_id, VirtualProtocol())
     dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
 
     if not bucket_list:
-        bucket_list = BucketList(our_id=host_ID) # dummy_contact)
+        bucket_list = BucketList(our_id=host_id) # dummy_contact)
 
     # Also add a contact in this 0 - 2 ** 159 range
     # This ensures that only 1 bucket split will occur after 20 nodes with ID >= 2 ** 159 are added.
@@ -61,9 +61,6 @@ def setup_split_failure(bucket_list = None):
     return bucket_list
 
 
-    
-
-
 class KBucketTest(unittest.TestCase):
 
     def test_too_many_contacts(self):
@@ -92,8 +89,7 @@ class AddContactTest(unittest.TestCase):
 
         dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
 
-        bucket_list: BucketList = BucketList(ID.random_id())  # ,
-                                             # dummy_contact)
+        bucket_list: BucketList = BucketList(ID.random_id())  # dummy_contact)
 
         for i in range(Constants.K):
             bucket_list.add_contact(Contact(ID.random_id()))
@@ -128,8 +124,7 @@ class AddContactTest(unittest.TestCase):
 
         # dummy_contact = Contact(VirtualProtocol(), ID(0))
         #  ((VirtualProtocol)dummyContact.Protocol).Node = new Node(dummyContact, new VirtualStorage());
-        bucket_list: BucketList = BucketList(ID.random_id()) # ,
-                                             # dummy_contact)
+        bucket_list: BucketList = BucketList(ID.random_id())  # , dummy_contact)
         for i in range(Constants.K):
             bucket_list.add_contact(Contact(ID.random_id()))
         bucket_list.add_contact(Contact(ID.random_id()))
@@ -256,7 +251,8 @@ class NodeLookupTests(unittest.TestCase):
             # n_other = [i for i in nodes if i != n]
 
             # From book:
-            # nodes.ForEach(n => nodes.Where(nOther => nOther != n).ForEach(nOther => n.BucketList.AddContact(nOther.OurContact)));
+            # nodes.ForEach(n => nodes.Where(nOther => nOther != n).
+            # ForEach(nOther => n.BucketList.AddContact(nOther.OurContact)));
             for other_node in n_other:
                 n.bucket_list.add_contact(other_node.our_contact)
 
@@ -330,14 +326,15 @@ class NodeLookupTests(unittest.TestCase):
         self.closer_contacts_alt_computation: list[Contact] = []
         self.further_contacts_alt_computation: list[Contact] = []
 
-        self.nearest_contact_node = sorted(self.contacts_to_query, key=lambda n: n.id ^ key)[0]
+        self.nearest_contact_node = sorted(self.contacts_to_query,
+                                           key=lambda contacts_to_query_nodes: contacts_to_query_nodes.id ^ key)[0]
         self.distance = self.nearest_contact_node.id ^ key
         
     def get_alt_close_and_far(self, contacts_to_query: list[Contact], 
                               closer: list[Contact], 
                               further: list[Contact],
                               nodes: list[Node],
-                              key: ID, # I think this is needed.
+                              key: ID,  # I think this is needed.
                               distance
                               ):
         """
@@ -353,7 +350,7 @@ class NodeLookupTests(unittest.TestCase):
             # by the get_close_contacts call are contacts we're querying, so they are
             # being excluded.
 
-            our_id = self.router.node.our_contact.id # our nodes ID
+            our_id = self.router.node.our_contact.id  # our nodes ID
 
             # all close contacts to us, excluding ourselves
             temp_list = contact_node.bucket_list.get_close_contacts(key, our_id)
@@ -371,8 +368,7 @@ class NodeLookupTests(unittest.TestCase):
                 elif close_contact.id ^ key >= distance and close_contact not in further:
                     further.append(close_contact)
     
-    def dont_test_lookup(self):
-
+    def test_lookup(self):
 
         for i in range(100):
             id = ID.random_id(seed=i)
@@ -380,7 +376,8 @@ class NodeLookupTests(unittest.TestCase):
             self.__setup()
 
             close_contacts: list[Contact] = self.router.lookup(
-                key=id, rpc_call=self.router.rpc_find_nodes, give_me_all=True)[1]
+                key=id, rpc_call=self.router.rpc_find_nodes, give_me_all=True)["contacts"]
+
             contacted_nodes: list[Contact] = close_contacts
 
             self.get_alt_close_and_far(self.contacts_to_query,
@@ -646,7 +643,7 @@ class DHTTest(unittest.TestCase):
         # node 2 has the value
         key = ID(0)
         val = "Test"
-        other_node_2._storage.set(key, val)
+        other_node_2.storage.set(key, val)
 
         # setup node 3
         contact_id_3 = ID(2 ** 158)  # I think this is the same as ID.Zero.SetBit(158)?
@@ -820,7 +817,7 @@ class DHTParallelTest(unittest.TestCase):
         # node 2 has the value
         key = ID(0)
         val = "Test"
-        other_node_2._storage.set(key, val)
+        other_node_2.storage.set(key, val)
 
         # setup node 3
         contact_id_3 = ID(2 ** 158)  # I think this is the same as ID.Zero.SetBit(158)?
@@ -886,11 +883,11 @@ class BootstrappingTests(unittest.TestCase):
             vp.append(VirtualProtocol())
 
         # us
-        dht_us: DHT = DHT(ID.random_id(), vp[0], VirtualStorage, Router())
+        dht_us: DHT = DHT(ID.random_id(), vp[0], storage_factory=VirtualStorage, router=Router())
         vp[0].node = dht_us._router.node
 
         # our bootstrap peer
-        dht_bootstrap: DHT = DHT(ID.random_id(), vp[1], VirtualStorage, Router())
+        dht_bootstrap: DHT = DHT(ID.random_id(), vp[1], storage_factory=VirtualStorage, router=Router())
         vp[1].node = dht_bootstrap._router.node
 
         # stops pycharm saying it could be undefined later on. THIS LINE IS USELESS.
@@ -947,12 +944,12 @@ class BootstrappingTests(unittest.TestCase):
             vp.append(VirtualProtocol())
 
         # Us, ID doesn't matter.
-        dht_us: DHT = DHT(ID.random_id(), vp[0], VirtualStorage, Router())
+        dht_us: DHT = DHT(ID.random_id(), vp[0], storage_factory=VirtualStorage, router=Router())
         vp[0].node = dht_us._router.node
 
         # our bootstrap peer
         # all IDs are < 2 ** 159
-        dht_bootstrap: DHT = DHT(ID.random_id(0, 2 ** 159 - 1), vp[1], VirtualStorage, Router())
+        dht_bootstrap: DHT = DHT(ID.random_id(0, 2 ** 159 - 1), vp[1], storage_factory=VirtualStorage, router=Router())
         vp[1].node = dht_bootstrap._router.node
         # print(sum([len([c for c in b.contacts]) for b in dht_bootstrap._router.node.bucket_list.buckets]))
 
@@ -989,9 +986,11 @@ class BootstrappingTests(unittest.TestCase):
 
         self.assertTrue(n.our_contact.id == important_contact.protocol.node.our_contact.id == ID.max())
 
-        self.assertTrue(len(n.bucket_list.contacts()) == 10, f"contacts: {len(n.bucket_list.contacts())}")
+        self.assertTrue(len(n.bucket_list.contacts()) == 10,
+                        f"contacts: {len(n.bucket_list.contacts())}")
 
-        self.assertTrue(len(important_contact.protocol.node.bucket_list.contacts()) == 10, f"contacts: {len(n.bucket_list.contacts())}")
+        self.assertTrue(len(important_contact.protocol.node.bucket_list.contacts()) == 10,
+                        f"contacts: {len(n.bucket_list.contacts())}")
 
         self.assertTrue(important_contact.id == ID.max(), "What else could it be?")
 
@@ -1006,7 +1005,6 @@ class BootstrappingTests(unittest.TestCase):
 
         self.assertTrue([len(b.contacts) for b in n.bucket_list.buckets] == [10],
                         "Must have 10 contacts in node.")
-
 
         print("Starting bootstrap...")
         dht_us.bootstrap(dht_bootstrap._router.node.our_contact)
@@ -1025,7 +1023,7 @@ class BucketManagementTests(unittest.TestCase):
         Tests that a nonresponding contact is evicted after 
         Constants.EVICTION_LIMIT tries.
         """
-        dht = DHT(ID(0), VirtualProtocol(), None, Router())
+        dht = DHT(ID(0), VirtualProtocol(), storage_factory=None, router=Router())
         bucket_list: BucketList = setup_split_failure(dht.node.bucket_list)
         self.assertTrue(len(bucket_list.buckets) == 2, 
                        "Bucket split should have occurred.")
@@ -1075,7 +1073,7 @@ class BucketManagementTests(unittest.TestCase):
         """
         Tests that a nonresponding contact puts the new contact into a pending list.
         """
-        dht = DHT(ID(0), VirtualProtocol(), None, Router())
+        dht = DHT(ID(0), VirtualProtocol(), storage_factory=None, router=Router())
         bucket_list: BucketList = setup_split_failure(dht.node.bucket_list)
 
         self.assertTrue(len(bucket_list.buckets) == 2,
@@ -1106,13 +1104,12 @@ class BucketManagementTests(unittest.TestCase):
         bucket_list.add_contact(next_new_contact)
 
         self.assertTrue(len(bucket_list.buckets[1].contacts) == 20,
-                       "Expecting 20 contacts in bucket 1."
-                       )
+                        "Expecting 20 contacts in bucket 1.")
         # Verify can_split -> Evict happened.
         self.assertTrue(len(dht.pending_contacts) == 1,
                         "Expected one pending contact.")
-        self.assertTrue(next_new_contact in dht.pending_contacts, 
-                       "Expected pending contact to be the 21st contact.")
+        self.assertTrue(next_new_contact in dht.pending_contacts,
+                        "Expected pending contact to be the 21st contact.")
         self.assertTrue(len(dht.eviction_count) == 1, 
                         "Expected one contact to be pending eviction.")
 
@@ -1145,7 +1142,7 @@ class Chapter10Tests(unittest.TestCase):
         existing.simply_store(ID.mid(), val_mid)
 
         self.assertTrue(
-            len(existing._storage.get_keys()) == 2,
+            len(existing.storage.get_keys()) == 2,
             "Expected the existing node to have 2 key-values."
         )
 
@@ -1178,7 +1175,7 @@ class Chapter10Tests(unittest.TestCase):
         unseenvp.node = unseen  # final fixup
 
         self.assertTrue(
-            len(unseen._storage.get_keys()) == 0,
+            len(unseen.storage.get_keys()) == 0,
             "The unseen node shouldn't have any key-values."
         )
         # An unseen node pings, and we should get back val_min only.
@@ -1199,17 +1196,17 @@ class Chapter10Tests(unittest.TestCase):
         # c1 ^ v2 < c2 ^ v2, so it does get sent.
 
         self.assertTrue(
-            len(unseen._storage.get_keys()) == 1,
+            len(unseen.storage.get_keys()) == 1,
             "Expected 1 value stored in our new node."
         )
 
         self.assertTrue(
-            unseen._storage.contains(ID.mid()),
+            unseen.storage.contains(ID.mid()),
             "Expected val_mid to be stored."
         )
 
         self.assertTrue(
-            unseen._storage.get(ID.mid()) == val_mid,
+            unseen.storage.get(ID.mid()) == val_mid,
             "Expected val_mid value to match."
         )
 
@@ -1318,6 +1315,180 @@ class DHTSerialisationTests(unittest.TestCase):
             new_dht._router.node == new_dht.node,
             "Router node not initialised."
         )
+
+
+class TCPSubnetTests(unittest.TestCase):
+    def __init__(self):
+        self.local_ip = "http://127.0.0.1"
+        self.port = 2720
+        self.server = TcpSubnetServer(self.local_ip, self.port)
+
+    # def initialise(self):
+    #     self.server = TcpSubnetServer(self.local_ip, self.port)
+
+    def test_cleanup(self):
+        self.server.stop()
+
+    def test_ping_route(self):
+        """
+        Makes sure no exceptions are thrown when pinging a contact.
+        """
+        p1 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=1)
+        p2 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=2)
+        
+        our_id = ID.random_id()
+        
+        c1 = Contact(id=our_id, protocol=p1)
+        c2 = Contact(id=ID.random_id(), protocol=p2)
+
+        n1 = Node(c1, VirtualStorage())
+        n2 = Node(c2, VirtualStorage())
+
+        self.server.register_protocol(p1.subnet, n1)
+        self.server.register_protocol(p2.subnet, n2)
+        self.server.start()
+
+        # The actual test:
+        p2.ping(c1)
+
+    def test_store_route(self):
+        p1 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=1)
+        p2 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=2)
+
+        our_id = ID.random_id()
+
+        c1 = Contact(id=our_id, protocol=p1)
+        c2 = Contact(id=ID.random_id(), protocol=p2)
+
+        n1 = Node(c1, VirtualStorage())
+        n2 = Node(c2, VirtualStorage())
+
+        self.server.register_protocol(p1.subnet, n1)
+        self.server.register_protocol(p2.subnet, n2)
+        self.server.start()
+
+        # The actual test:
+
+        sender = Contact(ID.random_id(), p1)
+        test_id = ID.random_id()
+        test_value = "Test"
+        p2.store(sender, test_id, test_value)
+
+        self.assertTrue(n2.storage.contains(test_id),
+                       "Expected remote peer to have value.")
+        self.assertTrue(n2.storage.get(test_id) == test_value,
+                        "Expected remote peer to contain stored value.")
+
+    def test_find_nodes_route(self):
+        p1 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=1)
+        p2 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=2)
+
+        our_id = ID.random_id()
+
+        c1 = Contact(id=our_id, protocol=p1)
+        c2 = Contact(id=ID.random_id(), protocol=p2)
+
+        n1 = Node(c1, VirtualStorage())
+        n2 = Node(c2, VirtualStorage())
+
+        # Node 2 knows about another contact that isn't us 
+        # - this is what we are trying to find
+
+        other_peer = ID.random_id()
+
+        n2.bucket_list.buckets[0].contacts.append(
+            Contact(
+                other_peer, 
+                TCPSubnetProtocol(self.local_ip, self.port, 3)
+            )
+        )
+        self.server.register_protocol(p1.subnet, n1)
+        self.server.register_protocol(p2.subnet, n2)
+        self.server.start()
+
+        id = ID.random_id()
+        ret: list[Contact] | None = p2.find_node(c1, id)[0]
+        if ret:
+            self.assertTrue(
+                len(ret) == 1, 
+                f"Expected 1 contact, {len(ret)} were returned."
+            )
+    
+            self.assertTrue(
+                ret[0].id == other_peer,
+                "Expected contact to the other peer (not us).")
+        else:
+            self.assertTrue(
+                isinstance(ret, list[Contact]),
+                "Expected find_node to return 1 contact, 0 were returned."
+            )
+
+    def test_find_value_router(self):
+        p1 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=1)
+        p2 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=2)
+
+        our_id = ID.random_id()
+
+        c1 = Contact(id=our_id, protocol=p1)
+        c2 = Contact(id=ID.random_id(), protocol=p2)
+
+        n1 = Node(c1, VirtualStorage())
+        n2 = Node(c2, VirtualStorage())
+
+        # Node 2 knows about another contact that isn't us
+        # - this is what we are trying to find
+
+        test_id = ID.random_id()
+        test_value = "Test"
+        p2.store(test_id, test_value)
+
+        self.assertTrue(
+            n2.storage.contains(test_id),
+            "Expected remote peer to have value."
+        )
+
+        self.assertTrue(
+            n2.storage.get(test_id) == test_value,
+            "Expected node to store the correct value."
+        )
+
+        ret = p2.find_value(c1, test_id)
+
+        self.assertTrue(
+            ret["contacts"] is None, "Expected to find value."  # huh?
+        )
+
+        self.assertTrue(
+            ret["val"] == test_value, "Value does not match expected value from peer."
+        )
+
+    def test_unresponsive_node(self):
+        p1 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=1)
+        p2 = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=2)
+        p2.responds = False
+        our_id = ID.random_id()
+
+        c1 = Contact(our_id, p1)
+        c2 = Contact(ID.random_id(), p2)
+
+        n1 = Node(c1, VirtualStorage())
+        n2 = Node(c2, VirtualStorage())
+
+        self.server.register_protocol(p1.subnet, n1)
+        self.server.register_protocol(p2.subnet, n2)
+        self.server.start()
+
+        test_id = ID.random_id()
+        test_value = "Test"
+
+        error: RPCError = p2.store(c1, test_id, test_value)
+
+        self.assertTrue(
+            error.timeout_error,
+            "Expected timeout when contacting unresponsive node."
+        )
+
+
 
 if __name__ == '__main__':
     unittest.main()

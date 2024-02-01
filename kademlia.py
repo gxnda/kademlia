@@ -1,11 +1,13 @@
-import random
 from abc import abstractmethod
-from datetime import datetime, timedelta
-from typing import Callable, TypedDict
 from dataclasses import dataclass
+from datetime import datetime, timedelta
+from math import ceil, log
 import pickle
-from networking import CommonRequest
+import random
 import threading
+from typing import Callable, Optional, TypedDict
+
+from networking import *
 
 DEBUG: bool = True
 
@@ -108,6 +110,8 @@ class Constants:
     BUCKET_REFRESH_INTERVAL: int = 3600  # seconds in an hour.
     KEY_VALUE_REPUBLISH_INTERVAL: int = 86400  # Seconds in a day.
     DHT_SERIALISED_SUFFIX = "dht"
+    REQUEST_TIMEOUT = 0.5  # 500ms
+
 
 class ID:
 
@@ -119,10 +123,9 @@ class ID:
             value: (int) ID denary value
         """
 
-        self.MAX_ID = 2**160
+        self.MAX_ID = 2 ** Constants.B
         self.MIN_ID = 0
-        if not (self.MAX_ID > value >= self.MIN_ID):
-            # TODO: check if value >= self.MIN_ID is valid.
+        if not (self.MAX_ID > value >= self.MIN_ID):  # ID can be 0, this is used in unit tests.
             raise ValueError(
                 f"ID {value} is out of range - must a positive integer less than 2^160."
             )
@@ -136,23 +139,36 @@ class ID:
 
     def bin(self) -> str:
         """
-        Returns value in binary - this does not include a 0b tag at the start.
+        Returns big-endian value in binary - this does not include a 0b tag at the start.
+        :return: Returns the binary value as a string, with length Constants.B by default
         """
-        return bin(self.value)[2:]
+
+        binary = bin(self.value)[2:]
+        number_of_zeroes_to_add = ceil(log(self.MAX_ID, 2)) - len(binary)
+        padded_binary = number_of_zeroes_to_add * "0" + binary
+        return padded_binary
+
+    def set_bit(self, bit: int):
+        """
+        Sets a given bit to 1, Little endian. (set_bit(0) sets smallest bit to 0)
+        :param bit: bit to be set.
+        :return: Nothing
+        """
+        bits = self.little_endian_bytes()
+        bits[bit] = "1"
+        return None
 
     def big_endian_bytes(self) -> list[str]:
         """
-        Returns the ID in big-endian binary - largest bit is at index 0.
+        Returns the padded ID in big-endian binary - largest bit is at index 0.
         """
-        big_endian = [x for x in self.bin()[2:]]
-        return big_endian
+        return [x for x in self.bin()]
 
     def little_endian_bytes(self) -> list[str]:
         """
-        Returns the ID in little-endian binary - smallest bit is at index 0.
+        Returns the padded ID in little-endian binary - smallest bit is at index 0.
         """
-        big_endian = [x for x in self.bin()[2:]][::-1]
-        return big_endian
+        return self.big_endian_bytes()[::-1]
 
     def __xor__(self, val) -> int:
         if isinstance(val, ID):
@@ -291,7 +307,9 @@ class IStorage:
 class Contact:
 
     def __init__(self, id: ID, protocol=None):
-        self.protocol: VirtualProtocol | IProtocol = protocol
+        
+        # Protocol should only be None if DEBUG? TODO: Is this true?
+        self.protocol: Optional[IProtocol] = protocol
         self.id = id
         self.last_seen: datetime = datetime.now()
 
@@ -310,9 +328,11 @@ class QueryReturn(TypedDict):
     found_by: Contact | None
 
 
-class BaseRouter:
-    def lookup(self, key: ID, rpc_call: Callable, give_me_all=False) -> QueryReturn | None:
-        pass
+class FindResult(TypedDict):
+    found: bool
+    found_by: Contact  # TODO: Add type hinting
+    found_value: str
+    found_contacts: list[Contact]
 
 
 class ContactQueueItem(TypedDict):
@@ -331,15 +351,33 @@ class Node:
                  storage: IStorage,
                  cache_storage=None):
 
+        if not cache_storage and not DEBUG:
+            raise ValueError(
+                "cache_storage must be supplied to type node if debug mode is not enabled."
+            )
+        
         self.our_contact: Contact = contact
-        self._storage: IStorage = storage
-        self.cache_storage = cache_storage
-        self.DHT: DHT | None = None
+        self.storage: IStorage = storage
+
+        # VirtualStorage will only be created by
+        self.cache_storage: IStorage = cache_storage if cache_storage else VirtualStorage()
+        self.DHT: Optional[DHT] = None  # This should never be None
         self.bucket_list = BucketList(contact.id)
 
     def ping(self, sender: Contact) -> Contact:
-        # TODO: Complete.
-        pass
+        """
+        Someone is pinging us. 
+        Register the contact and respond with our contact.
+        """
+        if sender.id.value == self.our_contact.id.value:
+            raise SendingQueryToSelfError(
+                "Sender of ping RPC cannot be ourself."
+            )
+        self.send_key_values_if_new_contact(sender)
+        self.bucket_list.add_contact(sender)
+
+        return self.our_contact
+
 
     def store(self,
               key: ID,
@@ -358,7 +396,7 @@ class Node:
             self.cache_storage.set(key, val, expiration_time_sec)
         else:
             self.send_key_values_if_new_contact(sender)
-            self._storage.set(key, val, Constants.EXPIRATION_TIME_SEC)
+            self.storage.set(key, val, Constants.EXPIRATION_TIME_SEC)
 
     def find_node(self, key: ID,
                   sender: Contact) -> tuple[list[Contact], str | None]:
@@ -386,7 +424,7 @@ class Node:
     def find_value(self, key: ID, sender: Contact) \
             -> tuple[list[Contact] | None, str | None]:
         """
-        Find value in self._storage, testing
+        Find value in self.storage, testing
         self.cache_storage if it is not in the former.
         If it is not in either, it gets K
         close contacts from the bucket list.
@@ -396,8 +434,8 @@ class Node:
 
         self.send_key_values_if_new_contact(sender)
 
-        if self._storage.contains(key):
-            return None, self._storage.get(key)
+        if self.storage.contains(key):
+            return None, self.storage.get(key)
         elif self.cache_storage.contains(key):
             return None, self.cache_storage.get(key)
         else:
@@ -425,7 +463,7 @@ class Node:
             if len(contacts) > 0:
                 # and our distance to the key < any other contact's distance
                 # to the key
-                for k in self._storage.get_keys():
+                for k in self.storage.get_keys():
                     # our minimum distance to the contact.
                     distance = min([c.id ^ k for c in contacts])
                     # If our contact is closer, store the contact on its
@@ -434,9 +472,9 @@ class Node:
                         error: RPCError | None = sender.protocol.store(
                             sender=self.our_contact,
                             key=ID(k),
-                            val=self._storage.get(k)
+                            val=self.storage.get(k)
                         )
-                        # if self.DHT: self.DHT.handle_error(error, sender)
+                        if self.DHT: self.DHT.handle_error(error, sender)
 
     def _is_new_contact(self, sender: Contact) -> bool:
         ret: bool
@@ -457,25 +495,25 @@ class Node:
         :param val:
         :return: None
         """
-        self._storage.set(key, val)
+        self.storage.set(key, val)
 
     # REQUEST HANDLERS: TODO: I think they go here?
 
     def server_ping(self, request: CommonRequest) -> dict:
-        protocol: IProtocol = self._protocol.instantiate_protocol(
+        protocol: IProtocol = Protocol.instantiate_protocol(
             request["protocol"],
             request["protocol_name"]
         )
         self.ping(
             Contact(
-                protocol=self._protocol,
-                id=ID(request.sender)
+                protocol=protocol,
+                id=ID(request["sender"])
             )
         )
         return {"random_id": request["random_id"]}
 
     def server_store(self, request: CommonRequest) -> dict:
-        protocol: IProtocol = self._protocol.instantiate_protocol(
+        protocol: IProtocol = Protocol.instantiate_protocol(
             request["protocol"],
             request["protocol_name"]
         )
@@ -492,7 +530,7 @@ class Node:
         return {"random_id": request["random_id"]}
 
     def server_find_node(self, request: CommonRequest) -> dict:
-        protocol: IProtocol = self._protocol.instantiate_protocol(
+        protocol: IProtocol = Protocol.instantiate_protocol(
             request["protocol"],
             request["protocol_name"]
         )
@@ -506,7 +544,7 @@ class Node:
         )
 
         contact_dict: list[dict] = []
-        for c in self.contacts:
+        for c in contacts:
             contact_info = {
                 "contact": c.id.value,
                 "protocol": c.protocol,
@@ -518,7 +556,7 @@ class Node:
         return {"contacts": contact_dict, "random_id": request["random_id"]}
 
     def server_find_value(self, request: CommonRequest) -> dict:
-        protocol: IProtocol = self._protocol.instantiate_protocol(
+        protocol: IProtocol = Protocol.instantiate_protocol(
             request["protocol"],
             request["protocol_name"]
         )
@@ -674,6 +712,28 @@ class KBucket:
         index = contact_ids.index(contact.id)
         self.contacts[index] = contact
         contact.touch()
+
+
+class BaseRouter:
+    def __init__(self):
+        self.closer_contacts: list[Contact]
+        self.further_contacts: list[Contact]
+        self.node: Node
+        self.dht: DHT
+        # self.locker
+
+    @abstractmethod
+    def lookup(self, key: ID, rpc_call: Callable, give_me_all=False) -> QueryReturn | None:
+        pass
+
+    def find_closest_nonempty_kbucket(self, key: ID) -> KBucket:
+        closest: KBucket = [b for b in self.node.bucket_list.buckets if len(b.contacts) > 0][0]
+        if closest is None:
+            raise AllKBucketsAreEmptyError(
+                "No non-empty buckets exist. You must first register a peer and add that peer to your bucketlist.")
+
+        return closest
+
 
 
 class BucketList:
@@ -979,7 +1039,8 @@ class Router(BaseRouter):
         new_contacts, timeout_error = contact.protocol.find_node(
             self.node.our_contact, key)
 
-        # dht?.handle_error(timeoutError, contact)
+        if self.dht: 
+            self.dht.handle_error(timeout_error, contact)
 
         return new_contacts, None, None
 
@@ -1028,39 +1089,118 @@ class Router(BaseRouter):
         pass
 
 
-class IProtocol:
-    # TODO: Create this!!
-    # It shouldn't be too hard, it's just making skeletons
-    # for type hinting all protocol methods.
-    pass
-
-
 class RPCError(Exception):
     """
-    Errors for RPC commands.
+    Possible errors for RPC commands.
     """
+    def __init__(self,
+                 error_message: str | None = None,
+                 timeout_error: bool = False,
+                 id_mismatch_error: bool = False,
+                 peer_error: bool = False,
+                 peer_error_message: str | None = None
+                 ):
+        super().__init__(error_message)
+        self.protocol_error_message: str | None = error_message 
+        
+        if error_message:
+            self.protocol_error = True
+        else:
+            self.protocol_error = False
+        
+        self.timeout_error = timeout_error
+        self.id_mismatch_error = id_mismatch_error
+        self.peer_error = peer_error
+        self.peer_error_message: str | None = peer_error_message
+
+        if self.peer_error_message and not self.peer_error:
+            raise ValueError("Parameter peer error message requires a peer error.")
+
+    def has_error(self) -> bool:
+        return self.timeout_error or \
+            self.protocol_error or \
+            self.id_mismatch_error or \
+            self.peer_error
+
+    def __str__(self):
+        if self.has_error():
+            if self.protocol_error:
+                return self.protocol_error_message
+            elif self.peer_error:
+                return self.peer_error_message
+        else:
+            return "No error."
 
     @staticmethod
     def no_error():
         pass
 
 
+class IProtocol:
+    """
+    Interface for all protocols to follow.
+    """
+    @property
+    @abstractmethod
+    def node(self):
+        pass
+
+    @node.setter
+    def node(self, new_node):
+        self.node = new_node
+
+    @abstractmethod
+    def ping(self, sender: Contact) -> RPCError:
+        pass
+
+    @abstractmethod
+    def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact], RPCError]:
+        pass
+
+    @abstractmethod
+    def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact], str, RPCError]:
+        pass
+
+    @abstractmethod
+    def store(self, sender: Contact, key: ID, val: str, is_cached: bool = False) -> RPCError:
+        pass
+
+
+def get_rpc_error(id: ID, 
+              resp: BaseResponse, 
+              timeout_error: bool,
+              peer_error: ErrorResponse) -> RPCError:
+    error = RPCError()
+    error.id_mismatch_error = id != resp["random_id"]
+    error.timeout_error = timeout_error
+    error.peer_error = peer_error is not None
+    if peer_error:
+        error.peer_error_message = peer_error["error_message"]
+
+    return error
+
+
 class VirtualProtocol(IProtocol):
     """
-    For unit testing, doesn't really do much
+    For unit testing, doesn't really do much in the main 
+    implementation, it's just used to make sure everything that 
+    doesn't involve networking works correctly.
     """
 
     def __init__(self, node: Node | None = None, responds=True) -> None:
         self.responds = responds
         self.node = node
+        self.type = "VirtualProtocol"
 
     def ping(self, sender: Contact) -> RPCError | None:
         if self.responds:
             self.node.ping(sender)
         else:
-            return RPCError(
-                "Time out while pinging contact - VirtualProtocol does not respond."
+            error = RPCError(
+                "Time out while pinging contact - VirtualProtocol does not respond.",
+                timeout_error = not self.responds
             )
+            return error
 
     def find_node(self, sender: Contact,
                   key: ID) -> tuple[list[Contact], RPCError | None]:
@@ -1187,8 +1327,7 @@ class DHT:
         
         :param id: ID associated with the DHT. TODO: More info.
         
-        :param protocol: Protocol used by the DHT. TODO: More info - I'm not even sure 
-        if this is correct.
+        :param protocol: Protocol implemented by the DHT.
         
         :param storage_factory: Storage to be used for all storage mechanisms - 
         if specific mechanisms are not provided.
@@ -1238,11 +1377,12 @@ class DHT:
         self.node.DHT = self
         self.node.bucket_list.DHT = self
         self._protocol = protocol
-        self._router: Router = router
+        self._router: BaseRouter = router
         self._router.node = self.node
         self._router.DHT = self
+        self.eviction_count: dict[int, int] = {}  # May be incorrect
 
-    def router(self) -> Router:
+    def router(self) -> BaseRouter:
         return self._router
 
     def protocol(self) -> IProtocol:
@@ -1303,7 +1443,7 @@ class DHT:
                         Constants.EXPIRATION_TIME_SEC / (2 ** separating_nodes)
                     )
                     error: RPCError = store_to.protocol.store(self.node.our_contact, key, lookup["val"])
-                    # self.handle_error(error, store_to)
+                    self.handle_error(error, store_to)
 
         return found, contacts, val
 
@@ -1331,7 +1471,7 @@ class DHT:
         for c in contacts:
             error: RPCError | None = c.protocol.store(
                 sender=self.node.our_contact, key=key, val=val)
-            # handle_error(error, c)
+            handle_error(error, c)
 
     def bootstrap(self, known_peer: Contact) -> None:
         """
@@ -1354,7 +1494,7 @@ class DHT:
         # finds K close contacts to self.our_id, excluding self.our_contact
         contacts, error = known_peer.protocol.find_node(
             sender=self.our_contact, key=self.our_id)
-        # handle_error(error, known_peer)
+        self.handle_error(error, known_peer)
         if not error:
             # print("NO ERROR")
 
@@ -1408,7 +1548,7 @@ class DHT:
             new_contacts, timeout_error = contact.protocol.find_node(
                 self.our_contact, random_id)
             # print(contacts.index(contact) + 1, "new contacts", new_contacts)
-            # handle_error(timeout_error, contact)
+            self.handle_error(timeout_error, contact)
             if new_contacts:
                 for other_contact in new_contacts:
                     self.node.bucket_list.add_contact(other_contact)
@@ -1512,12 +1652,73 @@ class DHT:
                     key=key,
                     val=self._originator_storage.get(key)
                 )
-                # handle_error(error, c)
+                self.handle_error(error, c)
 
             self._originator_storage.touch(k)
 
     def _get_separating_nodes_count(self, our_contact, store_to):
-        pass
+        pass  # TODO: Create.
+
+
+    def handle_error(self, error: RPCError, contact: Contact) -> None:
+        """
+        Put the timed out contact into a collection and increment the number
+        of times it has timed out.
+
+        If it has timed out a certain amount, remove it from the bucket 
+        and replace it with the most recent pending contact that are 
+        queued for that bucket.
+        """
+        # For all errors:
+        count = self.add_contact_to_evict(contact.id.value)
+        if count == Constants.EVICTION_LIMIT:
+            self.replace_contact(contact)
+
+    def delay_eviction(self, 
+                       to_evict: Contact, 
+                       to_replace: Contact) -> None:
+        """
+        The contact that did not respond (or had an error) gets "n" 
+        tries before being evicted and replaced with the most recently
+        seen contact that wants to got into the non-responding contact's
+        K-Bucket
+
+        :param to_evict: The contact that didn't respond.
+        :param to_replace: The contact that can replace the 
+        non-responding contact.
+        """
+        # Non-concurrent list needs locking
+        # lock(pending_contacts)
+        # add only if its a new pending contact.
+        if to_replace.id not in [c.id for c in self.pending_contacts]:
+            self.pending_contacts.append(to_replace)
+
+        key: int = to_evict.id.value
+        count = self.add_contact_to_evict(key)
+        # if the eviction attempts on key reach the eviction limit
+        if count == Constants.EVICTION_LIMIT:
+            self.replace_contact(to_evict)
+
+    def add_contact_to_evict(self, key: int) -> int:  # TODO: make protected.
+        # self.eviction_count is a dictionary of ID keys -> 
+        # how many times they have been considered for eviction.
+        if key not in self.eviction_count:
+            self.eviction_count[key] = 0
+        count = self.eviction_count[key] + 1
+        self.eviction_count[key] = count 
+
+        return count
+
+    def replace_contact(self, to_evict: Contact) -> None:  # TODO: make protected.
+        bucket = self.node.bucket_list.get_kbucket(to_evict.id)
+        # Prevent other threads from manipulating the bucket list or buckets
+        # lock(self.node.bucket_list)
+        self.evict_contact(bucket, to_evict)
+        self.replace_with_pending_contact(bucket)
+
+    def evict_contact(bucket: KBucket, to_evict: Contact) -> None:  # TODO: Make protected.
+         pass  # TODO: Complete
+        
 
     def save(self, filename: str) -> None:
         """
@@ -1533,6 +1734,7 @@ class DHT:
         """
         with open(filename, "rb") as input_file:
             return pickle.load(file=input_file)
+
 
 
 # class DHTSubclass(DHT):
@@ -1690,7 +1892,145 @@ class ParallelRouter(BaseRouter):
                 self.set_query_time()
 
 
+# class ContactListAndError(TypedDict):
+#     contacts: list[Contact]
+#     error: RPCError
 
 
+class TCPSubnetProtocol(IProtocol):
 
+    def __init__(self, url: str, port: int, subnet: int):
+        self.url = url
+        self.port = port
+        self.responds = True
+        self.subnet = None
+        self.type = "TCPSubnetProtocol"
 
+    def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
+        id: ID = ID.random_id()
+        ret, error, timeout_error = rest_call.post(
+            f"{self.url}:{self.port}//find_node",
+            FindNodeSubnetRequest(
+                protocol=sender.protocol,
+                protocol_name=sender.protocol.get_type(),
+                subnet=self.subnet,
+                sender=sender.id.value,
+                key=key.value,
+                random_id=id.value)
+            )
+        try:
+            contacts = []
+            if ret:
+                if ret["contacts"]:  # TODO: Is ret a dictionary?
+                    contacts = []
+                    for c in ret["contacts"]:
+                        new_c = Contact(Protocol.instantiate_protocol(c.protocol, val["protocol_name"]))
+                        contacts.append(new_c)
+                    # Return only contacts with supported protocols.
+                    if contacts:
+                        return [c for c in contacts if c.protocol is not None], get_rpc_error(id, ret, timeout_error, error)
+        except Exception as e:
+            return None, RPCError(protocol_error=True)
+
+    def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, str | None, RPCError]:
+            """
+            Attempt to find the value in the peer network.
+            
+            A null contact list is acceptable as it is a valid return
+            if the value is found.
+            The caller is responsible for checking the timeoutError flag
+            to make sure null contacts is not the result of a timeout
+            error.
+            """
+            random_id = ID.random_id()
+            try:
+                ret = rest_call.post(
+                    f"{self.url}:{self.port}//find_value",
+                    FindValueSubnetRequest(
+                        protocol=sender.protocol,
+                        protocol_name=sender.protocol,
+                        subnet=subnet,
+                        sender=sender.id.value,
+                        key=key.value,
+                        random_id = random_id.value
+                    ))
+                timeout_error = False
+                error = None
+            except TimeoutError as e:
+                # request timed out.
+                timeout_error = True
+                error = e
+
+            try:
+                contacts = []
+                if ret:
+                    if ret["contacts"]:
+                        for c in ret["contacts"]:
+                            new_contact = Contact(
+                                Protocol.instantiate_protocol(
+                                    c.protocol,
+                                    c.protocol_name,
+                                    ID(c.contact)
+                                ))
+                            contacts.append(new_contact)
+                            return [c for c in contacts if c.protocol != None], 
+                            ret["value"], 
+                            get_rpc_error(random_id, ret, timeout_error, error)
+            except Exception as ex:
+                rpc_error = RPCError(ex.message)
+                rpc_error.protocol_error = True
+                return None, None, rpc_error
+
+    def ping(self, sender: Contact) -> RPCError:
+        random_id = ID.random_id()
+        try:
+            ret = rest_call.post(
+                f"{self.url}:{self.port}//ping",
+                FindValueSubnetRequest(
+                    protocol=sender.protocol,
+                    protocol_name=sender.protocol.type,
+                    subnet=self.subnet,
+                    sender=sender.id.value,
+                    key=key.value,
+                    random_id = random_id.value
+                ))
+            timeout_error = False
+            error = None
+        except TimeoutError as e:
+            # request timed out.
+            timeout_error = True
+            error = e
+
+        return get_rpc_error(random_id, ret, timeout_error, error)
+
+    def store(self,
+              sender: Contact,
+              key: ID, 
+              val: str, 
+              is_cached=False,
+              expiration_time_sec=0
+              ) -> RPCError:
+        
+        random_id = ID.random_id()
+        try:
+            ret = rest_call.post(
+                f"{self.url}:{self.port}//store",
+            StoreSubnetRequest(
+                protocol=sender.protocol,
+                protocol_name=sender.protocol.type,
+                subnet=self.subnet,
+                sender=sender.id.value,
+                key=random_id.value,
+                value=val,
+                is_cached=is_cached,
+                expiration_time_sec=expiration_time_sec,
+                random_id=random_id.value
+            ))
+            timeout_error = False
+            error = None
+        except TimeoutError as e:
+            # request timed out.
+            timeout_error = True
+            error = e
+
+        return get_rpc_error(random_id, ret, timeout_error, error)
