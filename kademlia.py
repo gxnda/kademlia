@@ -46,6 +46,15 @@ class SenderIsSelfError(Exception):
     pass
 
 
+class ValueCannotBeNoneError(Exception):
+    """
+    Raised when a value is None, when everything was meant to have gone OK.
+    There is a risk of this being purposely triggered maliciously to shut down nodes on the network.
+    I'm not sure what to do in that situation.
+    TODO: Talk about this in the write-up.
+    """
+
+
 # class WithLock:
 #     """
 #     Lock object that can be used in "with" statements.
@@ -332,7 +341,7 @@ class QueryReturn(TypedDict):
 
 class FindResult(TypedDict):
     found: bool
-    found_by: Contact  # TODO: Add type hinting
+    found_by: Contact
     found_value: str
     found_contacts: list[Contact]
 
@@ -379,7 +388,6 @@ class Node:
         self.bucket_list.add_contact(sender)
 
         return self.our_contact
-
 
     def store(self,
               key: ID,
@@ -685,6 +693,12 @@ class KBucket:
         contact.touch()
 
 
+class GetCloserNodesReturn(TypedDict):
+    found: bool
+    found_by: Contact
+    val: str
+
+
 class BaseRouter:
     def __init__(self):
         self.closer_contacts: list[Contact]
@@ -714,6 +728,46 @@ class BaseRouter:
         :return: sorted list of contacts by distance (sorted by XOR distance to parameter key)
         """
         return sorted(bucket.contacts, key=lambda c: c.id ^ key)
+
+    def get_closer_nodes(self,
+                         key: ID,
+                         node_to_query: Contact,
+                         rpc_call: Callable[[ID, Contact], tuple[list[Contact], Contact, str]],
+                         further_contacts: list[Contact],
+                         closer_contacts: list[Contact]
+                         ) -> tuple[bool, str, Contact]:
+        """
+        TODO: Create docstring
+        Tells closer nodes to look for key
+        :param key:
+        :param node_to_query:
+        :param rpc_call:
+        :param further_contacts:
+        :param closer_contacts:
+        :return:
+        """
+        contacts, found_by, val = rpc_call(key, node_to_query)
+        peers_nodes: list[Contact] = []
+        for contact in contacts:
+            if contact.id.value != self.node.our_contact.id.value and node_to_query.id.value != contact.id.value:
+                if contact not in closer_contacts and contact not in further_contacts:
+                    peers_nodes.append(contact)
+
+        nearest_node_distance = node_to_query.id ^ key
+
+        # lock (locker)
+        close_peer_nodes = [p for p in peers_nodes if (p.id ^ node_to_query.id) < nearest_node_distance]
+        for p in close_peer_nodes:
+            if p.id not in [c.id for c in closer_contacts]:
+                closer_contacts.append(p)
+
+        # lock (locker)
+        far_peer_nodes = [p for p in peers_nodes if (p.id ^ node_to_query.id) >= nearest_node_distance]
+        for p in far_peer_nodes:
+            if p.id not in [c.id for c in further_contacts]:
+                further_contacts.append(p)
+
+        return val is not None, val, found_by
 
 
 class BucketList:
@@ -1030,9 +1084,28 @@ class Router(BaseRouter):
 
         return new_contacts, None, None
 
-    def rpc_find_value(self, key, contact):
-        # TODO: Create.
-        pass
+    def rpc_find_value(self, key: ID, contact: Contact) -> tuple[list[Contact], Contact, str]:
+        nodes: list[Contact] = []
+        ret_val: Optional[str] = None
+        found_by: Optional[Contact] = None
+
+        other_contacts, val, error = contact.protocol.find_value(self.node.our_contact, key)
+        self.dht.handle_error(error, contact)
+
+        if not error.has_error():
+            if other_contacts is not None:
+                for other_contact in other_contacts:
+                    nodes.append(other_contact)
+            else:
+                if val is None:
+                    raise ValueCannotBeNoneError("None values are not expected, nor supported from FIND_VALUE RPC.")
+                else:
+                    nodes.append(contact)
+                    found_by = contact
+                    ret_val = val
+
+        return nodes, found_by, ret_val
+
 
     def get_closer_nodes(self, key: ID, node_to_query: Contact,
                          rpc_call: Callable, closer_contacts: list[Contact],
