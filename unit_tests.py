@@ -13,7 +13,6 @@ def setup_split_failure(bucket_list=None):
     # b_host_id.extend([0] * 20)
     # b_host_id[19] = 0x7F
 
-
     # May be incorrect - book does some weird byte manipulation.
     host_id: ID = ID.random_id(2 ** 158, 2 ** 159 - 1)
 
@@ -21,7 +20,8 @@ def setup_split_failure(bucket_list=None):
     dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
 
     if not bucket_list:
-        bucket_list = BucketList(our_id=host_id) # dummy_contact)
+        bucket_list = BucketList(our_contact=dummy_contact)
+        bucket_list.our_id = host_id
 
     # Also add a contact in this 0 - 2 ** 159 range
     # This ensures that only 1 bucket split will occur after 20 nodes with ID >= 2 ** 159 are added.
@@ -94,7 +94,8 @@ class AddContactTest(unittest.TestCase):
 
         dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
 
-        bucket_list: BucketList = BucketList(ID.random_id())  # dummy_contact)
+        bucket_list: BucketList = BucketList(dummy_contact)
+        bucket_list.our_id = ID.random_id()
 
         for i in range(Constants.K):
             bucket_list.add_contact(Contact(ID.random_id()))
@@ -108,10 +109,9 @@ class AddContactTest(unittest.TestCase):
 
     def test_duplicate_id(self):
         dummy_contact = Contact(ID(0), VirtualProtocol())
-        #  ((VirtualProtocol)dummyContact.Protocol).Node = new Node(dummyContact, new VirtualStorage());
-        bucket_list: BucketList = BucketList(ID.random_id())
-        # !!! ^ There is a 2nd param "dummy_contact" in book here, 
-        # book is rather silly sometimes imo.
+        dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
+        bucket_list: BucketList = BucketList(dummy_contact)
+        bucket_list.our_id = ID.random_id()
 
         id: ID = ID.random_id()
 
@@ -127,9 +127,10 @@ class AddContactTest(unittest.TestCase):
 
     def test_bucket_split(self):
 
-        # dummy_contact = Contact(VirtualProtocol(), ID(0))
-        #  ((VirtualProtocol)dummyContact.Protocol).Node = new Node(dummyContact, new VirtualStorage());
-        bucket_list: BucketList = BucketList(ID.random_id())  # , dummy_contact)
+        dummy_contact = Contact(VirtualProtocol(), ID(0))
+        dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
+        bucket_list: BucketList = BucketList(dummy_contact)
+        bucket_list.our_id = ID.random_id()
         for i in range(Constants.K):
             bucket_list.add_contact(Contact(ID.random_id()))
         bucket_list.add_contact(Contact(ID.random_id()))

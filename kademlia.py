@@ -364,7 +364,7 @@ class Node:
         # VirtualStorage will only be created by
         self.cache_storage: IStorage = cache_storage if cache_storage else VirtualStorage()
         self.DHT: Optional[DHT] = None  # This should never be None
-        self.bucket_list = BucketList(contact.id)
+        self.bucket_list = BucketList(contact)
 
     def ping(self, sender: Contact) -> Contact:
         """
@@ -708,11 +708,15 @@ class BaseRouter:
 
 class BucketList:
 
-    def __init__(self, our_id: ID):
+    def __init__(self, our_contact: Contact):
+        """
+        :param our_contact: Our contact
+        """
         self.DHT = None
         self.buckets: list[KBucket] = [KBucket()]
         # first k-bucket has max range
-        self.our_id: ID = our_id
+        self.our_id: ID = our_contact.id
+        self.our_contact: Contact = our_contact
 
         # create locking object
         # self.lock = WithLock(Lock())
