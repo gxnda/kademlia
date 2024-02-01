@@ -66,7 +66,7 @@ class CommonRequest(TypedDict):
     """
     This includes all possible headers that could be passed.
     """
-    protocol: object
+    protocol: object  # IProtocol
     protocol_name: str
     random_id: int
     sender: int

@@ -705,6 +705,16 @@ class BaseRouter:
 
         return closest
 
+    @staticmethod
+    def get_closest_nodes(key: ID, bucket: KBucket) -> list[Contact]:
+        """
+        Get sorted list of closest contacts to the given key.
+        :param key: key to look close to.
+        :param bucket: bucket to look in.
+        :return: sorted list of contacts by distance (sorted by XOR distance to parameter key)
+        """
+        return sorted(bucket.contacts, key=lambda c: c.id ^ key)
+
 
 class BucketList:
 
@@ -880,6 +890,7 @@ class Router(BaseRouter):
         self.node: Node = node
         self.closer_contacts: list[Contact] = []
         self.further_contacts: list[Contact] = []
+        self.dht: Optional[DHT] = None
         # self.lock = WithLock(Lock())
 
     def lookup(self,
