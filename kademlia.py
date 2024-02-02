@@ -8,6 +8,8 @@ import threading
 from typing import Callable, Optional, TypedDict
 from os.path import commonprefix
 
+import requests
+
 from networking import *
 
 DEBUG: bool = True
@@ -1224,7 +1226,7 @@ class VirtualProtocol(IProtocol):
         return self.node.find_node(sender=sender, key=key)[0], None
 
     def find_value(self, sender: Contact,
-                   key: ID) -> tuple[list[Contact], str, RPCError | None]:
+                   key: ID) -> tuple[list[Contact] | None, str | None, RPCError | None]:
         """
         Returns either contacts or None if the value is found.
         """
@@ -1918,7 +1920,7 @@ class TCPSubnetProtocol(IProtocol):
 
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
         id: ID = ID.random_id()
-        ret, error, timeout_error = rest_call.post(
+        ret, error, timeout_error = requests.post(
             f"{self.url}:{self.port}//find_node",
             FindNodeSubnetRequest(
                 protocol=sender.protocol,
@@ -1954,7 +1956,7 @@ class TCPSubnetProtocol(IProtocol):
             """
             random_id = ID.random_id()
             try:
-                ret = rest_call.post(
+                ret = requests.post(
                     f"{self.url}:{self.port}//find_value",
                     FindValueSubnetRequest(
                         protocol=sender.protocol,
@@ -1994,7 +1996,7 @@ class TCPSubnetProtocol(IProtocol):
     def ping(self, sender: Contact) -> RPCError:
         random_id = ID.random_id()
         try:
-            ret = rest_call.post(
+            ret = requests.post(
                 f"{self.url}:{self.port}//ping",
                 FindValueSubnetRequest(
                     protocol=sender.protocol,
@@ -2023,7 +2025,7 @@ class TCPSubnetProtocol(IProtocol):
         
         random_id = ID.random_id()
         try:
-            ret = rest_call.post(
+            ret = requests.post(
                 f"{self.url}:{self.port}//store",
             StoreSubnetRequest(
                 protocol=sender.protocol,
