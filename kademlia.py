@@ -1,10 +1,10 @@
-import random
 from abc import abstractmethod
 from datetime import datetime, timedelta
 from math import ceil, log
 from typing import Callable, Optional, TypedDict
 from dataclasses import dataclass
 import pickle
+import random
 import threading
 
 import queue
@@ -357,9 +357,9 @@ class IStorage:
 class Contact:
 
     def __init__(self, id: ID, protocol=None):
-        self.protocol: IProtocol = protocol
-        # The only protocol should not be
-        self.protocol: VirtualProtocol | IProtocol = protocol
+        
+        # Protocol should only be None if DEBUG? TODO: Is this true?
+        self.protocol: Optional[IProtocol] = protocol
         self.id = id
         self.last_seen: datetime = datetime.now()
 
@@ -423,15 +423,33 @@ class Node:
                  storage: IStorage,
                  cache_storage=None):
 
+        if not cache_storage and not DEBUG:
+            raise ValueError(
+                "cache_storage must be supplied to type node if debug mode is not enabled."
+            )
+        
         self.our_contact: Contact = contact
         self.storage: IStorage = storage
-        self.cache_storage = cache_storage
-        self.DHT: DHT | None = None
+
+        # VirtualStorage will only be created by
+        self.cache_storage: IStorage = cache_storage if cache_storage else VirtualStorage()
+        self.DHT: Optional[DHT] = None  # This should never be None
         self.bucket_list = BucketList(contact.id)
 
     def ping(self, sender: Contact) -> Contact:
-        # TODO: Complete.
-        pass
+        """
+        Someone is pinging us. 
+        Register the contact and respond with our contact.
+        """
+        if sender.id.value == self.our_contact.id.value:
+            raise SendingQueryToSelfError(
+                "Sender of ping RPC cannot be ourself."
+            )
+        self.send_key_values_if_new_contact(sender)
+        self.bucket_list.add_contact(sender)
+
+        return self.our_contact
+
 
     def store(self,
               key: ID,
@@ -528,7 +546,7 @@ class Node:
                             key=ID(k),
                             val=self.storage.get(k)
                         )
-                        # if self.DHT: self.DHT.handle_error(error, sender)
+                        if self.DHT: self.DHT.handle_error(error, sender)
 
     def _is_new_contact(self, sender: Contact) -> bool:
         ret: bool
@@ -1080,7 +1098,8 @@ class Router(BaseRouter):
         new_contacts, timeout_error = contact.protocol.find_node(
             self.node.our_contact, key)
 
-        # dht?.handle_error(timeoutError, contact)
+        if self.dht: 
+            self.dht.handle_error(timeout_error, contact)
 
         return new_contacts, None, None
 
@@ -1158,9 +1177,11 @@ class VirtualProtocol(IProtocol):
         if self.responds:
             self.node.ping(sender)
         else:
-            return RPCError(
-                "Time out while pinging contact - VirtualProtocol does not respond."
+            error = RPCError(
+                "Time out while pinging contact - VirtualProtocol does not respond.",
+                timeout_error=not self.responds
             )
+            return error
 
     def find_node(self, sender: Contact,
                   key: ID) -> tuple[list[Contact], RPCError | None]:
@@ -1337,11 +1358,12 @@ class DHT:
         self.node.DHT = self
         self.node.bucket_list.DHT = self
         self._protocol = protocol
-        self._router: Router = router
+        self._router: BaseRouter = router
         self._router.node = self.node
         self._router.DHT = self
+        self.eviction_count: dict[int, int] = {}  # May be incorrect
 
-    def router(self) -> Router:
+    def router(self) -> BaseRouter:
         return self._router
 
     def protocol(self) -> IProtocol:
@@ -1402,7 +1424,7 @@ class DHT:
                         Constants.EXPIRATION_TIME_SEC / (2 ** separating_nodes)
                     )
                     error: RPCError = store_to.protocol.store(self.node.our_contact, key, lookup["val"])
-                    # self.handle_error(error, store_to)
+                    self.handle_error(error, store_to)
 
         return found, contacts, val
 
@@ -1430,7 +1452,7 @@ class DHT:
         for c in contacts:
             error: RPCError | None = c.protocol.store(
                 sender=self.node.our_contact, key=key, val=val)
-            # handle_error(error, c)
+            self.handle_error(error, c)
 
     def bootstrap(self, known_peer: Contact) -> None:
         """
@@ -1453,7 +1475,7 @@ class DHT:
         # finds K close contacts to self.our_id, excluding self.our_contact
         contacts, error = known_peer.protocol.find_node(
             sender=self.our_contact, key=self.our_id)
-        # handle_error(error, known_peer)
+        self.handle_error(error, known_peer)
         if not error:
             # print("NO ERROR")
 
@@ -1507,7 +1529,7 @@ class DHT:
             new_contacts, timeout_error = contact.protocol.find_node(
                 self.our_contact, random_id)
             # print(contacts.index(contact) + 1, "new contacts", new_contacts)
-            # handle_error(timeout_error, contact)
+            self.handle_error(timeout_error, contact)
             if new_contacts:
                 for other_contact in new_contacts:
                     self.node.bucket_list.add_contact(other_contact)
@@ -1611,12 +1633,72 @@ class DHT:
                     key=key,
                     val=self._originator_storage.get(key)
                 )
-                # handle_error(error, c)
+                self.handle_error(error, c)
 
             self._originator_storage.touch(k)
 
     def _get_separating_nodes_count(self, our_contact, store_to):
-        pass
+        pass  # TODO: Create.
+
+
+    def handle_error(self, error: RPCError, contact: Contact) -> None:
+        """
+        Put the timed out contact into a collection and increment the number
+        of times it has timed out.
+
+        If it has timed out a certain amount, remove it from the bucket
+        and replace it with the most recent pending contact that are
+        queued for that bucket.
+        """
+        # For all errors:
+        count = self.add_contact_to_evict(contact.id.value)
+        if count == Constants.EVICTION_LIMIT:
+            self.replace_contact(contact)
+
+    def delay_eviction(self,
+                       to_evict: Contact,
+                       to_replace: Contact) -> None:
+        """
+        The contact that did not respond (or had an error) gets "n"
+        tries before being evicted and replaced with the most recently
+        seen contact that wants to got into the non-responding contact's
+        K-Bucket
+
+        :param to_evict: The contact that didn't respond.
+        :param to_replace: The contact that can replace the
+        non-responding contact.
+        """
+        # Non-concurrent list needs locking
+        # lock(pending_contacts)
+        # add only if its a new pending contact.
+        if to_replace.id not in [c.id for c in self.pending_contacts]:
+            self.pending_contacts.append(to_replace)
+
+        key: int = to_evict.id.value
+        count = self.add_contact_to_evict(key)
+        # if the eviction attempts on key reach the eviction limit
+        if count == Constants.EVICTION_LIMIT:
+            self.replace_contact(to_evict)
+
+    def add_contact_to_evict(self, key: int) -> int:  # TODO: make protected.
+        # self.eviction_count is a dictionary of ID keys ->
+        # how many times they have been considered for eviction.
+        if key not in self.eviction_count:
+            self.eviction_count[key] = 0
+        count = self.eviction_count[key] + 1
+        self.eviction_count[key] = count
+
+        return count
+
+    def replace_contact(self, to_evict: Contact) -> None:  # TODO: make protected.
+        bucket = self.node.bucket_list.get_kbucket(to_evict.id)
+        # Prevent other threads from manipulating the bucket list or buckets
+        # lock(self.node.bucket_list)
+        self.evict_contact(bucket, to_evict)
+        self.replace_with_pending_contact(bucket)
+
+    def evict_contact(bucket: KBucket, to_evict: Contact) -> None:  # TODO: Make protected.
+         pass  # TODO: Complete
 
     def save(self, filename: str) -> None:
         """
@@ -2031,8 +2113,3 @@ class TCPSubnetProtocol(IProtocol):
             error = e
 
         return get_rpc_error(random_id, ret, timeout_error, error)
-
-
-
-
-

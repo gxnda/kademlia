@@ -131,7 +131,7 @@ class TCPSubnetServer(HTTPServer):
         )
 
         # TODO: Should these be double slashed?
-        self.route_packets: dict[str: type] = {
+        self.route_packets: dict[str, type] = {
             "//ping": PingRequest,  # "ping" should refer to type PingRequest
             "//store": StoreRequest,  # "store" should refer to type StoreRequest
             "//find_node": FindNodeRequest,  # "find_node" should refer to type FindNodeRequest
@@ -213,7 +213,7 @@ class TCPSubnetServer(HTTPServer):
                 if node:
                     # TODO: Make Asynchronous
                     new_thread = threading.Thread(
-                        target=CommonRequestHandler,  # TODO: This function does not exist.
+                        target=CommonRequestHandler,  # TODO: This does not exist.
                         args=(method_name, common_request, node, context)
                     )
                     new_thread.start()
