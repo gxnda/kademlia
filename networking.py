@@ -175,6 +175,8 @@ class TCPSubnetServer(HTTPServer):
         request_dict: dict = {}
         for key in key_value_pickled_pairs:
             # All objects are sent using HTTP as pickle objects to keep protocol objects intact.
+            # This deserialises all objects sent through, this means there is no need to instantiate the protocol in the
+            # main kademlia file.
             request_dict[key] = pickle.loads(key_value_pickled_pairs[key])
 
         print(context.request, context.command)
