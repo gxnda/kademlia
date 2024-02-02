@@ -11,6 +11,7 @@ from os.path import commonprefix
 import requests
 
 from networking import *
+from pickler import encode_data, decode_data
 
 DEBUG: bool = True
 
@@ -1920,16 +1921,20 @@ class TCPSubnetProtocol(IProtocol):
 
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
         id: ID = ID.random_id()
+        encoded_data = encode_data(
+            dict(FindNodeSubnetRequest(
+                  protocol=sender.protocol,
+                  protocol_name=type(sender.protocol),
+                  subnet=self.subnet,
+                  sender=sender.id.value,
+                  key=key.value,
+                  random_id=id.value
+            ))
+        )
         ret, error, timeout_error = requests.post(
             f"{self.url}:{self.port}//find_node",
-            FindNodeSubnetRequest(
-                protocol=sender.protocol,
-                protocol_name=sender.protocol.get_type(),
-                subnet=self.subnet,
-                sender=sender.id.value,
-                key=key.value,
-                random_id=id.value)
-            )
+            data=encoded_data
+        )
         try:
             contacts = []
             if ret:
@@ -1942,7 +1947,9 @@ class TCPSubnetProtocol(IProtocol):
                     if contacts:
                         return [c for c in contacts if c.protocol is not None], get_rpc_error(id, ret, timeout_error, error)
         except Exception as e:
-            return None, RPCError(protocol_error=True)
+            error = RPCError()
+            error.protocol_error = True
+            return None, error
 
     def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, str | None, RPCError]:
             """
@@ -1958,14 +1965,16 @@ class TCPSubnetProtocol(IProtocol):
             try:
                 ret = requests.post(
                     url=f"{self.url}:{self.port}//find_value",
-                    data=FindValueSubnetRequest(
-                        protocol=sender.protocol,
-                        protocol_name=sender.protocol,
-                        subnet=subnet,
-                        sender=sender.id.value,
-                        key=key.value,
-                        random_id = random_id.value
-                    ))
+                    data=encode_data(
+                            dict(FindValueSubnetRequest(
+                                protocol=sender.protocol,
+                                protocol_name=type(sender.protocol),
+                                subnet=self.subnet,
+                                sender=sender.id.value,
+                                key=key.value,
+                                random_id = random_id.value
+                            ))
+                    )
                 timeout_error = False
                 error = None
             except TimeoutError as e:
@@ -1997,15 +2006,17 @@ class TCPSubnetProtocol(IProtocol):
         random_id = ID.random_id()
         try:
             ret = requests.post(
-                f"{self.url}:{self.port}//ping",
-                FindValueSubnetRequest(
-                    protocol=sender.protocol,
-                    protocol_name=sender.protocol.type,
-                    subnet=self.subnet,
-                    sender=sender.id.value,
-                    key=key.value,
-                    random_id = random_id.value
-                ))
+                url=f"{self.url}:{self.port}//ping",
+                data=encode_data(
+                    dict(FindValueSubnetRequest(
+                            protocol=sender.protocol,
+                            protocol_name=type(sender.protocol),
+                            subnet=self.subnet,
+                            sender=sender.id.value,
+                            key=key.value,
+                            random_id = random_id.value))
+                )
+            )
             timeout_error = False
             error = None
         except TimeoutError as e:
@@ -2026,18 +2037,20 @@ class TCPSubnetProtocol(IProtocol):
         random_id = ID.random_id()
         try:
             ret = requests.post(
-                f"{self.url}:{self.port}//store",
-            StoreSubnetRequest(
-                protocol=sender.protocol,
-                protocol_name=sender.protocol.type,
-                subnet=self.subnet,
-                sender=sender.id.value,
-                key=random_id.value,
-                value=val,
-                is_cached=is_cached,
-                expiration_time_sec=expiration_time_sec,
-                random_id=random_id.value
-            ))
+                url=f"{self.url}:{self.port}//store",
+                data=encode_data(
+                    dict(StoreSubnetRequest(
+                        protocol=sender.protocol,
+                        protocol_name=type(sender.protocol),
+                        subnet=self.subnet,
+                        sender=sender.id.value,
+                        key=random_id.value,
+                        value=val,
+                        is_cached=is_cached,
+                        expiration_time_sec=expiration_time_sec,
+                        random_id=random_id.value))
+                )
+            )
             timeout_error = False
             error = None
         except TimeoutError as e:
