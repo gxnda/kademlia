@@ -1293,7 +1293,7 @@ class VirtualStorage(IStorage):
         pass
 
     def get_keys(self) -> list[int]:
-        pass
+        return list(self._store.keys())
 
     def touch(self, key: int) -> None:
         pass
@@ -1824,7 +1824,7 @@ class ParallelRouter(BaseRouter):
             self.semaphore.wait_one()  # dont think this is real
             item: ContactQueueItem = self.contact_queue.try_dequeue()
             if item:
-                val, found_by = self.get_closer_nodes(item["key"],
+                found, val, found_by = self.get_closer_nodes(item["key"],
                                             item["contact"],
                                             item["rpc_call"],
                                             item["closer_contacts"],
@@ -1975,6 +1975,7 @@ class TCPSubnetProtocol(IProtocol):
                                 random_id = random_id.value
                             ))
                     )
+                )
                 timeout_error = False
                 error = None
             except TimeoutError as e:

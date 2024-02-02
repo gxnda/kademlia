@@ -166,12 +166,7 @@ class ForceFailedAddTest(unittest.TestCase):
 
         new_contact = Contact(id=ID(id),
                               protocol=dummy_contact.protocol)
-        # print(len(bucket_list.buckets), len(bucket_list.contacts()), [len(b.contacts) for b in bucket_list.buckets])
-        print(bucket_list.buckets[1].shared_bits())
-        print("\n".join([b.id.bin() for b in bucket_list.buckets[1].contacts]))
-        print("\n".join([b.id.bin() for b in bucket_list.buckets[0].contacts]))
         bucket_list.add_contact(new_contact)
-        # print(len(bucket_list.buckets), len(bucket_list.contacts()), [len(b.contacts) for b in bucket_list.buckets])
 
         self.assertTrue(len(bucket_list.buckets) == 2,
                 f"Bucket split should have occured. Number of buckets should be 2, is {len(bucket_list.buckets)}.")
@@ -1014,11 +1009,11 @@ class BootstrappingTests(unittest.TestCase):
         self.assertTrue([len(b.contacts) for b in n.bucket_list.buckets] == [10],
                         "Must have 10 contacts in node.")
 
-        print("Starting bootstrap...")
+        # print("Starting bootstrap...")
         dht_us.bootstrap(dht_bootstrap._router.node.our_contact)
-        print("Bootstrap finished!")
+        # print("Bootstrap finished!")
 
-        print(f"\nLength of buckets: {[len(b.contacts) for b in dht_us._router.node.bucket_list.buckets]}")
+        # print(f"\nLength of buckets: {[len(b.contacts) for b in dht_us._router.node.bucket_list.buckets]}")
 
         sum_of_contacts = len(dht_us._router.node.bucket_list.contacts())
         self.assertTrue(sum_of_contacts == 31,
