@@ -1957,8 +1957,8 @@ class TCPSubnetProtocol(IProtocol):
             random_id = ID.random_id()
             try:
                 ret = requests.post(
-                    f"{self.url}:{self.port}//find_value",
-                    FindValueSubnetRequest(
+                    url=f"{self.url}:{self.port}//find_value",
+                    data=FindValueSubnetRequest(
                         protocol=sender.protocol,
                         protocol_name=sender.protocol,
                         subnet=subnet,
@@ -1985,9 +1985,9 @@ class TCPSubnetProtocol(IProtocol):
                                     ID(c.contact)
                                 ))
                             contacts.append(new_contact)
-                            return [c for c in contacts if c.protocol != None], 
-                            ret["value"], 
-                            get_rpc_error(random_id, ret, timeout_error, error)
+                            return [c for c in contacts if c.protocol != None], \
+                                ret["value"], \
+                                get_rpc_error(random_id, ret, timeout_error, error)
             except Exception as ex:
                 rpc_error = RPCError(ex.message)
                 rpc_error.protocol_error = True
