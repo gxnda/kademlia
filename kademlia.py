@@ -13,7 +13,7 @@ from os.path import commonprefix
 
 import requests
 
-import queue
+import my_queues
 from networking import *
 from pickler import encode_data, decode_data
 
@@ -1592,7 +1592,7 @@ class DHT:
         From the spec:
         “Buckets are generally kept fresh by the traffic of requests traveling through nodes. To handle pathological cases in which there are no lookups for a particular ID range, each node refreshes any bucket to which it has not performed a node lookup in the past hour. Refreshing means picking a random ID in the bucket’s range and performing a node search for that ID.”
         """
-        bucket_refresh_timer = Timer(Constants.BUCKET_REFRESH_INTERVAL)
+        bucket_refresh_timer = threading.Timer(Constants.BUCKET_REFRESH_INTERVAL, self._refresh_bucket)
         bucket_refresh_timer.auto_reset = True
         bucket_refresh_timer.elapsed += self.bucket_refresh_timer_elapsed
         bucket_refresh_timer.start()
@@ -1690,7 +1690,6 @@ class DHT:
 
     def _get_separating_nodes_count(self, our_contact, store_to):
         pass  # TODO: Create.
-
 
     def handle_error(self, error: RPCError, contact: Contact) -> None:
         """
@@ -1827,8 +1826,8 @@ def select_random(arr: list, freq: int) -> list:
 class ParallelRouter(BaseRouter):
     def __init__(self, node: Node = None):
         # TODO: Should these be empty?
-        super().__init__()
-        self.contact_queue = queue.InfiniteLinearQueue()  # TODO: Make protected - should it be infinite?
+        super().__init__(node)
+        self.contact_queue = my_queues.InfiniteLinearQueue()  # TODO: Make protected - should it be infinite?
         self.node: Node = node
         self.semaphore = threading.Semaphore()  # TODO: Make protected
         self.now: datetime = datetime.now()  # Should this be now?
