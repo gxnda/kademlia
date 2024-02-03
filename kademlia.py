@@ -781,7 +781,7 @@ class GetCloserNodesReturn(TypedDict):
 
 
 class BaseRouter:
-    def __init__(self, node: Node = Node):
+    def __init__(self, node: Node):
         self.closer_contacts: list[Contact]
         self.further_contacts: list[Contact]
         self.node: Node = node
@@ -1086,6 +1086,7 @@ class Router(BaseRouter):
     """
 
     def __init__(self, node: Node = None) -> None:
+        super().__init__(node)
         self.node: Node = node
         self.closer_contacts: list[Contact] = []
         self.further_contacts: list[Contact] = []
@@ -1196,82 +1197,6 @@ class Router(BaseRouter):
             "found_by": None
         }
 
-    def find_closest_nonempty_kbucket(self, key: ID) -> KBucket:
-        """
-        Helper method.
-        Code listing 34.
-        """
-        # gets all non-empty buckets from bucket list
-        non_empty_buckets: list[KBucket] = [
-            b for b in self.node.bucket_list.buckets if (len(b.contacts) != 0)
-        ]
-        if len(non_empty_buckets) == 0:
-            raise AllKBucketsAreEmptyError(
-                "No non-empty buckets can be found.")
-
-        return sorted(non_empty_buckets,
-                      key=(lambda b: b.id.value ^ key.value))[0]
-
-    # TODO: Remove.
-    """
-    @staticmethod
-    def get_closest_nodes(key: ID, bucket: KBucket) -> list[Contact]:
-        return sorted(bucket.contacts, key=lambda c: c.id.value ^ key.value)
-    """
-
-    def rpc_find_nodes(self, key: ID, contact: Contact):
-        # what is node??
-        new_contacts, timeout_error = contact.protocol.find_node(
-            self.node.our_contact, key)
-
-        if self.dht:
-            self.dht.handle_error(timeout_error, contact)
-
-        return new_contacts, None, None
-
-    def rpc_find_value(self, key, contact):
-        # TODO: Create.
-        pass
-
-    def get_closer_nodes(self, key: ID, node_to_query: Contact,
-                         rpc_call: Callable, closer_contacts: list[Contact],
-                         further_contacts: list[Contact]) -> bool:
-
-        contacts: list[Contact]
-        found_by: Contact
-        val: str
-        contacts, found_by, val = rpc_call(key, node_to_query)
-        peers_nodes = []
-        for contact in contacts:
-            if contact.id.value not in [
-                    self.node.our_contact.id.value, node_to_query.id.value,
-                    closer_contacts, further_contacts
-            ]:
-                peers_nodes.append(contact)
-
-        nearest_node_distance = node_to_query.id.value ^ key.value
-
-        # with self.lock:  # Lock thread while this is running.
-        for p in peers_nodes:
-            # if given nodes are closer than our nearest node
-            # , and it hasn't already been added:
-            if p.id.value ^ key.value < nearest_node_distance \
-                    and p.id.value not in [i.id.value for i in closer_contacts]:
-                closer_contacts.append(p)
-
-        # with self.lock:  # Lock thread while this is running.
-        for p in peers_nodes:
-            # if given nodes are further than or equal to the nearest node
-            # , and it hasn't already been added:
-            if p.id.value ^ key.value >= nearest_node_distance \
-                    and p.id.value not in [i.id.value for i in further_contacts]:
-                further_contacts.append(p)
-
-        return val is not None  # Can you use "is not" between empty strings and None?
-
-    def query(self, key, new_nodes_to_query, rpc_call, closer_contacts,
-              further_contacts) -> QueryReturn:
-        pass
 
 def get_rpc_error(id: ID,
                   resp: BaseResponse,
