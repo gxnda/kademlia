@@ -1,6 +1,8 @@
 from abc import abstractmethod
+from asyncio import sleep
 from datetime import datetime, timedelta
 from math import ceil, log
+from traceback import format_exc
 from typing import Callable, Optional, TypedDict
 from dataclasses import dataclass
 import pickle
@@ -49,6 +51,10 @@ class SendingQueryToSelfError(Exception):
 
 class SenderIsSelfError(Exception):
     """Raised when trying to send certain RPC commands, if sender is us."""
+    pass
+
+
+class BucketDoesNotContainContactToEvictError(Exception):
     pass
 
 
@@ -758,6 +764,14 @@ class KBucket:
         index = contact_ids.index(contact.id)
         self.contacts[index] = contact
         contact.touch()
+
+    def evict_contact(self, contact: Contact) -> None:
+        if self.contains(contact.id):
+            self.contacts.remove(contact)
+        else:
+            raise BucketDoesNotContainContactToEvictError(
+                "Contact not found."
+            )
 
 
 class GetCloserNodesReturn(TypedDict):
@@ -1809,8 +1823,18 @@ class DHT:
         self.evict_contact(bucket, to_evict)
         self.replace_with_pending_contact(bucket)
 
-    def evict_contact(bucket: KBucket, to_evict: Contact) -> None:  # TODO: Make protected.
-         pass  # TODO: Complete
+    def evict_contact(self, bucket: KBucket, to_evict: Contact) -> None:  # TODO: Make protected.
+
+        if to_evict.id.value in self.eviction_count:
+            self.eviction_count.pop(to_evict.id.value)
+
+        if not bucket.contains(to_evict.id):
+            raise BucketDoesNotContainContactToEvictError(
+                "Bucket does not contain the contact to be evicted."
+            )
+        else:
+            bucket.evict_contact(to_evict)
+
 
     def save(self, filename: str) -> None:
         """
@@ -1827,6 +1851,24 @@ class DHT:
         with open(filename, "rb") as input_file:
             return pickle.load(file=input_file)
 
+    def replace_with_pending_contact(self, bucket: KBucket):
+        """
+        Find a pending contact that goes into the bucket that now has room.
+        :param bucket:
+        :return:
+        """
+        contact: Optional[Contact] = None
+        # lock(self.pending_contacts)
+        temp_arr = []
+        for c1 in self.pending_contacts:
+            if self.node.bucket_list.get_kbucket(c1.id) == bucket:
+                contacts_sorted_by_lastseen = sorted(bucket.contacts, key=lambda c2: c2.last_seen)
+                contact = contacts_sorted_by_lastseen[-1]  # get last
+                break
+
+        if contact is not None:
+            self.pending_contacts.remove(contact)
+            bucket.add_contact(contact)
 
 # class DHTSubclass(DHT):
 #     def __init__(self):
@@ -1861,7 +1903,7 @@ class ParallelRouter(BaseRouter):
     def __init__(self, node: Node = None):
         # TODO: Should these be empty?
         super().__init__()
-        self.contact_queue: list[ContactQueueItem] = []  # TODO: Make protected - should it be infinite?
+        self.contact_queue = queue.InfiniteLinearQueue()  # TODO: Make protected - should it be infinite?
         self.node: Node = node
         self.semaphore = threading.Semaphore()  # TODO: Make protected
         self.now: datetime = datetime.now()  # Should this be now?
@@ -1903,8 +1945,8 @@ class ParallelRouter(BaseRouter):
         """
         flag = True
         while flag:  # I hate this.
-            self.semaphore.wait_one()  # dont think this is real
-            item: ContactQueueItem = self.contact_queue.try_dequeue()
+            self.semaphore.wait_one()  # don't think this is real
+            item: ContactQueueItem = self.contact_queue.dequeue()
             if item:
                 found, val, found_by = self.get_closer_nodes(item["key"],
                                             item["contact"],
@@ -1913,7 +1955,7 @@ class ParallelRouter(BaseRouter):
                                             item["further_contacts"]
                                             )
                 if val or found_by:
-                    if not stop_work:
+                    if not self.stop_work:
                         # Possible multiple "found"
                         # lock(locker)
                         item["find_result"]["found"] = True
@@ -1934,7 +1976,7 @@ class ParallelRouter(BaseRouter):
     def dequeue_remaining_work(self):
         dequeue_result = True
         while dequeue_result:
-            dequeue_result = self.contact_queue.try_dequeue()
+            dequeue_result = self.contact_queue.dequeue()
 
     def stop_remaining_work(self):
         self.dequeue_remaining_work()
@@ -2037,7 +2079,7 @@ class ParallelRouter(BaseRouter):
         # The lookup terminates when the initiator has queried and
         # received responses from the k closest nodes it has seen.
         while len(ret) < Constants.K and have_work:
-            thread.sleep(Constants.RESPONSE_WAIT_TIME)
+            sleep(Constants.RESPONSE_WAIT_TIME)  # Should this be time.sleep or asyncio.sleep, or threading ?
 
             found_return = self.parallel_found(find_result)
             if found_return:
@@ -2045,7 +2087,7 @@ class ParallelRouter(BaseRouter):
                 return found_return
 
             closer_uncontacted_nodes = [c for c in closer_contacts if c not in contacted_nodes]
-            further_uncontacted_nodes = [c for c in further_contacts if c not in further_nodes]
+            further_uncontacted_nodes = [c for c in further_contacts if c not in contacted_nodes]
 
             have_closer = len(closer_uncontacted_nodes) > 0
             have_further = len(further_uncontacted_nodes) > 0
@@ -2070,7 +2112,7 @@ class ParallelRouter(BaseRouter):
 
             if alpha_nodes:
                 for a in alpha_nodes:
-                    if a.ID not in [c.id for c in contacted_nodes]:
+                    if a.id not in [c.id for c in contacted_nodes]:
                         contacted_nodes.append(a)
                     self.queue_work(
                         key=key,
@@ -2119,8 +2161,8 @@ class TCPSubnetProtocol(IProtocol):
             if ret:
                 if ret["contacts"]:  # TODO: Is ret a dictionary?
                     contacts = []
-                    for c in ret["contacts"]:
-                        new_c = Contact(Protocol.instantiate_protocol(c.protocol, val["protocol_name"]))
+                    for val in ret["contacts"]:
+                        new_c = Contact(val["protocol"], val[""])
                         contacts.append(new_c)
                     # Return only contacts with supported protocols.
                     if contacts:
@@ -2141,19 +2183,20 @@ class TCPSubnetProtocol(IProtocol):
             error.
             """
             random_id = ID.random_id()
+            encoded_data = encode_data(
+                        dict(FindValueSubnetRequest(
+                            protocol=sender.protocol,
+                            protocol_name=type(sender.protocol),
+                            subnet=self.subnet,
+                            sender=sender.id.value,
+                            key=key.value,
+                            random_id=random_id.value
+                        ))
+                )
             try:
                 ret = requests.post(
                     url=f"{self.url}:{self.port}//find_value",
-                    data=encode_data(
-                            dict(FindValueSubnetRequest(
-                                protocol=sender.protocol,
-                                protocol_name=type(sender.protocol),
-                                subnet=self.subnet,
-                                sender=sender.id.value,
-                                key=key.value,
-                                random_id = random_id.value
-                            ))
-                    )
+                    data=encoded_data
                 )
                 timeout_error = False
                 error = None
@@ -2161,6 +2204,7 @@ class TCPSubnetProtocol(IProtocol):
                 # request timed out.
                 timeout_error = True
                 error = e
+                print("TimeoutError:",e)
 
             try:
                 contacts = []
@@ -2168,37 +2212,42 @@ class TCPSubnetProtocol(IProtocol):
                     if ret["contacts"]:
                         for c in ret["contacts"]:
                             new_contact = Contact(
-                                Protocol.instantiate_protocol(
-                                    c.protocol,
-                                    c.protocol_name),
-                                    ID(c.contact)
+                                    c["protocol"],  # instantiate_protocol
+                                    ID(c["contact"])
                                 )
                             contacts.append(new_contact)
-                            return [c for c in contacts if c.protocol != None], \
+                            return [c for c in contacts if c.protocol is not None], \
                                 ret["value"], \
-                                get_rpc_error(random_id, ret, timeout_error, error)
-            except Exception as ex:
-                rpc_error = RPCError(ex.message)
+                                get_rpc_error(
+                                    random_id, ret, timeout_error, ErrorResponse(
+                                        random_id=random_id.value,
+                                        error_message=str(error))
+                                )
+            except Exception as e:
+                rpc_error = RPCError(str(e))
                 rpc_error.protocol_error = True
+                print(f"Error performing find_value: {rpc_error}")
                 return None, None, rpc_error
 
     def ping(self, sender: Contact) -> RPCError:
         random_id = ID.random_id()
+        encoded_data = encode_data(
+            dict(PingSubnetRequest(
+                protocol=sender.protocol,
+                protocol_name=type(sender.protocol),
+                subnet=self.subnet,
+                sender=sender.id.value,
+                random_id=random_id.value)))
+
+        timeout_error = False
+        error = None
+        ret = None
         try:
             ret = requests.post(
                 url=f"{self.url}:{self.port}//ping",
-                data=encode_data(
-                    dict(FindValueSubnetRequest(
-                            protocol=sender.protocol,
-                            protocol_name=type(sender.protocol),
-                            subnet=self.subnet,
-                            sender=sender.id.value,
-                            key=key.value,
-                            random_id = random_id.value))
-                )
+                data=encoded_data
             )
-            timeout_error = False
-            error = None
+
         except TimeoutError as e:
             # request timed out.
             timeout_error = True
@@ -2215,24 +2264,25 @@ class TCPSubnetProtocol(IProtocol):
               ) -> RPCError:
         
         random_id = ID.random_id()
+        encoded_data = encode_data(
+            dict(StoreSubnetRequest(
+                protocol=sender.protocol,
+                protocol_name=type(sender.protocol),
+                subnet=self.subnet,
+                sender=sender.id.value,
+                key=key.value,
+                value=val,
+                is_cached=is_cached,
+                expiration_time_sec=expiration_time_sec,
+                random_id=random_id.value)))
+        timeout_error = False
+        error = None
+        ret = None
         try:
             ret = requests.post(
                 url=f"{self.url}:{self.port}//store",
-                data=encode_data(
-                    dict(StoreSubnetRequest(
-                        protocol=sender.protocol,
-                        protocol_name=type(sender.protocol),
-                        subnet=self.subnet,
-                        sender=sender.id.value,
-                        key=random_id.value,
-                        value=val,
-                        is_cached=is_cached,
-                        expiration_time_sec=expiration_time_sec,
-                        random_id=random_id.value))
+                data=encoded_data
                 )
-            )
-            timeout_error = False
-            error = None
         except TimeoutError as e:
             # request timed out.
             timeout_error = True

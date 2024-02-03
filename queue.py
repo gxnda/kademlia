@@ -3,6 +3,10 @@ from typing import Optional
 
 class InfiniteLinearQueue:
     def __init__(self):
+        """
+        You may ask, what's the point of this? isn't this just a normal list?
+        Basically, it is; but you have a
+        """
         self.__items = []
 
     def is_empty(self):
@@ -15,6 +19,8 @@ class InfiniteLinearQueue:
     def dequeue(self) -> Optional[any]:
         if not self.is_empty():
             return self.__items.pop(0)
+        else:
+            return None
 
 
 class LinearQueue(object):

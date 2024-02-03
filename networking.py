@@ -4,6 +4,8 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import pickle
 
+import pickler
+
 
 class UnknownRequestError(Exception):
     pass
@@ -80,7 +82,7 @@ class BaseResponse(TypedDict):
     random_id: int
 
 
-class ErrorResponse(TypedDict, BaseResponse):
+class ErrorResponse(BaseResponse, TypedDict):
     error_message: str
 
 
@@ -90,7 +92,7 @@ class ContactResponse(TypedDict):
     protocol_name: dict
 
 
-class FindNodeResponse(TypedDict, BaseResponse):
+class FindNodeResponse(BaseResponse, TypedDict):
     contacts: list[ContactResponse]
 
 
@@ -151,7 +153,7 @@ class TCPSubnetServer(HTTPServer):
         associated with the subnet." - Marc Clifton
 
         I am planning to take in a BaseHTTPRequestHandler object and read the body.
-        The body should be a JSON containing key value pairs of the following values:
+        The body should be a pickled dictionary containing key value pairs of the following values:
 
             protocol: object
             protocol_name: str
@@ -168,16 +170,8 @@ class TCPSubnetServer(HTTPServer):
         # TODO: Add Encryption !!!!!!!
 
         encoded_request: bytes = context.rfile.read()
-        decoded_request: str = encoded_request.decode("utf-8")
-        request = decoded_request
-
-        key_value_pickled_pairs: dict = json.loads(request)
-        request_dict: dict = {}
-        for key in key_value_pickled_pairs:
-            # All objects are sent using HTTP as pickle objects to keep protocol objects intact.
-            # This deserialises all objects sent through, this means there is no need to instantiate the protocol in the
-            # main kademlia file.
-            request_dict[key] = pickle.loads(key_value_pickled_pairs[key])
+        decoded_request: dict = pickler.decode_data(encoded_request)
+        request_dict = decoded_request
 
         print(context.request, context.command)
         if context.command == "POST":
