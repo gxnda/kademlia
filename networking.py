@@ -1,3 +1,4 @@
+import abc
 import threading
 from typing import TypedDict
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -109,10 +110,20 @@ class StoreResponse(BaseResponse):
     pass
 
 
+# class Server(abc.ABC):
+#     def __init__(self, url: str, port: int):
+#         self.url = url
+#         self.port = port
+#
+#     def start(self):
+#
+
+
 class TCPServer(HTTPServer):  # TODO: Create.
     def __init__(self, node):
         server_address: tuple[str, int] = (node.our_contact.protocol.ip, node.our_contact.protocol.port)
-        super().__init__(
+        HTTPServer.__init__(
+            self,
             server_address=server_address,
             RequestHandlerClass=BaseHTTPRequestHandler
         )
@@ -127,7 +138,8 @@ class TCPServer(HTTPServer):  # TODO: Create.
 
 class TCPSubnetServer(HTTPServer):
     def __init__(self, server_address: tuple[str, int]):
-        super().__init__(
+        HTTPServer.__init__(
+            self,
             server_address=server_address,
             RequestHandlerClass=BaseHTTPRequestHandler
         )
@@ -141,6 +153,43 @@ class TCPSubnetServer(HTTPServer):
         }
 
         self.subnets: dict = {}
+
+    def start(self) -> None:
+        """
+        Starts the server.
+        Holds up the entire program though, would recommend placing in a thread.
+        :return:
+        """
+        print("Starting server...")
+        self.serve_forever()
+
+    def stop(self):
+        """
+        Stops the server.
+        :return:
+        """
+        print("Stopping server...")
+        self.shutdown()
+
+    def thread_start(self) -> threading.Thread:
+        """
+        Starts the server on a thread, which is returned
+        :return: Thread the server is running on
+        """
+        thread = threading.Thread(target=self.start)
+        thread.start()
+        return thread
+
+    def thread_stop(self, thread: threading.Thread) -> None:
+        """
+        Stops the server on a given thread.
+        If the thread is invalid, the server will still shut
+        :param thread:
+        :return:
+        """
+        self.shutdown()
+        thread.join()  # wait for the thread to finish.
+        print("Server stopped.")
 
     def register_protocol(self, subnet: int, node):
         self.subnets[subnet] = node

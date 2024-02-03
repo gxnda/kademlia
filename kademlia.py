@@ -2077,7 +2077,7 @@ class TCPSubnetProtocol(IProtocol):
             ))
         )
         ret, error, timeout_error = requests.post(
-            f"{self.url}:{self.port}//find_node",
+            f"http://{self.url}:{self.port}/find_node",
             data=encoded_data
         )
         try:
@@ -2119,7 +2119,7 @@ class TCPSubnetProtocol(IProtocol):
                 )
             try:
                 ret = requests.post(
-                    url=f"{self.url}:{self.port}//find_value",
+                    url=f"http://{self.url}:{self.port}/find_value",
                     data=encoded_data
                 )
                 timeout_error = False
@@ -2168,7 +2168,7 @@ class TCPSubnetProtocol(IProtocol):
         ret = None
         try:
             ret = requests.post(
-                url=f"{self.url}:{self.port}//ping",
+                url=f"http://{self.url}:{self.port}/ping",
                 data=encoded_data
             )
 
@@ -2204,7 +2204,7 @@ class TCPSubnetProtocol(IProtocol):
         ret = None
         try:
             ret = requests.post(
-                url=f"{self.url}:{self.port}//store",
+                url=f"http://{self.url}:{self.port}/store",
                 data=encoded_data
                 )
         except TimeoutError as e:
