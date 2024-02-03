@@ -1,7 +1,8 @@
 from abc import abstractmethod
-from dataclasses import dataclass
 from datetime import datetime, timedelta
 from math import ceil, log
+from typing import Callable, Optional, TypedDict
+from dataclasses import dataclass
 import pickle
 import random
 import threading
@@ -10,10 +11,12 @@ from os.path import commonprefix
 
 import requests
 
+import queue
 from networking import *
 from pickler import encode_data, decode_data
 
 DEBUG: bool = True
+TRY_CLOSEST_BUCKET = False  # TODO: Find somewhere good to put this / remove it entirely.
 
 if DEBUG:
     random.seed(1)  # For consistent testing
@@ -47,6 +50,54 @@ class SendingQueryToSelfError(Exception):
 class SenderIsSelfError(Exception):
     """Raised when trying to send certain RPC commands, if sender is us."""
     pass
+
+
+class RPCError(Exception):
+    """
+    Possible errors for RPC commands.
+    """
+
+    def __init__(self,
+                 error_message: str | None = None,
+                 timeout_error: bool = False,
+                 id_mismatch_error: bool = False,
+                 peer_error: bool = False,
+                 peer_error_message: str | None = None
+                 ):
+        super().__init__(error_message)
+        self.protocol_error_message: str | None = error_message
+
+        if error_message:
+            self.protocol_error = True
+        else:
+            self.protocol_error = False
+
+        self.timeout_error = timeout_error
+        self.id_mismatch_error = id_mismatch_error
+        self.peer_error = peer_error
+        self.peer_error_message: str | None = peer_error_message
+
+        if self.peer_error_message and not self.peer_error:
+            raise ValueError("Parameter peer error message requires a peer error.")
+
+    def has_error(self) -> bool:
+        return self.timeout_error or \
+            self.protocol_error or \
+            self.id_mismatch_error or \
+            self.peer_error
+
+    def __str__(self):
+        if self.has_error():
+            if self.protocol_error:
+                return self.protocol_error_message
+            elif self.peer_error:
+                return self.peer_error_message
+        else:
+            return "No error."
+
+    @staticmethod
+    def no_error():
+        pass
 
 
 class ValueCannotBeNoneError(Exception):
@@ -321,6 +372,28 @@ class Contact:
     def touch(self) -> None:
         """Updates the last time the contact was seen."""
         self.last_seen = datetime.now()
+
+
+class IProtocol:
+    """
+    Interface for all protocols to follow.
+    """
+
+    @abstractmethod
+    def ping(self, sender: Contact) -> RPCError:
+        pass
+
+    @abstractmethod
+    def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact], RPCError]:
+        pass
+
+    @abstractmethod
+    def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact], str, RPCError]:
+        pass
+
+    @abstractmethod
+    def store(self, sender: Contact, key: ID, val: str, is_cached: bool) -> RPCError:
+        pass
 
 
 class QueryReturn(TypedDict):
@@ -1109,77 +1182,84 @@ class Router(BaseRouter):
             "found_by": None
         }
 
+    def find_closest_nonempty_kbucket(self, key: ID) -> KBucket:
+        """
+        Helper method.
+        Code listing 34.
+        """
+        # gets all non-empty buckets from bucket list
+        non_empty_buckets: list[KBucket] = [
+            b for b in self.node.bucket_list.buckets if (len(b.contacts) != 0)
+        ]
+        if len(non_empty_buckets) == 0:
+            raise AllKBucketsAreEmptyError(
+                "No non-empty buckets can be found.")
 
-class RPCError(Exception):
+        return sorted(non_empty_buckets,
+                      key=(lambda b: b.id.value ^ key.value))[0]
+
+    # TODO: Remove.
     """
-    Possible errors for RPC commands.
-    """
-    def __init__(self,
-                 error_message: str | None = None,
-                 timeout_error: bool = False,
-                 id_mismatch_error: bool = False,
-                 peer_error: bool = False,
-                 peer_error_message: str | None = None
-                 ):
-        super().__init__(error_message)
-        self.protocol_error_message: str | None = error_message 
-        
-        if error_message:
-            self.protocol_error = True
-        else:
-            self.protocol_error = False
-        
-        self.timeout_error = timeout_error
-        self.id_mismatch_error = id_mismatch_error
-        self.peer_error = peer_error
-        self.peer_error_message: str | None = peer_error_message
-
-        if self.peer_error_message and not self.peer_error:
-            raise ValueError("Parameter peer error message requires a peer error.")
-
-    def has_error(self) -> bool:
-        return self.timeout_error or \
-            self.protocol_error or \
-            self.id_mismatch_error or \
-            self.peer_error
-
-    def __str__(self):
-        if self.has_error():
-            if self.protocol_error:
-                return self.protocol_error_message
-            elif self.peer_error:
-                return self.peer_error_message
-        else:
-            return "No error."
-
     @staticmethod
-    def no_error():
-        pass
-
-
-class IProtocol:
-    """
-    Interface for all protocols to follow.
+    def get_closest_nodes(key: ID, bucket: KBucket) -> list[Contact]:
+        return sorted(bucket.contacts, key=lambda c: c.id.value ^ key.value)
     """
 
-    @abstractmethod
-    def ping(self, sender: Contact) -> RPCError:
+    def rpc_find_nodes(self, key: ID, contact: Contact):
+        # what is node??
+        new_contacts, timeout_error = contact.protocol.find_node(
+            self.node.our_contact, key)
+
+        if self.dht:
+            self.dht.handle_error(timeout_error, contact)
+
+        return new_contacts, None, None
+
+    def rpc_find_value(self, key, contact):
+        # TODO: Create.
         pass
 
-    @abstractmethod
-    def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact], RPCError]:
+    def get_closer_nodes(self, key: ID, node_to_query: Contact,
+                         rpc_call: Callable, closer_contacts: list[Contact],
+                         further_contacts: list[Contact]) -> bool:
+
+        contacts: list[Contact]
+        found_by: Contact
+        val: str
+        contacts, found_by, val = rpc_call(key, node_to_query)
+        peers_nodes = []
+        for contact in contacts:
+            if contact.id.value not in [
+                    self.node.our_contact.id.value, node_to_query.id.value,
+                    closer_contacts, further_contacts
+            ]:
+                peers_nodes.append(contact)
+
+        nearest_node_distance = node_to_query.id.value ^ key.value
+
+        # with self.lock:  # Lock thread while this is running.
+        for p in peers_nodes:
+            # if given nodes are closer than our nearest node
+            # , and it hasn't already been added:
+            if p.id.value ^ key.value < nearest_node_distance \
+                    and p.id.value not in [i.id.value for i in closer_contacts]:
+                closer_contacts.append(p)
+
+        # with self.lock:  # Lock thread while this is running.
+        for p in peers_nodes:
+            # if given nodes are further than or equal to the nearest node
+            # , and it hasn't already been added:
+            if p.id.value ^ key.value >= nearest_node_distance \
+                    and p.id.value not in [i.id.value for i in further_contacts]:
+                further_contacts.append(p)
+
+        return val is not None  # Can you use "is not" between empty strings and None?
+
+    def query(self, key, new_nodes_to_query, rpc_call, closer_contacts,
+              further_contacts) -> QueryReturn:
         pass
 
-    @abstractmethod
-    def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact], str, RPCError]:
-        pass
-
-    @abstractmethod
-    def store(self, sender: Contact, key: ID, val: str, is_cached: bool = False) -> RPCError:
-        pass
-
-
-def get_rpc_error(id: ID, 
+def get_rpc_error(id: ID,
                   resp: BaseResponse,
                   timeout_error: bool,
                   peer_error: ErrorResponse) -> RPCError:
@@ -1211,7 +1291,7 @@ class VirtualProtocol(IProtocol):
         else:
             error = RPCError(
                 "Time out while pinging contact - VirtualProtocol does not respond.",
-                timeout_error = not self.responds
+                timeout_error=not self.responds
             )
             return error
 
@@ -1678,8 +1758,8 @@ class DHT:
         Put the timed out contact into a collection and increment the number
         of times it has timed out.
 
-        If it has timed out a certain amount, remove it from the bucket 
-        and replace it with the most recent pending contact that are 
+        If it has timed out a certain amount, remove it from the bucket
+        and replace it with the most recent pending contact that are
         queued for that bucket.
         """
         # For all errors:
@@ -1687,17 +1767,17 @@ class DHT:
         if count == Constants.EVICTION_LIMIT:
             self.replace_contact(contact)
 
-    def delay_eviction(self, 
-                       to_evict: Contact, 
+    def delay_eviction(self,
+                       to_evict: Contact,
                        to_replace: Contact) -> None:
         """
-        The contact that did not respond (or had an error) gets "n" 
+        The contact that did not respond (or had an error) gets "n"
         tries before being evicted and replaced with the most recently
         seen contact that wants to got into the non-responding contact's
         K-Bucket
 
         :param to_evict: The contact that didn't respond.
-        :param to_replace: The contact that can replace the 
+        :param to_replace: The contact that can replace the
         non-responding contact.
         """
         # Non-concurrent list needs locking
@@ -1713,12 +1793,12 @@ class DHT:
             self.replace_contact(to_evict)
 
     def add_contact_to_evict(self, key: int) -> int:  # TODO: make protected.
-        # self.eviction_count is a dictionary of ID keys -> 
+        # self.eviction_count is a dictionary of ID keys ->
         # how many times they have been considered for eviction.
         if key not in self.eviction_count:
             self.eviction_count[key] = 0
         count = self.eviction_count[key] + 1
-        self.eviction_count[key] = count 
+        self.eviction_count[key] = count
 
         return count
 
@@ -1731,7 +1811,6 @@ class DHT:
 
     def evict_contact(bucket: KBucket, to_evict: Contact) -> None:  # TODO: Make protected.
          pass  # TODO: Complete
-        
 
     def save(self, filename: str) -> None:
         """
@@ -1781,15 +1860,18 @@ def select_random(arr: list, freq: int) -> list:
 class ParallelRouter(BaseRouter):
     def __init__(self, node: Node = None):
         # TODO: Should these be empty?
+        super().__init__()
+        self.contact_queue: list[ContactQueueItem] = []  # TODO: Make protected - should it be infinite?
         self.node: Node = node
-        self.contact_queue = []  # TODO: Make protected
         self.semaphore = threading.Semaphore()  # TODO: Make protected
-        self.now: datetime
+        self.now: datetime = datetime.now()  # Should this be now?
+        self.stop_work = False
+        self.initialise_thread_pool()
 
     def initialise_thread_pool(self):  # TODO: Make protected.
-        threads: list[threading.Thread]
+        threads: list[threading.Thread] = []
         for _ in range(Constants.MAX_THREADS):
-            thread = threading.Thread(target=self.thread_start(self.rpc_caller))
+            thread = threading.Thread(target=self.rpc_caller)
             # thread.is_background = True
             thread.start()
 
@@ -1849,60 +1931,157 @@ class ParallelRouter(BaseRouter):
         """
         return (datetime.now() - self.now).total_seconds() > Constants.QUERY_TIME
 
-    def lookup(self):  # TODO: Very much incomplete
-        ...
+    def dequeue_remaining_work(self):
+        dequeue_result = True
+        while dequeue_result:
+            dequeue_result = self.contact_queue.try_dequeue()
+
+    def stop_remaining_work(self):
+        self.dequeue_remaining_work()
+        self.stop_work = True
+
+    def parallel_found(self, find_result: FindResult) -> tuple[
+        type(FindResult["found"]),
+        bool,
+        type(FindResult["found_contacts"]),
+        type(FindResult["found_by"]),
+        type(FindResult["found_value"])
+    ]:
+        """
+        :param find_result:
+        :param found_ret: given as a tuple so that it is used as reference.
+        :return:
+        """
+        # lock(locker)
+        if find_result["found"]:
+            # lock(find_result["found_contacts"]
+            found_ret = (True, find_result["found_contacts"], find_result["found_by"], find_result["found_value"])
+
+        return find_result["found"], True, find_result["found_contacts"], find_result["found_by"], find_result["found_value"]
+
+    def lookup(self, key: ID, rpc_call: Callable, give_me_all: bool = False):  # TODO: Very much incomplete
+
+        if not isinstance(self.node, Node):
+            raise TypeError("ParallelRouter must have instance node.")
+
+        stop_work: bool = False
+        have_work: bool = True
+        find_result: FindResult = FindResult()
+        ret: list[Contact] = []
+        contacted_nodes: list[Contact] = []
+        closer_contacts: list[Contact] = []
+        further_contacts: list[Contact] = []
+        found: bool = False
+        contacts: list[Contact] = []
+        found_by: Optional[Contact] = None
+        val: str = ""
+
+        # TODO: Why do I do this?
+        if TRY_CLOSEST_BUCKET:
+            # Spec: The lookup initiator starts by picking a nodes from its closest non-empty k-bucket
+            bucket = self.find_closest_nonempty_kbucket(key)
+
+            # Not in spec -- sort by the closest nodes in the closest bucket.
+            all_nodes: list[Contact] = self.node.bucket_list.get_close_contacts(
+                key, self.node.our_contact.id)[0:Constants.K]
+
+            nodes_to_query: list[Contact] = all_nodes[0:Constants.A]
+        else:
+            if DEBUG:
+                all_nodes: list[Contact] = self.node.bucket_list.get_kbucket(key).contacts[0:Constants.K]
+            else:
+                # For unit testing, this is a bad way to get a list of close contacts with virtual nodes
+                # because we're always going to get the closest nodes right at the get go.
+                all_nodes: list[Contact] = self.node.bucket_list.get_close_contacts(key, self.node.our_contact.id)[0:Constants.K]
+
+            nodes_to_query: list[Contact] = all_nodes[0:Constants.A]
+
+            # Also not explicity in specification:
+            # any closer node in the alpha list is immediately added to our closer contact list,
+            # and any further node in the alpha list is immediately added to our further contact list.
+            for c in nodes_to_query:
+                if (c.id ^ key) < (self.node.our_contact.id ^ key):
+                    closer_contacts.append(c)
+                else:
+                    further_contacts.append(c)
+
+            # the remaining contacts can be put here.
+            for c in all_nodes:
+                if c not in nodes_to_query:
+                    further_contacts.append(c)
+
+        # we're about to contact these nodes.
+        for c in nodes_to_query:
+            if c.id not in [i.id for i in contacted_nodes]:
+                contacted_nodes.append(c)
+
+        # Spec: the initiator then sends parallel asynchronous FIND_NODE RPCS to the
+        # Constants.A nodes it has chosen, Constants.A is a system-wide concurrency parameter,
+        # such as 3.
+
+        for c in nodes_to_query:
+            self.queue_work(key=key,
+                            contact=c,
+                            rpc_call=rpc_call,
+                            closer_contacts=closer_contacts,
+                            further_contacts=further_contacts,
+                            find_result=find_result)
+
+        self.set_query_time()
+
+        # add any new closer contacts to the list we're going to return.
         for c in closer_contacts:
-            if c.ID != [r.ID for r in ret]:
-                ret.append(a)
+            if c.id not in [r.id for r in ret]:
+                ret.append(c)
 
         # The lookup terminates when the initiator has queried and
         # received responses from the k closest nodes it has seen.
         while len(ret) < Constants.K and have_work:
             thread.sleep(Constants.RESPONSE_WAIT_TIME)
 
-        found_return = self.parallel_found(find_result)
-        if found_return:
-            self.stop_remaining_work()
-            return found_return
+            found_return = self.parallel_found(find_result)
+            if found_return:
+                self.stop_remaining_work()
+                return found_return
 
-        closer_uncontacted_nodes = [c for c in closer_contacts if c not in contacted_nodes]
-        further_uncontacted_nodes = [c for c in further_contacts if c not in further_nodes]
+            closer_uncontacted_nodes = [c for c in closer_contacts if c not in contacted_nodes]
+            further_uncontacted_nodes = [c for c in further_contacts if c not in further_nodes]
 
-        have_closer = len(closer_uncontacted_nodes) > 0
-        have_further = len(further_uncontacted_nodes) > 0
+            have_closer = len(closer_uncontacted_nodes) > 0
+            have_further = len(further_uncontacted_nodes) > 0
 
-        have_work = have_closer or have_further or not self.query_time_expired()
+            have_work = have_closer or have_further or not self.query_time_expired()
 
-        # for the k nodes the initiator has heard of closest to the target...
-        alpha_nodes = None
+            # for the k nodes the initiator has heard of closest to the target...
+            alpha_nodes = None
 
-        if have_closer:
-            # we're about to contact these nodes.
-            if len(closer_uncontacted_nodes) >= Constants.A:
-                alpha_nodes = closer_uncontacted_nodes[0: Constants.A - 1]
-            else:
-                alpha_nodes = closer_uncontacted_nodes
+            if have_closer:
+                # we're about to contact these nodes.
+                if len(closer_uncontacted_nodes) >= Constants.A:
+                    alpha_nodes = closer_uncontacted_nodes[0: Constants.A - 1]
+                else:
+                    alpha_nodes = closer_uncontacted_nodes
 
-        elif have_further:
-            if len(further_uncontacted_nodes) >= Constants.A:
-                alpha_nodes = further_uncontacted_nodes[0: Constants.A - 1]
-            else:
-                alpha_nodes = further_uncontacted_nodes
+            elif have_further:
+                if len(further_uncontacted_nodes) >= Constants.A:
+                    alpha_nodes = further_uncontacted_nodes[0: Constants.A - 1]
+                else:
+                    alpha_nodes = further_uncontacted_nodes
 
-        if alpha_nodes:
-            for a in alpha_nodes:
-                if a.ID not in [c.id for c in contacted_nodes]:
-                    contacted_nodes.append(a)
-                self.queue_work(
-                    key=key,
-                    contact=a,
-                    rpc_call=rpc_call,
-                    closer_contacts=closer_contacts,
-                    further_contacts=further_contacts,
-                    find_result=find_result
-                )
+            if alpha_nodes:
+                for a in alpha_nodes:
+                    if a.ID not in [c.id for c in contacted_nodes]:
+                        contacted_nodes.append(a)
+                    self.queue_work(
+                        key=key,
+                        contact=a,
+                        rpc_call=rpc_call,
+                        closer_contacts=closer_contacts,
+                        further_contacts=further_contacts,
+                        find_result=find_result
+                    )
 
-                self.set_query_time()
+                    self.set_query_time()
 
 
 # class ContactListAndError(TypedDict):
@@ -1991,9 +2170,9 @@ class TCPSubnetProtocol(IProtocol):
                             new_contact = Contact(
                                 Protocol.instantiate_protocol(
                                     c.protocol,
-                                    c.protocol_name,
+                                    c.protocol_name),
                                     ID(c.contact)
-                                ))
+                                )
                             contacts.append(new_contact)
                             return [c for c in contacts if c.protocol != None], \
                                 ret["value"], \
