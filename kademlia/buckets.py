@@ -1,12 +1,12 @@
 from datetime import datetime
 from os.path import commonprefix
 
-from constants import Constants
-from contact import Contact
-from errors import BucketDoesNotContainContactToEvictError, OurNodeCannotBeAContactError, OutOfRangeError, \
+from .constants import Constants
+from .contact import Contact
+from .errors import BucketDoesNotContainContactToEvictError, OurNodeCannotBeAContactError, OutOfRangeError, \
     RPCError, TooManyContactsError
-from id import ID
-from main import DEBUG
+from .id import ID
+from .main import DEBUG
 
 
 class KBucket:

@@ -1,6 +1,6 @@
 import pickle
 
-from kademlia.errors import DataDecodingError
+from .errors import DataDecodingError
 
 
 def encode_data(data: dict) -> bytes:

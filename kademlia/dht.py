@@ -3,16 +3,16 @@ import threading
 from datetime import datetime, timedelta
 from typing import Callable, Optional
 
-from buckets import KBucket
-from constants import Constants
-from contact import Contact
-from dictionaries import QueryReturn
-from errors import BucketDoesNotContainContactToEvictError, RPCError
-from id import ID
-from interfaces import IProtocol, IStorage
-from node import Node
-from routers import BaseRouter
-from storage import VirtualStorage
+from .buckets import KBucket
+from .constants import Constants
+from .contact import Contact
+from .dictionaries import QueryReturn
+from .errors import BucketDoesNotContainContactToEvictError, RPCError
+from .id import ID
+from .interfaces import IProtocol, IStorage
+from .node import Node
+from .routers import BaseRouter
+from .storage import VirtualStorage
 
 
 class DHT:

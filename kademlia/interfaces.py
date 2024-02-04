@@ -1,7 +1,9 @@
 from abc import abstractmethod
 from datetime import datetime
 
-from id import ID
+from .contact import Contact
+from .errors import RPCError
+from .id import ID
 
 
 class IStorage:

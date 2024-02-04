@@ -4,27 +4,20 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="misc: server iter 2">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/buckets.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/buckets.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/constants.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/contact.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/contact.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dht.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/dht.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dictionaries.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/dictionaries.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/errors.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/errors.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/id.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/id.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interfaces.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/interfaces.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kademlia.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/kademlia.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/locker.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/locker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my_queues.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/my_queues.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/networking.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/networking.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/node.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pickler.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/pickler.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/protocols.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/protocols.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routers.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/routers.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/storage.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/unit_tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/unit_tests.py" afterDir="false" />
+    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="feat: moved kademlia into a folder">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/buckets.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/buckets.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/constants.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/contact.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/contact.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/dht.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/dht.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/dictionaries.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/dictionaries.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/interfaces.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/interfaces.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/kademlia.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/kademlia.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/networking.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/networking.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/node.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/node.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/pickler.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/pickler.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/protocols.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/protocols.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/routers.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/routers.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -83,27 +76,33 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python tests.unit tests.executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "master",
+    "ignore.virus.scanning.warn.message": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
-      &quot;Python&quot;
+  "keyToStringList": {
+    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
+      "Python"
     ]
   }
-}</component>
-  <component name="RunManager" selected="Python tests.Python tests for unit_tests.TCPSubnetTests.test_ping_route">
+}]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\gabri\PycharmProjects\P2P\kademlia" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python tests.unit tests">
     <configuration name="P2P-System" type="PythonConfigurationType" factoryName="Python">
       <module name="P2P-System" />
       <option name="ENV_FILES" value="" />
@@ -217,10 +216,10 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python tests.unit tests" />
         <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_ping_route" />
         <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests" />
         <item itemvalue="Python tests.Python tests for unit_tests.BucketManagementTests.test_non_responding_contact_delayed_eviction" />
-        <item itemvalue="Python tests.unit tests" />
         <item itemvalue="Python tests.Python tests for unit_tests.KBucketTest.test_no_funny_business" />
       </list>
     </recent_temporary>
@@ -465,14 +464,6 @@
       <option name="project" value="LOCAL" />
       <updated>1703381549502</updated>
     </task>
-    <task id="LOCAL-00095" summary="checkpoint: fixing unit test error - not fixed yet">
-      <option name="closed" value="true" />
-      <created>1703799717297</created>
-      <option name="number" value="00095" />
-      <option name="presentableId" value="LOCAL-00095" />
-      <option name="project" value="LOCAL" />
-      <updated>1703799717297</updated>
-    </task>
     <task id="LOCAL-00096" summary="checkpoint: fixing unit test error - not fixed yet">
       <option name="closed" value="true" />
       <created>1703813804898</created>
@@ -593,7 +584,15 @@
       <option name="project" value="LOCAL" />
       <updated>1707062998360</updated>
     </task>
-    <option name="localTasksCounter" value="113" />
+    <task id="LOCAL-00113" summary="feat: moved kademlia into a folder">
+      <option name="closed" value="true" />
+      <created>1707070441130</created>
+      <option name="number" value="00113" />
+      <option name="presentableId" value="LOCAL-00113" />
+      <option name="project" value="LOCAL" />
+      <updated>1707070441130</updated>
+    </task>
+    <option name="localTasksCounter" value="114" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -638,7 +637,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="style: renamed random_id_in_space() to random_id()" />
     <MESSAGE value="feat: added bootstrap unit test." />
     <MESSAGE value="docs: updated ID.random_id() docstring" />
     <MESSAGE value="feat: added BucketList.contacts()" />
@@ -663,15 +661,16 @@
     <MESSAGE value="feat: created threading.Timer(), and renamed queue to my_queues to prevent import errors." />
     <MESSAGE value="fix: TCPSubnetServer debugging" />
     <MESSAGE value="misc: server iter 2" />
-    <option name="LAST_COMMIT_MESSAGE" value="misc: server iter 2" />
+    <MESSAGE value="feat: moved kademlia into a folder" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: moved kademlia into a folder" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/p2p$.coverage" NAME=" Coverage Results" MODIFIED="1706997881210" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests.coverage" NAME="Unittests for unit_tests Coverage Results" MODIFIED="1703352716012" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/P2P$kademlia.coverage" NAME="kademlia Coverage Results" MODIFIED="1703796464653" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/p2p$scratch.coverage" NAME="scratch Coverage Results" MODIFIED="1706732795734" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
-    <SUITE FILE_PATH="coverage/P2P$.coverage" NAME=" Coverage Results" MODIFIED="1703815575290" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests.coverage" NAME="Unittests for unit_tests Coverage Results" MODIFIED="1703352716012" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/P2P$.coverage" NAME=" Coverage Results" MODIFIED="1707072612903" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests_NodeLookupTests_test_get_close_contacts_ordered.coverage" NAME="Unittests for unit_tests.NodeLookupTests.test_get_close_contacts_ordered Coverage Results" MODIFIED="1703377308442" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests_BootstrappingTests_test_bootstrap_outside_bootstrapping_bucket.coverage" NAME="Unittests for unit_tests.BootstrappingTests.test_bootstrap_outside_bootstrapping_bucket Coverage Results" MODIFIED="1704295201404" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/P2P$kademlia.coverage" NAME="kademlia Coverage Results" MODIFIED="1703796464653" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/p2p$.coverage" NAME=" Coverage Results" MODIFIED="1706997881210" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

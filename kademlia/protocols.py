@@ -1,11 +1,11 @@
-from kademlia.contact import Contact
-from kademlia.dictionaries import BaseResponse, ErrorResponse, FindNodeSubnetRequest, FindValueSubnetRequest, PingSubnetRequest, \
+from .contact import Contact
+from .dictionaries import BaseResponse, ErrorResponse, FindNodeSubnetRequest, FindValueSubnetRequest, PingSubnetRequest, \
     StoreSubnetRequest
-from kademlia.errors import RPCError
-from id import ID
-from interfaces import IProtocol
-from node import Node
-from pickler import encode_data
+from .errors import RPCError
+from .id import ID
+from .interfaces import IProtocol
+from .node import Node
+from .pickler import encode_data
 
 
 def get_rpc_error(id: ID,

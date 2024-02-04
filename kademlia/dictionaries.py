@@ -1,7 +1,7 @@
 from typing import Callable, TypedDict
 
-from contact import Contact
-from id import ID
+from .contact import Contact
+from .id import ID
 
 
 class QueryReturn(TypedDict):
