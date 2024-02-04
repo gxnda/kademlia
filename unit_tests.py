@@ -351,34 +351,31 @@ class NodeLookupTests(unittest.TestCase):
         """
         Alternate implementation for getting closer and further contacts.
         """
-        # for each node in our bucket (nodes_to_query) we're going
-        # to get k nodes closest to the key
+        # For each node (A == K) for testing in our bucket (nodes_to_query
         for contact in contacts_to_query:
-            # very inefficient - TODO: Make more efficient.
-            contact_node: Node = [i for i in nodes if i.our_contact == contact][0]
-            # close contacts do not contain ourselves or the nodes we're contacting.
-            # note that of all the contacts in the bucket list, many of the k returned
-            # by the get_close_contacts call are contacts we're querying, so they are
-            # being excluded.
+            # Find the node that we're contacting:
+            contact_node: Node = [n for n in nodes if n.our_contact == contact][0]
 
-            our_id = self.router.node.our_contact.id  # our nodes ID
-
-            # all close contacts to us, excluding ourselves
-            temp_list = contact_node.bucket_list.get_close_contacts(key, our_id)
-            close_contacts_of_contacted_node: list[Contact] = []
-
-            # if we don't have to query the contact at some point, we can add it.
-            for c in temp_list:
-                if c.id not in [i.id for i in contacts_to_query]:
+            # Close contacts except ourself and the nodes we're contacting.
+            # Note that of all the contacts in the bucket list, many of the K returned
+            # by the get_close_contacts call are contacts we're querying, so they're being excluded.
+            close_contacts_of_contacted_node = []
+            temp = contact_node.bucket_list.get_close_contacts(key, self.router.node.our_contact.id)
+            for c in contacts_to_query:
+                if c.id.value not in [i.id.value for i in temp]:
                     close_contacts_of_contacted_node.append(c)
 
-            for close_contact in close_contacts_of_contacted_node:
-                # work out which is closer, if it is closer, and we haven't already added it:
-                if close_contact.id ^ key < distance and close_contact not in closer:
-                    closer.append(close_contact)
-                elif close_contact.id ^ key >= distance and close_contact not in further:
-                    further.append(close_contact)
-    
+            for close_contact_of_contacted_node in close_contacts_of_contacted_node:
+                # Which of these contacts are closer?
+                if close_contact_of_contacted_node.id ^ key < distance:
+                    if close_contact_of_contacted_node.id.value not in [c.id.value for c in closer]:
+                        closer.append(close_contact_of_contacted_node)
+
+                # Which of these contacts are further?
+                if close_contact_of_contacted_node.id ^ key >= distance:
+                    if close_contact_of_contacted_node.id.value not in [c.id.value for c in closer]:
+                        closer.append(close_contact_of_contacted_node)
+
     def test_lookup(self):
 
         for i in range(100):
@@ -398,9 +395,13 @@ class NodeLookupTests(unittest.TestCase):
                                        key=id, 
                                        distance=self.distance)
 
-            self.assertTrue(len(close_contacts) >=
-                    len(self.closer_contacts_alt_computation),
-                    "Expected at least as many contacts.")
+            print("close_contacts", [str(i.id.value)[-3:] for i in close_contacts])
+            print("closer_contacts_alt_computation", [str(i.id.value)[-3:] for i in self.closer_contacts_alt_computation])
+            print("\n\n")
+
+            self.assertTrue(len(close_contacts) >= len(self.closer_contacts_alt_computation),
+                            f"Expected at least as many contacts: {len(close_contacts)} vs {len(self.closer_contacts_alt_computation)}")
+
             for c in self.closer_contacts_alt_computation:
                 self.assertTrue(c in close_contacts, 
                                 "somehow a close contact in the computation is not in the originals?")
