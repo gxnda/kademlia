@@ -165,7 +165,7 @@ class Router(BaseRouter):
         self.node: Node = node
         self.closer_contacts: list[Contact] = []
         self.further_contacts: list[Contact] = []
-        self.dht: Optional[DHT] = None
+        self.dht = None
         # self.lock = WithLock(Lock())
 
     def lookup(self,
@@ -320,7 +320,7 @@ class ParallelRouter(BaseRouter):
         """
         flag = True
         while flag:  # I hate this.
-            self.semaphore.wait_one()  # don't think this is real
+            self.semaphore.acquire()
             item: ContactQueueItem = self.contact_queue.dequeue()
             if item:
                 found, val, found_by = self.get_closer_nodes(item["key"],

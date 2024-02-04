@@ -1,8 +1,8 @@
 import requests
 
 from .contact import Contact
-from .dictionaries import BaseResponse, ErrorResponse, FindNodeSubnetRequest, FindValueSubnetRequest, PingSubnetRequest, \
-    StoreSubnetRequest
+from .dictionaries import (BaseResponse, ErrorResponse, FindNodeSubnetRequest,
+                           FindValueSubnetRequest, PingSubnetRequest, StoreSubnetRequest)
 from .errors import RPCError
 from .id import ID
 from .interfaces import IProtocol
