@@ -1,7 +1,6 @@
 from abc import abstractmethod
 from datetime import datetime
 
-from .contact import Contact
 from .errors import RPCError
 from .id import ID
 
@@ -52,19 +51,19 @@ class IProtocol:
     """
 
     @abstractmethod
-    def ping(self, sender: Contact) -> RPCError:
+    def ping(self, sender) -> RPCError:
         pass
 
     @abstractmethod
-    def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact], RPCError]:
+    def find_node(self, sender, key: ID) -> tuple[list, RPCError]:
         pass
 
     @abstractmethod
-    def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact], str, RPCError]:
+    def find_value(self, sender, key: ID) -> tuple[list, str, RPCError]:
         pass
 
     @abstractmethod
-    def store(self, sender: Contact, key: ID, val: str, is_cached: bool) -> RPCError:
+    def store(self, sender, key: ID, val: str, is_cached: bool) -> RPCError:
         pass
 
 
