@@ -1,113 +1,13 @@
 import abc
 import threading
+from time import sleep
 from typing import Optional, TypedDict
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import pickle
 
+import main
 import pickler
-
-
-class UnknownRequestError(Exception):
-    pass
-
-
-class BaseRequest(TypedDict):
-    protocol: object
-    protocol_name: str
-    sender: int
-    random_id: int
-
-
-class FindNodeRequest(BaseRequest, TypedDict):
-    key: int
-
-
-class FindValueRequest(BaseRequest, TypedDict):
-    key: int
-
-
-class PingRequest(BaseRequest, TypedDict):
-    pass
-
-
-class StoreRequest(BaseRequest, TypedDict):
-    key: int
-    value: str
-    is_cached: bool
-    expiration_time_sec: int
-
-
-class ITCPSubnet(TypedDict):
-    """
-    Interface used for TCP.
-    """
-    subnet: int
-
-
-class FindNodeSubnetRequest(FindNodeRequest, ITCPSubnet, TypedDict):
-    # subnet: int
-    pass
-
-
-class FindValueSubnetRequest(FindValueRequest, ITCPSubnet, TypedDict):
-    # subnet: int
-    pass
-
-
-class PingSubnetRequest(PingRequest, ITCPSubnet, TypedDict):
-    # subnet: int
-    pass
-
-
-class StoreSubnetRequest(StoreRequest, ITCPSubnet, TypedDict):
-    # subnet: int
-    pass
-
-
-class CommonRequest(TypedDict):
-    """
-    This includes all possible headers that could be passed.
-    """
-    protocol: object  # IProtocol
-    protocol_name: str
-    random_id: int
-    sender: int
-    key: int
-    value: int
-    is_cached: bool
-    expiration_time_sec: int
-
-
-class BaseResponse(TypedDict):
-    random_id: int
-
-
-class ErrorResponse(BaseResponse, TypedDict):
-    error_message: str
-
-
-class ContactResponse(TypedDict):
-    contact: int
-    protocol: dict  # Or object?
-    protocol_name: dict
-
-
-class FindNodeResponse(BaseResponse, TypedDict):
-    contacts: list[ContactResponse]
-
-
-class FindValueResponse(TypedDict, BaseResponse):
-    contacts: list[ContactResponse]
-    value: str
-
-
-class PingResponse(TypedDict, BaseResponse):
-    pass
-
-
-class StoreResponse(BaseResponse):
-    pass
 
 
 class CommonRequestHandler:
@@ -135,7 +35,31 @@ class Server(HTTPServer):
 
 
 class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
-        
+
+    def common_request_handler(self,
+                               method_name: str,
+                               common_request: CommonRequest,
+                               node):  # TODO: Make protected.
+        if main.DEBUG:
+            print(node.our_contact.protocol.type)
+            if node.our_contact.protocol.type == "TCPSubnetProtocol":
+                if not node.our_contact.protocol.responds:
+                    # Exceeds 500ms timeout
+                    sleep(secs=1)
+        try:
+            method = getattr(node, method_name)
+            response = method(common_request)
+            encoded_response = pickler.encode_data(response)
+            self.send_response(200, str(encoded_response))
+        except Exception as e:
+            error_response: ErrorResponse = ErrorResponse(
+                error_message=str(e)
+                random_id=ID.random_id()
+            )
+            self.send_response(400, )
+
+
+
     def do_POST(self):
         routing_methods = {
             "/ping": PingRequest,  # "ping" should refer to type PingRequest
@@ -183,16 +107,14 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             node = self.server.subnets.get(subnet)  # should be valid if inheriting from SubnetServer?
             if node:
                 new_thread = threading.Thread(
-                    target=CommonRequestHandler,  # TODO: This does not exist.
+                    target=self.common_request_handler,  # TODO: This does not exist.
                     args=(method_name, common_request, node, self)
                 )
                 new_thread.start()
 
             else:
-                send_error_response(
-                    self,
-                    ErrorResponse("Subnet node not found.")
-                )
+                encoded_response = pickler.encode_data("Subnet node not found.")
+                self.send_response(400, "Subnet node not found.")  # TODO: Make encrypted.
 
             # context.close_connection = True
 

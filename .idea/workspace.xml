@@ -4,7 +4,26 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="fix: Tried to make them all TypedDict -&gt; BaseRequest can no longer give random ID by default." />
+    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="misc: server iter 2">
+      <change afterPath="$PROJECT_DIR$/buckets.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/constants.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/contact.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dht.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dictionaries.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/errors.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/id.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/interfaces.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/locker.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/node.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/protocols.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/routers.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/storage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GUI.py" beforeDir="false" afterPath="$PROJECT_DIR$/GUI.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/networking.py" beforeDir="false" afterPath="$PROJECT_DIR$/networking.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -17,10 +36,13 @@
       </list>
     </option>
   </component>
+  <component name="Git.Merge.Settings">
+    <option name="BRANCH" value="TCP-subnet-protocol" />
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="node-lookup-untested" />
+        <entry key="$PROJECT_DIR$" value="TCP-subnet-protocol" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -53,11 +75,16 @@
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  },
+  &quot;keyToStringList&quot;: {
+    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
+      &quot;Python&quot;
+    ]
   }
 }</component>
-  <component name="RunManager" selected="Python tests.Python tests for unit_tests.BootstrappingTests.test_bootstrap_outside_bootstrapping_bucket">
+  <component name="RunManager" selected="Python tests.Python tests for unit_tests.TCPSubnetTests.test_ping_route">
     <configuration name="P2P-System" type="PythonConfigurationType" factoryName="Python">
       <module name="P2P-System" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -80,29 +107,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="kademlia" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="P2P-System" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/kademlia.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="Python tests for unit_tests.BootstrappingTests" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+    <configuration name="Python tests for unit_tests.BucketManagementTests.test_non_responding_contact_delayed_eviction" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="P2P-System" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -113,11 +118,11 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;unit_tests.BootstrappingTests&quot;" />
+      <option name="_new_target" value="&quot;unit_tests.BucketManagementTests.test_non_responding_contact_delayed_eviction&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Python tests for unit_tests.BootstrappingTests.test_bootstrap_outside_bootstrapping_bucket" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+    <configuration name="Python tests for unit_tests.KBucketTest.test_no_funny_business" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="P2P-System" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -128,11 +133,11 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;unit_tests.BootstrappingTests.test_bootstrap_outside_bootstrapping_bucket&quot;" />
+      <option name="_new_target" value="&quot;unit_tests.KBucketTest.test_no_funny_business&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Python tests for unit_tests.BootstrappingTests.test_random_within_bucket_tests" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+    <configuration name="Python tests for unit_tests.TCPSubnetTests" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="P2P-System" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -143,7 +148,22 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;unit_tests.BootstrappingTests.test_random_within_bucket_tests&quot;" />
+      <option name="_new_target" value="&quot;unit_tests.TCPSubnetTests&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Python tests for unit_tests.TCPSubnetTests.test_ping_route" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="P2P-System" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;unit_tests.TCPSubnetTests.test_ping_route&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
@@ -164,19 +184,19 @@
     </configuration>
     <list>
       <item itemvalue="Python.P2P-System" />
-      <item itemvalue="Python.kademlia" />
-      <item itemvalue="Python tests.Python tests for unit_tests.BootstrappingTests" />
-      <item itemvalue="Python tests.Python tests for unit_tests.BootstrappingTests.test_bootstrap_outside_bootstrapping_bucket" />
-      <item itemvalue="Python tests.Python tests for unit_tests.BootstrappingTests.test_random_within_bucket_tests" />
+      <item itemvalue="Python tests.Python tests for unit_tests.BucketManagementTests.test_non_responding_contact_delayed_eviction" />
+      <item itemvalue="Python tests.Python tests for unit_tests.KBucketTest.test_no_funny_business" />
+      <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests" />
+      <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_ping_route" />
       <item itemvalue="Python tests.unit tests" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python tests.Python tests for unit_tests.BootstrappingTests.test_bootstrap_outside_bootstrapping_bucket" />
-        <item itemvalue="Python tests.Python tests for unit_tests.BootstrappingTests" />
-        <item itemvalue="Python tests.Python tests for unit_tests.BootstrappingTests.test_random_within_bucket_tests" />
+        <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_ping_route" />
+        <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests" />
+        <item itemvalue="Python tests.Python tests for unit_tests.BucketManagementTests.test_non_responding_contact_delayed_eviction" />
         <item itemvalue="Python tests.unit tests" />
-        <item itemvalue="Python.kademlia" />
+        <item itemvalue="Python tests.Python tests for unit_tests.KBucketTest.test_no_funny_business" />
       </list>
     </recent_temporary>
   </component>
@@ -198,48 +218,10 @@
       <workItem from="1704501592505" duration="5231000" />
       <workItem from="1704661183757" duration="1580000" />
       <workItem from="1704910215407" duration="6318000" />
-    </task>
-    <task id="LOCAL-00011" summary="chore: formatting">
-      <created>1703166194807</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
-      <option name="project" value="LOCAL" />
-      <updated>1703166194807</updated>
-    </task>
-    <task id="LOCAL-00012" summary="feat: added docstring to get() in VirtualStorage.">
-      <created>1703166533254</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1703166533254</updated>
-    </task>
-    <task id="LOCAL-00013" summary="chore: fixed grammar mistake.">
-      <created>1703166609613</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
-      <option name="project" value="LOCAL" />
-      <updated>1703166609613</updated>
-    </task>
-    <task id="LOCAL-00014" summary="feat: added shell functions to DHT.">
-      <created>1703166963384</created>
-      <option name="number" value="00014" />
-      <option name="presentableId" value="LOCAL-00014" />
-      <option name="project" value="LOCAL" />
-      <updated>1703166963384</updated>
-    </task>
-    <task id="LOCAL-00015" summary="feat: added a first draft for DHT.find_value() - still untested though.">
-      <created>1703168284852</created>
-      <option name="number" value="00015" />
-      <option name="presentableId" value="LOCAL-00015" />
-      <option name="project" value="LOCAL" />
-      <updated>1703168284852</updated>
-    </task>
-    <task id="LOCAL-00016" summary="feat: renamed the unit test file.">
-      <created>1703168413290</created>
-      <option name="number" value="00016" />
-      <option name="presentableId" value="LOCAL-00016" />
-      <option name="project" value="LOCAL" />
-      <updated>1703168413290</updated>
+      <workItem from="1706910703794" duration="5963000" />
+      <workItem from="1706979188820" duration="14046000" />
+      <workItem from="1707058400365" duration="42000" />
+      <workItem from="1707061747708" duration="3912000" />
     </task>
     <task id="LOCAL-00017" summary="done smth">
       <created>1703342554993</created>
@@ -544,30 +526,93 @@
       <option name="project" value="LOCAL" />
       <updated>1704922710827</updated>
     </task>
-    <option name="localTasksCounter" value="107" />
+    <task id="LOCAL-00107" summary="I PUT IT ALL IN THE WRONG BRANCH OMG">
+      <created>1706914829765</created>
+      <option name="number" value="00107" />
+      <option name="presentableId" value="LOCAL-00107" />
+      <option name="project" value="LOCAL" />
+      <updated>1706914829765</updated>
+    </task>
+    <task id="LOCAL-00108" summary="feat: added lots of missing functions, such as KBucket.evict_contact() and DHT.evict_contact()">
+      <created>1706988910501</created>
+      <option name="number" value="00108" />
+      <option name="presentableId" value="LOCAL-00108" />
+      <option name="project" value="LOCAL" />
+      <updated>1706988910502</updated>
+    </task>
+    <task id="LOCAL-00109" summary="feat: removed all redundant functions in Router - they already existed in BaseRouter">
+      <created>1706989111694</created>
+      <option name="number" value="00109" />
+      <option name="presentableId" value="LOCAL-00109" />
+      <option name="project" value="LOCAL" />
+      <updated>1706989111694</updated>
+    </task>
+    <task id="LOCAL-00110" summary="feat: created threading.Timer(), and renamed queue to my_queues to prevent import errors.">
+      <created>1706989939509</created>
+      <option name="number" value="00110" />
+      <option name="presentableId" value="LOCAL-00110" />
+      <option name="project" value="LOCAL" />
+      <updated>1706989939509</updated>
+    </task>
+    <task id="LOCAL-00111" summary="fix: TCPSubnetServer debugging">
+      <created>1706997972447</created>
+      <option name="number" value="00111" />
+      <option name="presentableId" value="LOCAL-00111" />
+      <option name="project" value="LOCAL" />
+      <updated>1706997972447</updated>
+    </task>
+    <task id="LOCAL-00112" summary="misc: server iter 2">
+      <created>1707062998360</created>
+      <option name="number" value="00112" />
+      <option name="presentableId" value="LOCAL-00112" />
+      <option name="project" value="LOCAL" />
+      <updated>1707062998360</updated>
+    </task>
+    <option name="localTasksCounter" value="113" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="Branch">
+          <value>
+            <list>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="origin/TCP-subnet-protocol" />
+                </option>
+              </RecentGroup>
+            </list>
+          </value>
+        </entry>
+      </map>
+    </option>
     <option name="TAB_STATES">
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="origin/TCP-subnet-protocol" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
           </value>
         </entry>
       </map>
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix: renamed constants to not initialise each time." />
-    <MESSAGE value="feat: added shell router.rpc_find_value" />
-    <MESSAGE value="feat: added random_id_within_bucket_range()" />
-    <MESSAGE value="chore: removed white space" />
-    <MESSAGE value="feat: added DHT Bootstrapping (DHT.bootstrap() and DHT.refresh_bucket())" />
-    <MESSAGE value="feat: made random_id_in_space() a class method of ID. All occurrences have been renamed." />
     <MESSAGE value="style: renamed random_id_in_space() to random_id()" />
     <MESSAGE value="feat: added bootstrap unit test." />
     <MESSAGE value="docs: updated ID.random_id() docstring" />
@@ -587,11 +632,18 @@
     <MESSAGE value="fix: tried to get TypedDict requests working" />
     <MESSAGE value="fix: only way I could think of to fix it." />
     <MESSAGE value="fix: Tried to make them all TypedDict -&gt; BaseRequest can no longer give random ID by default." />
-    <option name="LAST_COMMIT_MESSAGE" value="fix: Tried to make them all TypedDict -&gt; BaseRequest can no longer give random ID by default." />
+    <MESSAGE value="I PUT IT ALL IN THE WRONG BRANCH OMG" />
+    <MESSAGE value="feat: added lots of missing functions, such as KBucket.evict_contact() and DHT.evict_contact()" />
+    <MESSAGE value="feat: removed all redundant functions in Router - they already existed in BaseRouter" />
+    <MESSAGE value="feat: created threading.Timer(), and renamed queue to my_queues to prevent import errors." />
+    <MESSAGE value="fix: TCPSubnetServer debugging" />
+    <MESSAGE value="misc: server iter 2" />
+    <option name="LAST_COMMIT_MESSAGE" value="misc: server iter 2" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/p2p$.coverage" NAME=" Coverage Results" MODIFIED="1704295732193" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/p2p$.coverage" NAME=" Coverage Results" MODIFIED="1706997881210" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests.coverage" NAME="Unittests for unit_tests Coverage Results" MODIFIED="1703352716012" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/p2p$scratch.coverage" NAME="scratch Coverage Results" MODIFIED="1706732795734" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
     <SUITE FILE_PATH="coverage/P2P$.coverage" NAME=" Coverage Results" MODIFIED="1703815575290" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests_NodeLookupTests_test_get_close_contacts_ordered.coverage" NAME="Unittests for unit_tests.NodeLookupTests.test_get_close_contacts_ordered Coverage Results" MODIFIED="1703377308442" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests_BootstrappingTests_test_bootstrap_outside_bootstrapping_bucket.coverage" NAME="Unittests for unit_tests.BootstrappingTests.test_bootstrap_outside_bootstrapping_bucket Coverage Results" MODIFIED="1704295201404" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

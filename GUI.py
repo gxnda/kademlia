@@ -65,9 +65,6 @@ class BootstrapFrame(ctk.CTkFrame):
         print("Connecting to bootstrap server...")
 
 
-
-
-
 if __name__ == "__main__":
     app = GUI()
     app.load_bootstrap_window()

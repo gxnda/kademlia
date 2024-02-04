@@ -1,11 +1,17 @@
 import threading
 import unittest
 
-from kademlia import BucketList, VirtualProtocol, \
-    Constants, Contact, ID, KBucket, TooManyContactsError, Node, \
-    Router, VirtualStorage, DHT, ParallelRouter, TCPSubnetProtocol, RPCError
-
+from buckets import BucketList, KBucket
+from constants import Constants
+from contact import Contact
+from dht import DHT
+from errors import RPCError, TooManyContactsError
+from id import ID
 from networking import TCPSubnetServer
+from node import Node
+from protocols import TCPSubnetProtocol, VirtualProtocol
+from routers import ParallelRouter, Router
+from storage import VirtualStorage
 
 
 def setup_split_failure(bucket_list=None):
@@ -1483,7 +1489,6 @@ class TCPSubnetTests(unittest.TestCase):
         )
 
         server.thread_stop(thread)
-
 
 
 if __name__ == '__main__':
