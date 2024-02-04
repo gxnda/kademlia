@@ -10,10 +10,6 @@ from .dictionaries import PingRequest, StoreRequest, FindNodeRequest, FindValueR
 from .id import ID
 
 
-class CommonRequestHandler:
-    pass
-
-
 class Server(HTTPServer):
     def __init__(self, server_address: tuple[str, int], RequestHandlerClass):
         HTTPServer.__init__(
@@ -29,7 +25,6 @@ class Server(HTTPServer):
             "/find_node": FindNodeRequest,  # "find_node" should refer to type FindNodeRequest
             "/find_value": FindValueRequest  # "find_value" should refer to type FindValueRequest
         }
-
 
 
 class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
@@ -104,7 +99,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             if node:
                 new_thread = threading.Thread(
                     target=self.common_request_handler,  # TODO: This does not exist.
-                    args=(method_name, common_request, node, self)
+                    args=(method_name, common_request, node)
                 )
                 new_thread.start()
 
