@@ -1,3 +1,5 @@
+import requests
+
 from .contact import Contact
 from .dictionaries import BaseResponse, ErrorResponse, FindNodeSubnetRequest, FindValueSubnetRequest, PingSubnetRequest, \
     StoreSubnetRequest

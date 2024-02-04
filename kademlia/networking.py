@@ -3,8 +3,8 @@ from time import sleep
 from typing import Optional
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-import main
-import pickler
+import kademlia.main as main
+import kademlia.pickler as pickler
 from .dictionaries import PingRequest, StoreRequest, FindNodeRequest, FindValueRequest, ErrorResponse, \
     CommonRequest
 from .id import ID
