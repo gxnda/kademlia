@@ -4,11 +4,10 @@ from datetime import datetime
 from time import sleep
 from typing import Callable, Optional
 
-import my_queues
+import kademlia.my_queues as my_queues
 from .buckets import KBucket
 from .constants import Constants
 from .contact import Contact
-from .dht import DHT
 from .dictionaries import ContactQueueItem, FindResult, QueryReturn
 from .errors import AllKBucketsAreEmptyError, ValueCannotBeNoneError
 from .id import ID
@@ -22,7 +21,7 @@ class BaseRouter:
         self.closer_contacts: list[Contact]
         self.further_contacts: list[Contact]
         self.node: Node = node
-        self.dht: Optional[DHT] = None  # TODO: Is it optional?
+        self.dht = None  # TODO: Is it optional?
         # self.locker
 
     def find_closest_nonempty_kbucket(self, key: ID) -> KBucket:
