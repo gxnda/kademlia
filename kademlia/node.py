@@ -3,7 +3,6 @@ from typing import Optional
 from .buckets import BucketList
 from .constants import Constants
 from .contact import Contact
-from .dht import DHT
 from .dictionaries import CommonRequest
 from .errors import RPCError, SenderIsSelfError, SendingQueryToSelfError
 from .id import ID
@@ -29,7 +28,7 @@ class Node:
 
         # VirtualStorage will only be created by
         self.cache_storage: IStorage = cache_storage if cache_storage else VirtualStorage()
-        self.DHT: Optional[DHT] = None  # This should never be None
+        self.DHT = None  # This should never be None
         self.bucket_list = BucketList(contact)
 
     def ping(self, sender: Contact) -> Contact:
