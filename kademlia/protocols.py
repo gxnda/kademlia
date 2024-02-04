@@ -1,7 +1,7 @@
-from contact import Contact
-from dictionaries import BaseResponse, ErrorResponse, FindNodeSubnetRequest, FindValueSubnetRequest, PingSubnetRequest, \
+from kademlia.contact import Contact
+from kademlia.dictionaries import BaseResponse, ErrorResponse, FindNodeSubnetRequest, FindValueSubnetRequest, PingSubnetRequest, \
     StoreSubnetRequest
-from errors import RPCError
+from kademlia.errors import RPCError
 from id import ID
 from interfaces import IProtocol
 from node import Node

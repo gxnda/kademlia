@@ -1,11 +1,11 @@
 from typing import Optional
 
-from buckets import BucketList
-from constants import Constants
-from contact import Contact
-from dht import DHT
-from dictionaries import CommonRequest
-from errors import RPCError, SenderIsSelfError, SendingQueryToSelfError
+from kademlia.buckets import BucketList
+from kademlia.constants import Constants
+from kademlia.contact import Contact
+from kademlia.dht import DHT
+from kademlia.dictionaries import CommonRequest
+from kademlia.errors import RPCError, SenderIsSelfError, SendingQueryToSelfError
 from id import ID
 from interfaces import IProtocol, IStorage
 from main import DEBUG

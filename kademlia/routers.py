@@ -5,12 +5,12 @@ from time import sleep
 from typing import Callable, Optional
 
 import my_queues
-from buckets import KBucket
-from constants import Constants
-from contact import Contact
-from dht import DHT
-from dictionaries import ContactQueueItem, FindResult, QueryReturn
-from errors import AllKBucketsAreEmptyError, ValueCannotBeNoneError
+from kademlia.buckets import KBucket
+from kademlia.constants import Constants
+from kademlia.contact import Contact
+from kademlia.dht import DHT
+from kademlia.dictionaries import ContactQueueItem, FindResult, QueryReturn
+from kademlia.errors import AllKBucketsAreEmptyError, ValueCannotBeNoneError
 from id import ID
 from kademlia import TRY_CLOSEST_BUCKET
 from main import DEBUG

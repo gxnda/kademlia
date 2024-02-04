@@ -1,6 +1,6 @@
 import random
 
-from contact import Contact
+from kademlia.contact import Contact
 from main import DEBUG
 from node import Node
 from id import ID

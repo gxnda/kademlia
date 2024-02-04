@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from id import ID
-from interfaces import IStorage
+from kademlia.id import ID
+from kademlia.interfaces import IStorage
 
 
 class VirtualStorage(IStorage):
