@@ -95,17 +95,19 @@ class Node:
         If it is not in either, it gets K
         close contacts from the bucket list.
         """
+        print("find_value called")
         if sender.id == self.our_contact.id:
             raise SendingQueryToSelfError("Sender cannot be ourselves.")
-
+        print(1)
         self.send_key_values_if_new_contact(sender)
-
+        print(2)
         if self.storage.contains(key):
             return None, self.storage.get(key)
         elif self.cache_storage.contains(key):
             return None, self.cache_storage.get(key)
         else:
             return self.bucket_list.get_close_contacts(key, sender.id), None
+        print(3)
 
     def send_key_values_if_new_contact(self, sender: Contact) -> None:
         """
@@ -122,6 +124,7 @@ class Node:
         For a new contact, we store values to that contact whose keys
         XOR our_contact are less than the stored keys XOR other_contacts.
         """
+        print("send key values if new contact")
         if self._is_new_contact(sender):
             # with self.bucket_list.lock:
             # Clone so we can release the lock.
@@ -135,12 +138,14 @@ class Node:
                     # If our contact is closer, store the contact on its
                     # node.
                     if (self.our_contact.id ^ k) < distance:
+                        print(sender.protocol)
                         error: RPCError | None = sender.protocol.store(
                             sender=self.our_contact,
                             key=ID(k),
                             val=self.storage.get(k)
                         )
-                        if self.DHT: self.DHT.handle_error(error, sender)
+                        if self.DHT:
+                            self.DHT.handle_error(error, sender)
 
     def _is_new_contact(self, sender: Contact) -> bool:
         ret: bool
@@ -213,7 +218,9 @@ class Node:
         return {"contacts": contact_dict, "random_id": request["random_id"]}
 
     def server_find_value(self, request: CommonRequest) -> dict:
+        print("Server find value called")
         protocol: IProtocol = request["protocol"]
+        print(protocol)
         contacts, val = self.find_value(
             sender=Contact(
                 protocol=protocol,
@@ -221,6 +228,7 @@ class Node:
             ),
             key=ID(request["key"])
         )
+        print(contacts, val)
         contact_dict: list[dict] = []
         if contacts:
             for c in contacts:

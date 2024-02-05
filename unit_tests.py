@@ -1535,28 +1535,16 @@ class TCPSubnetTests(unittest.TestCase):
         server.thread_stop(thread)
 
     def test_find_value_router(self):
-
-        local_ip = "http://127.0.0.1/"
-        port = 7124
-
-        p1 = TCPSubnetProtocol(url=local_ip, port=port, subnet=1)
-        p2 = TCPSubnetProtocol(url=local_ip, port=port, subnet=2)
-
-        our_id = ID.random_id()
-
-        c1 = Contact(id=our_id, protocol=p1)
-        c2 = Contact(id=ID.random_id(), protocol=p2)
-
-        n1 = Node(c1, VirtualStorage())
-        n2 = Node(c2, VirtualStorage())
+        local_ip, port, server, p1, p2, our_id, c1, c2, n1, n2, thread = self.setup()
 
         # Node 2 knows about another contact that isn't us
         # - this is what we are trying to find
 
         test_id = ID.random_id()
         test_value = "Test"
-        p2.store(key=test_id, val=test_value)
-
+        print("[Client] Store starting...")
+        p2.store(sender=c1, key=test_id, val=test_value)
+        print("[Client] Store done.")
         self.assertTrue(
             n2.storage.contains(test_id),
             "Expected remote peer to have value."
@@ -1567,14 +1555,16 @@ class TCPSubnetTests(unittest.TestCase):
             "Expected node to store the correct value."
         )
 
-        ret = p2.find_value(c1, test_id)
+        print("[Client] Find value starting...")
+        contacts, val, error = p2.find_value(c1, test_id)
+        print("[Client] Find value done.")
 
         self.assertTrue(
-            ret["contacts"] is None, "Expected to find value."  # huh?
+            contacts is None, "Expected to find value."  # huh?
         )
 
         self.assertTrue(
-            ret["val"] == test_value, "Value does not match expected value from peer."
+            val == test_value, "Value does not match expected value from peer."
         )
 
     def test_unresponsive_node(self):

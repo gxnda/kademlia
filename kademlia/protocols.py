@@ -174,10 +174,12 @@ class TCPSubnetProtocol(IProtocol):
 
         ret = None
         try:
+            print("[Client] Sending POST")
             ret = requests.post(
                 url=f"http://{self.url}:{self.port}/find_value",
                 data=encoded_data
             )
+            print("[Client] Completed POST")
             timeout_error = False
             error = None
         except TimeoutError as e:
@@ -186,20 +188,26 @@ class TCPSubnetProtocol(IProtocol):
             error = e
             print("TimeoutError:", e)
 
+        if ret:
+            encoded_data = ret.content
+            ret_decoded = pickler.decode_data(encoded_data)
+        else:
+            ret_decoded = None
+
         try:
             contacts = []
-            if ret:
-                if ret["contacts"]:
-                    for c in ret["contacts"]:
+            if ret_decoded:
+                if ret_decoded["contacts"]:
+                    for c in ret_decoded["contacts"]:
                         new_contact = Contact(
                             c["protocol"],  # instantiate_protocol
                             ID(c["contact"])
                         )
                         contacts.append(new_contact)
                         return [c for c in contacts if c.protocol is not None], \
-                            ret["value"], \
+                            ret_decoded["value"], \
                             get_rpc_error(
-                                random_id, ret, timeout_error, ErrorResponse(
+                                random_id, ret_decoded, timeout_error, ErrorResponse(
                                     random_id=random_id.value,
                                     error_message=str(error))
                             )
@@ -254,7 +262,6 @@ class TCPSubnetProtocol(IProtocol):
               is_cached=False,
               expiration_time_sec=0
               ) -> RPCError:
-
         random_id = ID.random_id()
 
         encoded_data = encode_data(
@@ -274,11 +281,14 @@ class TCPSubnetProtocol(IProtocol):
         ret = None
 
         try:
+            print(f"Running Store POST to http://{self.url}:{self.port}/store")
             ret = requests.post(
                 url=f"http://{self.url}:{self.port}/store",
                 data=encoded_data
             )
+            print("Store POST done!")
         except TimeoutError as e:
+            print("Exception!", e)
             # request timed out.
             timeout_error = True
             error = e
@@ -287,7 +297,6 @@ class TCPSubnetProtocol(IProtocol):
         # TODO: Add error handling
         encoded_data = ret.content
         formatted_response = pickler.decode_data(encoded_data)
-        print(formatted_response)
 
         return get_rpc_error(random_id, formatted_response, timeout_error, ErrorResponse(
             error_message=str(error), random_id=ID.random_id()))

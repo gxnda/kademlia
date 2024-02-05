@@ -33,17 +33,24 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
                                method_name: str,
                                common_request: CommonRequest,
                                node):  # TODO: Make protected.
+        print(1)
         if main.DEBUG:
             if node.our_contact.protocol.type == "TCPSubnetProtocol":
                 if not node.our_contact.protocol.responds:
                     # Exceeds 500ms timeout
+                    print("[Server] Does not respond, sleeping for timeout.")
                     sleep(secs=1)
+        print(2)
         try:
+            print(3)
+            print(node, method_name)
             method = getattr(node, method_name)
+            print(method)
+            print(4)
             response = method(common_request)
+            print(5)
             encoded_response = pickler.encode_data(response)
             print("[Server] Sending encoded 200: ", response)
-
             self.send_response(code=200)  # , message=encoded_response.decode("latin1"))
 
             # print("Adding headers... - Is wfile closed:", self.wfile.closed)
@@ -93,6 +100,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
         # print("[Server] Request received:", decoded_request)
         request_dict = decoded_request
         path: str = self.path
+        print(path)
         # Remove "/"
         # Prefix our call with "server_" so that the method name is unambiguous.
         method_name: str = "server_" + path[1:]  # path.substring(2)
@@ -104,6 +112,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             request_type: Optional[TypedDict] = None
 
         # if we know what the request wants (if it's a ping/find_node RPC etc.)
+        print(request_type)
         if request_type:
             subnet: int = request_dict["subnet"]
             common_request: CommonRequest = CommonRequest(
@@ -121,6 +130,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             # Because this is for testing on the same PC.
             node = self.server.subnets.get(subnet)  # should be valid if inheriting from SubnetServer?
             if node:
+                print("call req")
                 self.common_request_handler(method_name, common_request, node)
                 # print("Starting thread...")
                 # new_thread = threading.Thread(
