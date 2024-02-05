@@ -47,12 +47,13 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
 
             self.send_response(code=200)  # , message=encoded_response.decode("latin1"))
 
-            print("Adding headers...")
-            self.send_header("content-type", "application/octet-stream")
+            print("Adding headers... - Is wfile closed:", self.wfile.closed)
+            self.send_header("Content-Type", "application/octet-stream")
             self.end_headers()
-            print("Finished headers")
+            print("Finished headers - Is wfile closed:", self.wfile.closed)
 
             print("Writing 200...", self.wfile.closed)
+            print(encoded_response)
             self.wfile.write(encoded_response)
             print("Writing 200 Success!", self.wfile.closed)
 
@@ -65,11 +66,11 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             print("Sending encoded 400:", error_response)
             encoded_response = pickler.encode_data(error_response)
 
-            print("Adding headers...")
-            self.send_header("content-type", "application/octet-stream")
-            print("a")
+            print("Adding headers... - Is wfile closed:", self.wfile.closed)
+            self.send_header("Content-Type", "application/octet-stream")
+            print("a - Is wfile closed:", self.wfile.closed)
             self.end_headers()
-            print("Finished headers")
+            print("Finished headers - Is wfile closed:", self.wfile.closed)
             self.send_response(code=400)  # , message=encoded_response.decode("latin1"))
 
             self.wfile.write(encoded_response)
@@ -136,12 +137,13 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             # Because this is for testing on the same PC.
             node = self.server.subnets.get(subnet)  # should be valid if inheriting from SubnetServer?
             if node:
-                print("Starting thread...")
-                new_thread = threading.Thread(
-                    target=self.common_request_handler,
-                    args=(method_name, common_request, node)
-                )
-                new_thread.start()
+                self.common_request_handler(method_name, common_request, node)
+                # print("Starting thread...")
+                # new_thread = threading.Thread(
+                #     target=self.common_request_handler,
+                #     args=(method_name, common_request, node)
+                # )
+                # new_thread.start()
 
             else:
                 print("Subnet node not found.")

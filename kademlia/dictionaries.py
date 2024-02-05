@@ -104,6 +104,9 @@ class CommonRequest(TypedDict):
 
 
 class BaseResponse(TypedDict):
+    """
+    Has element random_id (int).
+    """
     random_id: int
 
 

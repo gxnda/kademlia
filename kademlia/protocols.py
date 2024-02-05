@@ -1,5 +1,6 @@
 import requests
 
+from kademlia import pickler
 from kademlia.contact import Contact
 from kademlia.dictionaries import (BaseResponse, ErrorResponse, FindNodeSubnetRequest,
                                    FindValueSubnetRequest, PingSubnetRequest, StoreSubnetRequest)
@@ -208,14 +209,19 @@ class TCPSubnetProtocol(IProtocol):
                 data=encoded_data
             )
             print("POST done?")
-            print("Received:", ret.url, ret.status_code, ret.request)
+            print("Received:", ret.url, ret.status_code, ret.text)
 
         except TimeoutError as e:
             print("Timed out.")
             # request timed out.
             timeout_error = True
-            print(e)
             error = e
+
+        encoding = ret.encoding
+        encoded_data = pickler.decode_data(ret.text.encode(encoding))
+        print(encoded_data)
+        if ret:
+            ret_base_response: BaseResponse = BaseResponse(random_id=14)
 
         return get_rpc_error(random_id, ret, timeout_error, ErrorResponse(
             error_message=str(error), random_id=ID.random_id()))
