@@ -1,8 +1,8 @@
 from abc import abstractmethod
 from datetime import datetime
 
-from .errors import RPCError
-from .id import ID
+from kademlia.errors import RPCError
+from kademlia.id import ID
 
 
 class IStorage:

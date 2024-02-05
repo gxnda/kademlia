@@ -1,13 +1,13 @@
 import requests
 
-from .contact import Contact
-from .dictionaries import (BaseResponse, ErrorResponse, FindNodeSubnetRequest,
-                           FindValueSubnetRequest, PingSubnetRequest, StoreSubnetRequest)
-from .errors import RPCError
-from .id import ID
-from .interfaces import IProtocol
-from .node import Node
-from .pickler import encode_data
+from kademlia.contact import Contact
+from kademlia.dictionaries import (BaseResponse, ErrorResponse, FindNodeSubnetRequest,
+                                   FindValueSubnetRequest, PingSubnetRequest, StoreSubnetRequest)
+from kademlia.errors import RPCError
+from kademlia.id import ID
+from kademlia.interfaces import IProtocol
+from kademlia.node import Node
+from kademlia.pickler import encode_data
 
 
 def get_rpc_error(id: ID,
@@ -202,14 +202,19 @@ class TCPSubnetProtocol(IProtocol):
         error = None
         ret = None
         try:
-            ret = requests.post(
+            print("Sender: About to POST")
+            ret: requests.Response = requests.post(
                 url=f"http://{self.url}:{self.port}/ping",
                 data=encoded_data
             )
+            print("POST done?")
+            print("Received:", ret.url, ret.status_code, ret.request)
 
         except TimeoutError as e:
+            print("Timed out.")
             # request timed out.
             timeout_error = True
+            print(e)
             error = e
 
         return get_rpc_error(random_id, ret, timeout_error, ErrorResponse(

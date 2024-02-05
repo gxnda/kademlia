@@ -5,15 +5,15 @@ from time import sleep
 from typing import Callable, Optional
 
 import kademlia.my_queues as my_queues
-from .buckets import KBucket
-from .constants import Constants
-from .contact import Contact
-from .dictionaries import ContactQueueItem, FindResult, QueryReturn
-from .errors import AllKBucketsAreEmptyError, ValueCannotBeNoneError
-from .id import ID
-from .kademlia import TRY_CLOSEST_BUCKET
-from .main import DEBUG
-from .node import Node
+from kademlia.buckets import KBucket
+from kademlia.constants import Constants
+from kademlia.contact import Contact
+from kademlia.dictionaries import ContactQueueItem, FindResult, QueryReturn
+from kademlia.errors import AllKBucketsAreEmptyError, ValueCannotBeNoneError
+from kademlia.id import ID
+from kademlia.helpers import TRY_CLOSEST_BUCKET
+from kademlia.main import DEBUG
+from kademlia.node import Node
 
 
 class BaseRouter:

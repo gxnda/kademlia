@@ -1,10 +1,10 @@
 import random
 
-from .contact import Contact
-from .main import DEBUG
-from .node import Node
-from .id import ID
-from .storage import VirtualStorage
+from kademlia.contact import Contact
+from kademlia.main import DEBUG
+from kademlia.node import Node
+from kademlia.id import ID
+from kademlia.storage import VirtualStorage
 
 TRY_CLOSEST_BUCKET = False  # TODO: Find somewhere good to put this / remove it entirely.
 

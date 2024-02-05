@@ -5,9 +5,9 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import kademlia.main as main
 import kademlia.pickler as pickler
-from .dictionaries import PingRequest, StoreRequest, FindNodeRequest, FindValueRequest, ErrorResponse, \
+from kademlia.dictionaries import PingRequest, StoreRequest, FindNodeRequest, FindValueRequest, ErrorResponse, \
     CommonRequest
-from .id import ID
+from kademlia.id import ID
 
 
 class Server(HTTPServer):
@@ -43,13 +43,46 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             method = getattr(node, method_name)
             response = method(common_request)
             encoded_response = pickler.encode_data(response)
-            self.send_response(200, str(encoded_response))
+            print("Sending encoded 200: ", response)
+
+            self.send_response(code=200)  # , message=encoded_response.decode("latin1"))
+
+            print("Adding headers...")
+            self.send_header("content-type", "application/octet-stream")
+            self.end_headers()
+            print("Finished headers")
+
+            print("Writing 200...", self.wfile.closed)
+            self.wfile.write(encoded_response)
+            print("Writing 200 Success!", self.wfile.closed)
+
         except Exception as e:
+            print("Exception! - Is wfile closed:", self.wfile.closed)
             error_response: ErrorResponse = ErrorResponse(
                 error_message=str(e),
                 random_id=ID.random_id()
             )
-            self.send_response(400, str(pickler.encode_data(error_response)))
+            print("Sending encoded 400:", error_response)
+            encoded_response = pickler.encode_data(error_response)
+
+            print("Adding headers...")
+            self.send_header("content-type", "application/octet-stream")
+            print("a")
+            self.end_headers()
+            print("Finished headers")
+            self.send_response(code=400)  # , message=encoded_response.decode("latin1"))
+
+            self.wfile.write(encoded_response)
+
+        finally:
+            print("Finally...")
+            if not self.wfile.closed:
+                print("try close")
+                self.wfile.close()
+                print("close success!")
+            else:
+                print("It was already closed! (What on earth)")
+        print("Common request handler done!")
 
     def do_POST(self):
         print("Server: POST Received.")
@@ -103,34 +136,19 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             # Because this is for testing on the same PC.
             node = self.server.subnets.get(subnet)  # should be valid if inheriting from SubnetServer?
             if node:
+                print("Starting thread...")
                 new_thread = threading.Thread(
-                    target=self.common_request_handler,  # TODO: This does not exist.
+                    target=self.common_request_handler,
                     args=(method_name, common_request, node)
                 )
                 new_thread.start()
 
             else:
+                print("Subnet node not found.")
                 encoded_response = pickler.encode_data("Subnet node not found.")
                 self.send_response(400, "Subnet node not found.")  # TODO: Make encrypted.
 
             # context.close_connection = True
-
-
-class TCPServer(HTTPServer):  # TODO: Create.
-    def __init__(self, node):
-        server_address: tuple[str, int] = (node.our_contact.protocol.ip, node.our_contact.protocol.port)
-        HTTPServer.__init__(
-            self,
-            server_address=server_address,
-            RequestHandlerClass=HTTPSubnetRequestHandler
-        )
-        self.route_packets = {
-            "/Ping": PingRequest,
-            "/Store": StoreRequest,
-            "/FindNode": FindNodeRequest,
-            "/FindValue": FindValueRequest
-        }
-        self.node = node
 
 
 class TCPSubnetServer(HTTPServer):
@@ -265,3 +283,21 @@ class TCPSubnetServer(HTTPServer):
     #                 )
     #
     #             # context.close_connection = True
+
+
+class TCPServer(HTTPServer):  # TODO: Create.
+    def __init__(self, node):
+        server_address: tuple[str, int] = (node.our_contact.protocol.ip, node.our_contact.protocol.port)
+        HTTPServer.__init__(
+            self,
+            server_address=server_address,
+            RequestHandlerClass=HTTPSubnetRequestHandler
+        )
+        self.route_packets = {
+            "/Ping": PingRequest,
+            "/Store": StoreRequest,
+            "/FindNode": FindNodeRequest,
+            "/FindValue": FindValueRequest
+        }
+        self.node = node
+

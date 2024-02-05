@@ -1,6 +1,6 @@
 import pickle
 
-from .errors import DataDecodingError
+from kademlia.errors import DataDecodingError
 
 
 def encode_data(data: dict) -> bytes:
@@ -12,13 +12,17 @@ def encode_data(data: dict) -> bytes:
     return pickle.dumps(data)
 
 
-def decode_data(encoded_data) -> dict:
+def decode_data(encoded_data: bytes) -> dict:
     """
     Takes in a string, decodes all pickled byte strings of the string dictionary 
     into python objects, and returns the decoded dictionary.
     """
     try:
-        decoded_data = pickle.loads(encoded_data)
+        if isinstance(encoded_data, bytes):
+            decoded_data = pickle.loads(encoded_data)
+        else:
+            raise TypeError(f"Encoded data should be type bytes, found type {type(encoded_data)}")
+
     except Exception as error:
         raise DataDecodingError("Error decoding data.") from error
     return decoded_data

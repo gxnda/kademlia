@@ -1,14 +1,14 @@
 from typing import Optional
 
-from .buckets import BucketList
-from .constants import Constants
-from .contact import Contact
-from .dictionaries import CommonRequest
-from .errors import RPCError, SenderIsSelfError, SendingQueryToSelfError
-from .id import ID
-from .interfaces import IProtocol, IStorage
-from .main import DEBUG
-from .storage import VirtualStorage
+from kademlia.buckets import BucketList
+from kademlia.constants import Constants
+from kademlia.contact import Contact
+from kademlia.dictionaries import CommonRequest
+from kademlia.errors import RPCError, SenderIsSelfError, SendingQueryToSelfError
+from kademlia.id import ID
+from kademlia.interfaces import IProtocol, IStorage
+from kademlia.main import DEBUG
+from kademlia.storage import VirtualStorage
 
 
 class Node:

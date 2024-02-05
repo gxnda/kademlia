@@ -1,4 +1,5 @@
 import unittest
+import random
 
 from kademlia.buckets import BucketList, KBucket
 from kademlia.constants import Constants
@@ -11,7 +12,11 @@ from kademlia.node import Node
 from kademlia.protocols import TCPSubnetProtocol, VirtualProtocol
 from kademlia.routers import ParallelRouter, Router
 from kademlia.storage import VirtualStorage
+from kademlia.helpers import DEBUG
 
+
+if DEBUG:
+    random.seed(1)
 
 def setup_split_failure(bucket_list=None):
     # force host node ID to < 2 ** 159 so the node ID is not in the
