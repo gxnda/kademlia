@@ -1471,10 +1471,9 @@ class TCPSubnetTests(unittest.TestCase):
         # The actual test:
 
         sender = Contact(ID.random_id(), p1)
-        test_id = ID.random_id()
+        test_id: ID = ID.random_id()
         test_value = "Test"
         p2.store(sender, test_id, test_value)
-
 
         self.assertTrue(n2.storage.contains(test_id),
                        "Expected remote peer to have value.")
@@ -1516,7 +1515,8 @@ class TCPSubnetTests(unittest.TestCase):
         thread = server.thread_start()
 
         id = ID.random_id()
-        ret: list[Contact] | None = p2.find_node(c1, id)[0]
+        ret, errors = p2.find_node(c1, id)
+
         if ret:
             self.assertTrue(
                 len(ret) == 1,
@@ -1532,7 +1532,7 @@ class TCPSubnetTests(unittest.TestCase):
                 "Expected find_node to return 1 contact, 0 were returned."
             )
 
-        server.thread_stop()
+        server.thread_stop(thread)
 
     def test_find_value_router(self):
 

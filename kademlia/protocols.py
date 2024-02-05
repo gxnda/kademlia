@@ -90,12 +90,13 @@ class TCPSubnetProtocol(IProtocol):
         self.url = url
         self.port = port
         self.responds = True
-        self.subnet = None
+        self.subnet = subnet
         self.type = "TCPSubnetProtocol"
 
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
+
         id: ID = ID.random_id()
-        print("find_node: a")
+
         encoded_data = encode_data(
             dict(FindNodeSubnetRequest(
                 protocol=sender.protocol,
@@ -106,28 +107,47 @@ class TCPSubnetProtocol(IProtocol):
                 random_id=id.value
             ))
         )
-        print("find_node: b")
         print(f"http://{self.url}:{self.port}/find_node")
-        ret, error, timeout_error = requests.post(
-            f"http://{self.url}:{self.port}/find_node",
-            data=encoded_data
-        )
-        print("find_node: c")
+
+        ret = None
+        timeout_error = False
+        error = ""
         try:
-            contacts = []
-            if ret:
-                if ret["contacts"]:  # TODO: Is ret a dictionary?
+            print("[Client] Sending find_node RPC...")
+            ret = requests.post(
+                f"http://{self.url}:{self.port}/find_node",
+                data=encoded_data
+            )
+
+        except TimeoutError as e:
+            print("[Client] Timed out.")
+            # request timed out.
+            timeout_error = True
+            error = e
+        if ret:
+            encoded_data = ret.content
+            ret_decoded = pickler.decode_data(encoded_data)
+        else:
+            ret_decoded = None
+        try:
+            if ret_decoded:
+                if ret_decoded["contacts"]:
                     contacts = []
-                    for val in ret["contacts"]:
-                        new_c = Contact(val["protocol"], val[""])
+                    for val in ret_decoded["contacts"]:
+                        new_c = Contact(ID(val["contact"]), val["protocol"])
                         contacts.append(new_c)
                     # Return only contacts with supported protocols.
+                    rpc_error = get_rpc_error(id,
+                                              ret_decoded,
+                                              timeout_error,
+                                              ErrorResponse(error_message=str(error), random_id=ID.random_id()))
                     if contacts:
-                        return [c for c in contacts if c.protocol is not None], get_rpc_error(id, ret, timeout_error,
-                                                                                              error)
+                        ret_contacts = [c for c in contacts if c.protocol is not None]
+                        return ret_contacts, rpc_error
         except Exception as e:
             error = RPCError()
             error.protocol_error = True
+            print("[Client] Exception thrown: ", e)
             return None, error
 
     def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, str | None, RPCError]:
@@ -203,15 +223,15 @@ class TCPSubnetProtocol(IProtocol):
         error = None
         ret = None
         try:
-            print("[Client]: Sending Ping RPC...")
+            print("[Client] Sending Ping RPC...")
             ret: requests.Response = requests.post(
                 url=f"http://{self.url}:{self.port}/ping",
                 data=encoded_data
             )
-            print("[Client]: Received", ret.url, ret.status_code, ret.text)
+            print(f"[Client] Received HTTP Response from {ret.url} with code {ret.status_code}")
 
         except TimeoutError as e:
-            print("Timed out.")
+            print("[Client] Timed out.")
             # request timed out.
             timeout_error = True
             error = e
@@ -220,19 +240,9 @@ class TCPSubnetProtocol(IProtocol):
 
         if ret.status_code == 200:
             encoded_data = ret.content
-            formatted_response = pickler.decode_data(encoded_data)
-            if isinstance(formatted_response, dict):
-                if formatted_response["random_id"]:
-                    random_id = formatted_response["random_id"]
-                else:
-                    raise ValueError("No random ID returned")
-            else:
-                raise TypeError("Not a dictionary!")
-            ret_base_response: BaseResponse = BaseResponse(random_id=random_id)
+            ret_base_response = pickler.decode_data(encoded_data)
         elif ret.status_code == 400:
             error = "Bad Request"
-
-        print(ret_base_response)
 
         return get_rpc_error(random_id, ret_base_response, timeout_error, ErrorResponse(
             error_message=str(error), random_id=ID.random_id()))
@@ -246,6 +256,7 @@ class TCPSubnetProtocol(IProtocol):
               ) -> RPCError:
 
         random_id = ID.random_id()
+
         encoded_data = encode_data(
             dict(StoreSubnetRequest(
                 protocol=sender.protocol,
@@ -257,9 +268,11 @@ class TCPSubnetProtocol(IProtocol):
                 is_cached=is_cached,
                 expiration_time_sec=expiration_time_sec,
                 random_id=random_id.value)))
+
         timeout_error = False
         error = None
         ret = None
+
         try:
             ret = requests.post(
                 url=f"http://{self.url}:{self.port}/store",
@@ -270,5 +283,11 @@ class TCPSubnetProtocol(IProtocol):
             timeout_error = True
             error = e
 
-        return get_rpc_error(random_id, ret, timeout_error, ErrorResponse(
+        # if ret.status_code == 200:
+        # TODO: Add error handling
+        encoded_data = ret.content
+        formatted_response = pickler.decode_data(encoded_data)
+        print(formatted_response)
+
+        return get_rpc_error(random_id, formatted_response, timeout_error, ErrorResponse(
             error_message=str(error), random_id=ID.random_id()))

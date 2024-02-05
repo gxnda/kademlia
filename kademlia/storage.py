@@ -24,9 +24,9 @@ class VirtualStorage(IStorage):
         :param key: Type ID or Integer, key value to be searched.
         :return:
         """
-        if isinstance(type(key), ID):
+        if isinstance(key, ID):
             return self._store[key.value]
-        elif isinstance(type(key), int):
+        elif isinstance(key, int):
             return self._store[key]
         else:
             raise TypeError("'get()' parameter 'key' must be type ID or int.")

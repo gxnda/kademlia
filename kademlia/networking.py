@@ -34,7 +34,6 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
                                common_request: CommonRequest,
                                node):  # TODO: Make protected.
         if main.DEBUG:
-            print(node.our_contact.protocol.type)
             if node.our_contact.protocol.type == "TCPSubnetProtocol":
                 if not node.our_contact.protocol.responds:
                     # Exceeds 500ms timeout
@@ -101,7 +100,6 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
         # What type is the request?
         try:
             # path is something like /ping or /find_node
-            print(path)
             request_type: Optional[TypedDict] = routing_methods[path]
         except KeyError:
             request_type: Optional[TypedDict] = None
@@ -164,7 +162,7 @@ class TCPSubnetServer(HTTPServer):
         Holds up the entire program though, would recommend placing in a thread.
         :return:
         """
-        print("Starting server...")
+        print("[Server] Starting server...")
         self.serve_forever()
 
     def stop(self):
@@ -172,7 +170,7 @@ class TCPSubnetServer(HTTPServer):
         Stops the server.
         :return:
         """
-        print("Stopping server...")
+        print("[Server] Stopping server...")
         self.shutdown()
 
     def thread_start(self) -> threading.Thread:
@@ -193,7 +191,7 @@ class TCPSubnetServer(HTTPServer):
         """
         self.shutdown()
         thread.join()  # wait for the thread to finish.
-        print("Server stopped.")
+        print("[Server] Server stopped.")
 
     def register_protocol(self, subnet: int, node):
         self.subnets[subnet] = node
