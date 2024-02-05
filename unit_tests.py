@@ -1334,8 +1334,7 @@ class DHTSerialisationTests(unittest.TestCase):
 
         self.assertTrue(
             type(dht) == type(new_dht),
-            "Saved and loaded DHT are not the same type. " \
-            f"{type(dht)} vs {type(new_dht)}"
+            f"Saved and loaded DHT are not the same type. {type(dht)} vs {type(new_dht)}"
         )
         self.assertTrue(
             dht.our_id == new_dht.our_id,
@@ -1374,13 +1373,13 @@ class DHTSerialisationTests(unittest.TestCase):
     def second_dht_serialisation_test(self):
         p1: TCPSubnetProtocol = TCPSubnetProtocol(
             "http://127.0.0.1/", 
-            2720, 
+            7124, 
             1
         )
 
         p2: TCPSubnetProtocol = TCPSubnetProtocol(
             "http://127.0.0.1/",
-            2720,
+            7124,
             1
         )
 
@@ -1430,7 +1429,7 @@ class TCPSubnetTests(unittest.TestCase):
     @staticmethod
     def setup():
         local_ip = "127.0.0.1"
-        port = 2720
+        port = 7124
         server = TCPSubnetServer(server_address=(local_ip, port))
 
         p1 = TCPSubnetProtocol(url=local_ip, port=port, subnet=1)
@@ -1480,8 +1479,9 @@ class TCPSubnetTests(unittest.TestCase):
         server.thread_stop(thread)
 
     def test_find_nodes_route(self):
-        local_ip = "http://http://127.0.0.1//"
-        port = 2720
+        local_ip = "127.0.0.1"
+        port = 1344
+
         server = TCPSubnetServer(server_address=(local_ip, port))
 
         p1 = TCPSubnetProtocol(url=local_ip, port=port, subnet=1)
@@ -1532,7 +1532,7 @@ class TCPSubnetTests(unittest.TestCase):
     def test_find_value_router(self):
 
         local_ip = "http://127.0.0.1/"
-        port = 2720
+        port = 7124
 
         p1 = TCPSubnetProtocol(url=local_ip, port=port, subnet=1)
         p2 = TCPSubnetProtocol(url=local_ip, port=port, subnet=2)

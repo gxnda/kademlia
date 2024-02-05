@@ -1,6 +1,6 @@
 import threading
 from time import sleep
-from typing import Optional
+from typing import Optional, TypedDict
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import kademlia.main as main
@@ -52,6 +52,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             self.send_response(400, str(pickler.encode_data(error_response)))
 
     def do_POST(self):
+        print("Server: POST Received.")
         routing_methods = {
             "/ping": PingRequest,  # "ping" should refer to type PingRequest
             "/store": StoreRequest,  # "store" should refer to type StoreRequest
@@ -71,17 +72,22 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
         # Remove "/"
         # Prefix our call with "server_" so that the method name is unambiguous.
         method_name: str = "server_" + path[1:]  # path.substring(2)
-
+        print(f"method_name: {method_name}")
         # What type is the request?
         try:
             # path is something like /ping or /find_node
-            request_type: Optional[str] = routing_methods[path]
+            print(path)
+            request_type: Optional[TypedDict] = routing_methods[path]
         except KeyError:
-            request_type: Optional[str] = None
+            request_type: Optional[TypedDict] = None
+
+        print(f"request_type: {request_type.__annotations__}")
 
         # if we know what the request wants (if it's a ping/find_node RPC etc.)
         if request_type:
+            print("Request type!")
             subnet: int = request_dict["subnet"]
+            print("Subnet: ", subnet)
             common_request: CommonRequest = CommonRequest(
                 protocol=request_dict.get("protocol"),
                 protocol_name=request_dict.get("protocol_name"),
@@ -247,7 +253,7 @@ class TCPSubnetServer(HTTPServer):
     #             if node:
     #                 # TODO: Make Asynchronous
     #                 new_thread = threading.Thread(
-    #                     target=CommonRequestHandler,  # TODO: This does not exist.
+    #                     target=CommonRequestHandler,
     #                     args=(method_name, common_request, node, context)
     #                 )
     #                 new_thread.start()

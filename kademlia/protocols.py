@@ -94,6 +94,7 @@ class TCPSubnetProtocol(IProtocol):
 
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
         id: ID = ID.random_id()
+        print("find_node: a")
         encoded_data = encode_data(
             dict(FindNodeSubnetRequest(
                 protocol=sender.protocol,
@@ -104,10 +105,13 @@ class TCPSubnetProtocol(IProtocol):
                 random_id=id.value
             ))
         )
+        print("find_node: b")
+        print(f"http://{self.url}:{self.port}/find_node")
         ret, error, timeout_error = requests.post(
             f"http://{self.url}:{self.port}/find_node",
             data=encoded_data
         )
+        print("find_node: c")
         try:
             contacts = []
             if ret:
