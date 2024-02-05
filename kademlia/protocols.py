@@ -203,13 +203,12 @@ class TCPSubnetProtocol(IProtocol):
         error = None
         ret = None
         try:
-            print("Sender: About to POST")
+            print("[Client]: Sending Ping RPC...")
             ret: requests.Response = requests.post(
                 url=f"http://{self.url}:{self.port}/ping",
                 data=encoded_data
             )
-            print("POST done?")
-            print("Received:", ret.url, ret.status_code, ret.text)
+            print("[Client]: Received", ret.url, ret.status_code, ret.text)
 
         except TimeoutError as e:
             print("Timed out.")
@@ -217,13 +216,25 @@ class TCPSubnetProtocol(IProtocol):
             timeout_error = True
             error = e
 
-        encoding = ret.encoding
-        encoded_data = pickler.decode_data(ret.text.encode(encoding))
-        print(encoded_data)
-        if ret:
-            ret_base_response: BaseResponse = BaseResponse(random_id=14)
+        ret_base_response = None
 
-        return get_rpc_error(random_id, ret, timeout_error, ErrorResponse(
+        if ret.status_code == 200:
+            encoded_data = ret.content
+            formatted_response = pickler.decode_data(encoded_data)
+            if isinstance(formatted_response, dict):
+                if formatted_response["random_id"]:
+                    random_id = formatted_response["random_id"]
+                else:
+                    raise ValueError("No random ID returned")
+            else:
+                raise TypeError("Not a dictionary!")
+            ret_base_response: BaseResponse = BaseResponse(random_id=random_id)
+        elif ret.status_code == 400:
+            error = "Bad Request"
+
+        print(ret_base_response)
+
+        return get_rpc_error(random_id, ret_base_response, timeout_error, ErrorResponse(
             error_message=str(error), random_id=ID.random_id()))
 
     def store(self,

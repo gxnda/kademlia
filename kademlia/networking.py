@@ -43,50 +43,42 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             method = getattr(node, method_name)
             response = method(common_request)
             encoded_response = pickler.encode_data(response)
-            print("Sending encoded 200: ", response)
+            print("[Server] Sending encoded 200: ", response)
 
             self.send_response(code=200)  # , message=encoded_response.decode("latin1"))
 
-            print("Adding headers... - Is wfile closed:", self.wfile.closed)
+            # print("Adding headers... - Is wfile closed:", self.wfile.closed)
             self.send_header("Content-Type", "application/octet-stream")
             self.end_headers()
-            print("Finished headers - Is wfile closed:", self.wfile.closed)
+            # print("Finished headers - Is wfile closed:", self.wfile.closed)
 
-            print("Writing 200...", self.wfile.closed)
-            print(encoded_response)
+            # print("Writing 200...", self.wfile.closed)
             self.wfile.write(encoded_response)
-            print("Writing 200 Success!", self.wfile.closed)
+            print("[Server] Writing response success!", self.wfile.closed)
 
         except Exception as e:
-            print("Exception! - Is wfile closed:", self.wfile.closed)
+            print("[Server] Exception sending response.")
             error_response: ErrorResponse = ErrorResponse(
                 error_message=str(e),
                 random_id=ID.random_id()
             )
-            print("Sending encoded 400:", error_response)
+            print("[Server] Sending encoded 400:", error_response)
             encoded_response = pickler.encode_data(error_response)
 
-            print("Adding headers... - Is wfile closed:", self.wfile.closed)
             self.send_header("Content-Type", "application/octet-stream")
-            print("a - Is wfile closed:", self.wfile.closed)
             self.end_headers()
-            print("Finished headers - Is wfile closed:", self.wfile.closed)
             self.send_response(code=400)  # , message=encoded_response.decode("latin1"))
 
             self.wfile.write(encoded_response)
 
         finally:
-            print("Finally...")
             if not self.wfile.closed:
-                print("try close")
                 self.wfile.close()
-                print("close success!")
             else:
-                print("It was already closed! (What on earth)")
-        print("Common request handler done!")
+                print("[Server] Response body was already closed! (What on earth, somethings gone wrong!)")
 
     def do_POST(self):
-        print("Server: POST Received.")
+        print("[Server] POST Received.")
         routing_methods = {
             "/ping": PingRequest,  # "ping" should refer to type PingRequest
             "/store": StoreRequest,  # "store" should refer to type StoreRequest
@@ -99,14 +91,13 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
         # encoded_request: bytes = self.rfile.read()
         decoded_request: dict = pickler.decode_data(encoded_request)
         
-        print("Request received:", decoded_request)
+        print("[Server] Request received:", decoded_request)
         
         request_dict = decoded_request
         path: str = self.path
         # Remove "/"
         # Prefix our call with "server_" so that the method name is unambiguous.
         method_name: str = "server_" + path[1:]  # path.substring(2)
-        print(f"method_name: {method_name}")
         # What type is the request?
         try:
             # path is something like /ping or /find_node
@@ -115,13 +106,9 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
         except KeyError:
             request_type: Optional[TypedDict] = None
 
-        print(f"request_type: {request_type.__annotations__}")
-
         # if we know what the request wants (if it's a ping/find_node RPC etc.)
         if request_type:
-            print("Request type!")
             subnet: int = request_dict["subnet"]
-            print("Subnet: ", subnet)
             common_request: CommonRequest = CommonRequest(
                 protocol=request_dict.get("protocol"),
                 protocol_name=request_dict.get("protocol_name"),
