@@ -76,19 +76,58 @@ def setup_split_failure(bucket_list=None):
 
 class KBucketTest(unittest.TestCase):
 
-    def test_too_many_contacts(self):
-        with self.assertRaises(TooManyContactsError):
-            k = Constants.K
-            k_bucket = KBucket()
-            for i in range(k):
-                contact = Contact(ID(i))
-                k_bucket.add_contact(contact)
+    def test_add_to_kbucket(self):
+        """
+        Description
+        Contact added to a full bucket.
 
+        Expected
+        “TooManyContactsError” should be raised.
+
+        :return:
+        """
+        k = Constants.K
+        k_bucket = KBucket()
+        for i in range(k):
+            contact = Contact(ID(i))
+            k_bucket.add_contact(contact)
+        self.assertTrue(len(k_bucket.contacts) == k)
+
+    def test_too_many_contacts(self):
+        """
+        Description
+        Contact added to an almost full bucket.
+
+        Expected
+        No exceptions should be raised, length of bucket contacts should be Constants.K
+
+        Notes
+        This implies standard behaviour of contacts being added to a relatively empty bucket,
+        as it is required as a prerequisite to this test.
+        :return:
+        """
+
+        k = Constants.K
+        k_bucket = KBucket()
+        for i in range(k):
+            contact = Contact(ID(i))
+            k_bucket.add_contact(contact)
+        with self.assertRaises(TooManyContactsError):
             # Trying to add one more contact should raise the exception
             contact = Contact(ID(k + 1))
             k_bucket.add_contact(contact)
 
     def test_no_funny_business(self):
+        """
+        Description
+        Compare a Kbucket with no initial contacts parameter, to one
+        with an empty initial contacts parameter
+
+        Expected
+        They are the same.
+
+        :return:
+        """
         k1: KBucket = KBucket(low=0, high=100)
         k2: KBucket = KBucket(low=10, high=200, initial_contacts=[])
         self.assertTrue(k1.contacts == k2.contacts)
@@ -97,6 +136,16 @@ class KBucketTest(unittest.TestCase):
 class AddContactTest(unittest.TestCase):
 
     def test_unique_id_add(self):
+        """
+        Description
+
+        Adding K contacts to bucket list.
+
+        Expected
+
+        Bucket list should not split into separate buckets, and K contacts should exist in one bucket.
+        :return:
+        """
         dummy_contact: Contact = Contact(id=ID(0),
                                          protocol=VirtualProtocol())
 
@@ -116,6 +165,16 @@ class AddContactTest(unittest.TestCase):
             "K contacts should have been added.")
 
     def test_duplicate_id(self):
+        """
+        Description
+
+        Adding 1 contact to a bucket list twice.
+
+        Expected
+        The bucket list should realise that the contact ID already exists in the buckets,
+        therefore it should not be added.
+        :return:
+        """
         dummy_contact = Contact(ID(0), VirtualProtocol())
         dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
         bucket_list: BucketList = BucketList(dummy_contact)
@@ -134,8 +193,20 @@ class AddContactTest(unittest.TestCase):
             "Bucket should have one contact.")
 
     def test_bucket_split(self):
+        """
+        Description
 
-        dummy_contact = Contact(VirtualProtocol(), ID(0))
+        Adding K + 1 contacts to an empty bucket list.
+
+        Expected
+
+        The bucket list should split into 2 separate buckets.
+
+
+        :return:
+        """
+
+        dummy_contact = Contact(ID(0), VirtualProtocol())
         dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
         bucket_list: BucketList = BucketList(dummy_contact)
         bucket_list.our_id = ID.random_id()
@@ -151,13 +222,27 @@ class AddContactTest(unittest.TestCase):
 
 class ForceFailedAddTest(unittest.TestCase):
     def test_force_failed_add(self):
+        """
+        Description
+
+        Creates a bucket list composed of K ID’s, with a depth of 5 in the range 2 ** 159 to 2 ** 160 – 1,
+        along with another Contact with ID in range 0 to 2 ** 159 – 1.
+        Then another contact should be added with ID >= 2 ** 159.
+
+        Expected
+
+        Bucket split should occur, with 1 contact in the first bucket, and 20 contacts in the second bucket.
+        Then when the 22nd contact is added, nothing should have changed, due to the depth of the bucket it’s being
+        added to MOD 5 is 0.
+        :return:
+        """
         dummy_contact = Contact(id=ID(0))
         node = Node(contact=dummy_contact, storage=VirtualStorage())
 
-        bucket_list: BucketList = setup_split_failure()  # TODO: THIS FUNCTION DOES NOT EXIST.
+        bucket_list: BucketList = setup_split_failure()
 
         self.assertTrue(len(bucket_list.buckets) == 2,
-                f"Bucket split should have occured. Number of buckets should be 2, is {len(bucket_list.buckets)}.")
+                f"Bucket split should have occurred. Number of buckets should be 2, is {len(bucket_list.buckets)}.")
 
         self.assertTrue(len(bucket_list.buckets[0].contacts) == 1,
                 "Expected 1 contact in bucket 0.")
@@ -192,6 +277,18 @@ class ForceFailedAddTest(unittest.TestCase):
 class NodeLookupTests(unittest.TestCase):
 
     def test_get_close_contacts_ordered(self):
+        """
+        Description
+
+        Adds 100 random contacts to a nodes bucket list, then FIND_NODE is performed.
+
+        Expected
+
+        K Contacts should be returned; Returned contacts should be ordered by distance.
+        It should have returned the smallest ID’s possible, as host ID = 0.
+
+        :return:
+        """
         sender: Contact = Contact(id=ID.random_id(),
                                   protocol=None)
         node: Node = Node(
