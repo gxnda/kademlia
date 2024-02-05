@@ -70,11 +70,12 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
 
             self.wfile.write(encoded_response)
 
-        finally:
-            if not self.wfile.closed:
-                self.wfile.close()
-            else:
-                print("[Server] Response body was already closed! (What on earth, somethings gone wrong!)")
+        # self.wfile.close()
+        # finally:
+        #     if not self.wfile.closed:
+        #         self.wfile.close()
+        #     else:
+        #         print("[Server] Response body was already closed! (What on earth, somethings gone wrong!)")
 
     def do_POST(self):
         print("[Server] POST Received.")
@@ -89,9 +90,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
         encoded_request: bytes = self.rfile.read(content_length)
         # encoded_request: bytes = self.rfile.read()
         decoded_request: dict = pickler.decode_data(encoded_request)
-        
-        print("[Server] Request received:", decoded_request)
-        
+        # print("[Server] Request received:", decoded_request)
         request_dict = decoded_request
         path: str = self.path
         # Remove "/"
