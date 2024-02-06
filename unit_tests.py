@@ -1,5 +1,6 @@
 import unittest
 import random
+from time import sleep
 
 from kademlia.buckets import BucketList, KBucket
 from kademlia.constants import Constants
@@ -1497,6 +1498,7 @@ class TCPSubnetTests(unittest.TestCase):
         server.thread_stop(thread)
 
     def test_find_nodes_route(self):
+        sleep(3)
         local_ip = "127.0.0.1"
         port = 1344
 
@@ -1549,6 +1551,7 @@ class TCPSubnetTests(unittest.TestCase):
         server.thread_stop(thread)
 
     def test_find_value_router(self):
+        sleep(3)
         local_ip, port, server, p1, p2, our_id, c1, c2, n1, n2, thread = self.setup()
 
         # Node 2 knows about another contact that isn't us
@@ -1582,6 +1585,7 @@ class TCPSubnetTests(unittest.TestCase):
         )
 
     def test_unresponsive_node(self):
+        sleep(3)
         local_ip = "127.0.0.1"
         port = 7124
         server = TCPSubnetServer(server_address=(local_ip, port))
