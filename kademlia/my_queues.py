@@ -5,7 +5,7 @@ class InfiniteLinearQueue:
     def __init__(self):
         """
         You may ask, what's the point of this? isn't this just a normal list?
-        Basically, it is; but you have a
+        Basically, it is; but you have a dequeue method.
         """
         self.__items = []
 

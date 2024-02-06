@@ -1,6 +1,6 @@
 import threading
 from time import sleep
-from typing import Optional, TypedDict
+from typing import Optional, TypedDict, Callable
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import kademlia.main as main
@@ -42,14 +42,14 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
         try:
             print(3)
             print(node, method_name)
-            method = getattr(node, method_name)
+            method: Callable = getattr(node, method_name)
             print(method)
             print(4)
             response = method(common_request)
             print(5)
             encoded_response = pickler.encode_data(response)
             print("[Server] Sending encoded 200: ", response)
-            self.send_response(code=200)  # , message=encoded_response.decode("latin1"))
+            self.send_response(code=200)
 
             # print("Adding headers... - Is wfile closed:", self.wfile.closed)
             self.send_header("Content-Type", "application/octet-stream")
@@ -80,7 +80,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
         #     if not self.wfile.closed:
         #         self.wfile.close()
         #     else:
-        #         print("[Server] Response body was already closed! (What on earth, somethings gone wrong!)")
+        #         print("[Server] Response body was already closed! (What on earth, something's gone wrong!)")
 
     def do_POST(self):
         print("[Server] POST Received.")

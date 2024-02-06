@@ -1,12 +1,12 @@
 from datetime import datetime
 from os.path import commonprefix
 
-from .constants import Constants
-from .contact import Contact
-from .errors import BucketDoesNotContainContactToEvictError, OurNodeCannotBeAContactError, OutOfRangeError, \
+from kademlia.constants import Constants
+from kademlia.contact import Contact
+from kademlia.errors import BucketDoesNotContainContactToEvictError, OurNodeCannotBeAContactError, OutOfRangeError, \
     RPCError, TooManyContactsError
-from .id import ID
-from .main import DEBUG
+from kademlia.id import ID
+from kademlia.main import DEBUG
 
 
 class KBucket:
