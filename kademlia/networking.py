@@ -30,9 +30,7 @@ class Server(HTTPServer):
 class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
 
     def common_request_handler(self,
-                               method_name: str,
-                               common_request: CommonRequest,
-                               node):  # TODO: Make protected.
+                               method_name: str, common_request: CommonRequest, node):  # TODO: Make protected.
         print(1)
         if main.DEBUG:
             if node.our_contact.protocol.type == "TCPSubnetProtocol":
