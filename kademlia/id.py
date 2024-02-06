@@ -37,15 +37,13 @@ class ID:
         padded_binary = number_of_zeroes_to_add * "0" + binary
         return padded_binary
 
-    def set_bit(self, bit: int):
+    def set_bit(self, bit: int) -> None:
         """
         Sets a given bit to 1, Little endian. (set_bit(0) sets smallest bit to 0)
         :param bit: bit to be set.
         :return: Nothing
         """
-        bits = self.little_endian_bytes()
-        bits[bit] = "1"
-        return None
+        self.little_endian_bytes()[bit] = "1"
 
     def big_endian_bytes(self) -> list[str]:
         """
@@ -96,7 +94,10 @@ class ID:
             return self.value > val
 
     def __str__(self) -> str:
-        return str(self.denary())
+        return str(self.value)
+
+    def __repr__(self) -> str:
+        return str(self.value)[:-3]
 
     @classmethod
     def max(cls):

@@ -105,7 +105,7 @@ class DHT:
         self._protocol = protocol
         self._router: BaseRouter = router
         self._router.node = self.node
-        self._router.DHT = self
+        self._router.dht = self
         self.eviction_count: dict[int, int] = {}  # May be incorrect
 
     def router(self) -> BaseRouter:
@@ -146,7 +146,7 @@ class DHT:
 
         # TODO: Talk about what this does - I haven't made it yet so IDK.
         found, our_val = self._originator_storage.try_get_value(key)
-        print(found, contacts, our_val)
+        print("try_get_value result:", found, contacts, our_val)
         if our_val:
             found = True
             val = our_val
@@ -169,6 +169,7 @@ class DHT:
 
                 if store_to:
                     separating_nodes: int = self._get_separating_nodes_count(self.our_contact, store_to)
+                    print("Separating nodes:", separating_nodes)
                     exp_time_sec: int = int(
                         Constants.EXPIRATION_TIME_SEC / (2 ** separating_nodes)
                     )
@@ -387,9 +388,21 @@ class DHT:
             self._originator_storage.touch(k)
 
     def _get_separating_nodes_count(self, contact_a: Contact, contact_b: Contact):
+        """
+        Returns the number of contacts between 2 contacts in our bucket list.
+        :param contact_a:
+        :param contact_b:
+        :return:
+        """
         # get all the contacts, ordered by ID
-        print("ca", contact_a in self.node.bucket_list.contacts())
-        print("cb", contact_b in self.node.bucket_list.contacts())
+        if contact_a not in self.node.bucket_list.contacts():
+            raise KeyError(f"Contact not in list: {str(contact_a.id)},"
+                           f"list contains: {[str(i.id) for i in self.node.bucket_list.contacts()]}")
+
+        if contact_b not in self.node.bucket_list.contacts():
+            raise KeyError(f"Contact not in list: {str(contact_b.id)},"
+                           f"list contains: {[str(i.id) for i in self.node.bucket_list.contacts()]}")
+
         all_contacts: list[Contact] = sorted(self.node.bucket_list.contacts(), key=lambda c: c.id.value)
         print([i.id.value for i in self.node.bucket_list.contacts()])
         print(contact_a.id.value, contact_b.id.value)
@@ -397,7 +410,7 @@ class DHT:
         index_b = all_contacts.index(contact_b)
         return abs(index_a - index_b)
 
-    def handle_error(self, error: RPCError, contact: Contact) -> None:
+    def handle_error(self, error: RPCError | None, contact: Contact) -> None:
         """
         Put the timed out contact into a collection and increment the number
         of times it has timed out.
@@ -406,10 +419,11 @@ class DHT:
         and replace it with the most recent pending contact that are
         queued for that bucket.
         """
-        # For all errors:
-        count = self.add_contact_to_evict(contact.id.value)
-        if count == Constants.EVICTION_LIMIT:
-            self.replace_contact(contact)
+        if error:
+            if error.has_error():
+                count = self.add_contact_to_evict(contact.id.value)
+                if count == Constants.EVICTION_LIMIT:
+                    self.replace_contact(contact)
 
     def delay_eviction(self,
                        to_evict: Contact,

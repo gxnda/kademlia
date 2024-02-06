@@ -650,7 +650,8 @@ class DHTTest(unittest.TestCase):
         # Ensures that all nodes are closer, because id.max ^ n < id.max when n > 0.
         # (the distance between a node and max id is always closer than the furthest possible)
         # TODO: Why are there 6 arguments? im tired i sleep now
-        dht = DHT(id=ID.max(), router=Router(), storage_factory=lambda: store1, protocol=VirtualProtocol())
+        dht = DHT(id=ID.max(), router=Router(), protocol=vp1, originator_storage=store1,
+                  republish_storage=store1, cache_storage=VirtualStorage())
 
         vp1.node = dht._router.node
         contact_id: ID = ID.mid()  # middle ID
@@ -750,7 +751,6 @@ class DHTTest(unittest.TestCase):
         cache3 = VirtualStorage()
 
         dht: DHT = DHT(id=ID.max(), protocol=vp1, router=Router(), storage_factory=lambda: store1)
-
         vp1.node = dht._router.node
 
         # setup node 2
@@ -767,10 +767,12 @@ class DHTTest(unittest.TestCase):
 
         # setup node 3
         contact_id_3 = ID(2 ** 158)  # I think this is the same as ID.Zero.SetBit(158)?
+        print("id", contact_id_3)
         other_contact_3 = Contact(contact_id_3, vp3)
         other_node_3 = Node(other_contact_3, store3, cache_storage=cache3)
         vp3.node = other_node_3
         # add the third contact to our peer list
+        print("DHT Router DHT", dht._router.dht._router.dht._router.dht._router)
         dht._router.node.bucket_list.add_contact(other_contact_3)
 
         self.assertFalse(store1.contains(key),
