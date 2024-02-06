@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Callable, TypedDict
 
 from .contact import Contact
@@ -135,3 +136,9 @@ class PingResponse(TypedDict, BaseResponse):
 
 class StoreResponse(BaseResponse):
     pass
+
+
+class StoreValue(TypedDict):
+    value: str
+    republish_timestamp: datetime
+    expiration_time: int

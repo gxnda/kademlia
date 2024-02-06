@@ -619,10 +619,11 @@ class DHTTest(unittest.TestCase):
                   protocol=vp,
                   storage_factory=VirtualStorage,
                   router=Router())
+        print(dht._originator_storage)
         vp.node = dht._router.node
         key = ID.random_id()
         dht.store(key, "Test")
-        return_val = dht.find_value(key)
+        found, contacts, return_val = dht.find_value(key)
 
         self.assertTrue(return_val == "Test",
                         "Expected to get back what we stored.")
