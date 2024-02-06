@@ -197,6 +197,8 @@ class BucketList:
         Adds a contact to a k-bucket in the list, this is determined by the range of k-buckets in the lists.
         This range should span the entire ID space - so there should always be a k-bucket to be added.
 
+        If we can't add it, it will be added to DHT pending contacts.
+
         This raises an error if we try to add ourselves to the k-bucket.
 
         :param contact: Contact to be added, this is touched in the process.
@@ -208,6 +210,7 @@ class BucketList:
 
         contact.touch()  # Update the time last seen to now
 
+        print("[Client] Add contact called.")
         # with self.lock:
         kbucket: KBucket = self.get_kbucket(contact.id)
         if kbucket.contains(contact.id):
@@ -216,8 +219,9 @@ class BucketList:
             kbucket.replace_contact(contact)
 
         elif kbucket.is_full():
+            print("Kbucket is full.")
             if self.can_split(kbucket):
-                # print("Splitting!")
+                print("Splitting!")
                 # Split then try again
                 k1, k2 = kbucket.split()
                 # print(f"K1: {len(k1.contacts)}, K2: {len(k2.contacts)}, Buckets: {self.buckets}")
@@ -232,21 +236,26 @@ class BucketList:
                 )  # Unless k <= 0, This should never cause a recursive loop
 
             else:
-                # print("cannot split :(")
+                print("cannot split")
                 last_seen_contact: Contact = sorted(
                     kbucket.contacts, key=lambda c: c.last_seen)[0]
                 error: RPCError | None = last_seen_contact.protocol.ping(
                     self.our_contact)
                 if error:
+                    # Unresponsive
+                    print("Node is unresponsive")
                     if self.DHT:  # tests may not initialise a DHT
                         self.DHT.delay_eviction(last_seen_contact, contact)
                 else:
                     # still can't add the contact ,so put it into the pending list
+                    print("Node is responsive.")
                     if self.DHT:
+                        print("add to pending.")
                         self.DHT.add_to_pending(contact)
 
         else:
             # Bucket is not full, nothing special happens.
+            print("Adding contact.")
             kbucket.add_contact(contact)
 
     def get_close_contacts(self, key: ID, exclude: ID) -> list[Contact]:

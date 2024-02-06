@@ -962,7 +962,7 @@ class BootstrappingTests(unittest.TestCase):
 
         test_cases: list[tuple[int, int]] = [
 
-                (0, 256),              # 7 bits should be set
+                (0, 256),             # 7 bits should be set
                 (256, 1024),          # 2 bits (256 + 512) should be set
                 (65536, 65536 * 2),   # no additional bits should be set.
                 (65536, 65536 * 4),   # 2 bits (65536 and 65536*2) should be set.
