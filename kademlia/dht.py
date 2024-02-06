@@ -6,7 +6,7 @@ from typing import Callable, Optional
 from .buckets import KBucket
 from .constants import Constants
 from .contact import Contact
-from .dictionaries import QueryReturn
+from .dictionaries import QueryReturn, StoreValue
 from .errors import BucketDoesNotContainContactToEvictError, RPCError
 from .id import ID
 from .interfaces import IProtocol, IStorage
@@ -123,7 +123,7 @@ class DHT:
         self._originator_storage.set(key, val)
         self.store_on_closer_contacts(key, val)
 
-    def find_value(self, key: ID) -> tuple[bool, list[Contact] | None, str | None]:
+    def find_value(self, key: ID) -> tuple[bool, list[Contact] | None, StoreValue | None]:
         """
         Attempts to find a given value.
         First it checks our originator storage. If the given key does not have a value in our storage,

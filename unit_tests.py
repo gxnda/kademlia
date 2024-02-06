@@ -624,8 +624,7 @@ class DHTTest(unittest.TestCase):
         key = ID.random_id()
         dht.store(key, "Test")
         found, contacts, return_val = dht.find_value(key)
-
-        self.assertTrue(return_val == "Test",
+        self.assertTrue(return_val["value"] == "Test",
                         "Expected to get back what we stored.")
 
     def test_value_stored_in_closer_node(self):
@@ -667,7 +666,7 @@ class DHTTest(unittest.TestCase):
 
         # Try and find the value, given our Dht knows about the other contact.
         _, _, retval = dht.find_value(key)
-        self.assertTrue(retval == val,
+        self.assertTrue(retval["value"] == val,
                         "Expected to get back what we stored")
 
     def test_value_stored_in_further_node(self):
@@ -697,8 +696,8 @@ class DHTTest(unittest.TestCase):
         self.assertTrue(store2.contains(key),
                         "Expected other node to HAVE cached the key-value.")
 
-        retval: str = dht.find_value(key)[2]
-        self.assertTrue(retval == val,
+        _, _, retval = dht.find_value(key)
+        self.assertTrue(retval["value"] == val,
                         "Expected to get back what we stored.")
 
     def test_value_stored_gets_propagated(self):
