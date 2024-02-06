@@ -750,7 +750,12 @@ class DHTTest(unittest.TestCase):
 
         cache3 = VirtualStorage()
 
-        dht: DHT = DHT(id=ID.max(), protocol=vp1, router=Router(), storage_factory=lambda: store1)
+        dht: DHT = DHT(id=ID.max(),
+                       protocol=vp1,
+                       router=Router(),
+                       originator_storage=store1,
+                       republish_storage=store1,
+                       cache_storage=VirtualStorage())
         vp1.node = dht._router.node
 
         # setup node 2
