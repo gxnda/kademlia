@@ -456,27 +456,26 @@ class NodeLookupTests(unittest.TestCase):
         # For each node (A == K) for testing in our bucket (nodes_to_query
         for contact in contacts_to_query:
             # Find the node that we're contacting:
-            contact_node: Node = [n for n in nodes if n.our_contact == contact][0]
+            contact_node: Node = next((n for n in nodes if n.our_contact == contact), None)
+            if contact_node is None:
+                continue
 
             # Close contacts except ourself and the nodes we're contacting.
             # Note that of all the contacts in the bucket list, many of the K returned
             # by the get_close_contacts call are contacts we're querying, so they're being excluded.
-            close_contacts_of_contacted_node = []
-            temp = contact_node.bucket_list.get_close_contacts(key, self.router.node.our_contact.id)
-            for c in contacts_to_query:
-                if c.id.value not in [i.id.value for i in temp]:
-                    close_contacts_of_contacted_node.append(c)
+            close_contacts_of_contacted_node = [
+                c for c in contact_node.bucket_list.get_close_contacts(key, self.router.node.our_contact.id)
+                if c.id.value not in [c.id.value for c in contacts_to_query]
+            ]
 
             for close_contact_of_contacted_node in close_contacts_of_contacted_node:
                 # Which of these contacts are closer?
-                if close_contact_of_contacted_node.id ^ key < distance:
-                    if close_contact_of_contacted_node.id.value not in [c.id.value for c in closer]:
-                        closer.append(close_contact_of_contacted_node)
+                if close_contact_of_contacted_node.id.value ^ key.value < distance and close_contact_of_contacted_node.id.value not in [c.id.value for c in closer]:
+                    closer.append(close_contact_of_contacted_node)
 
-                # Which of these contacts are further?
-                if close_contact_of_contacted_node.id ^ key >= distance:
-                    if close_contact_of_contacted_node.id.value not in [c.id.value for c in closer]:
-                        closer.append(close_contact_of_contacted_node)
+                # Which of these contacts are farther?
+                if close_contact_of_contacted_node.id.value ^ key.value >= distance and close_contact_of_contacted_node.id.value not in [c.id.value for c in further]:
+                    further.append(close_contact_of_contacted_node)
 
     def test_lookup(self):
 
@@ -489,7 +488,6 @@ class NodeLookupTests(unittest.TestCase):
                 key=id, rpc_call=self.router.rpc_find_nodes, give_me_all=True)["contacts"]
 
             contacted_nodes: list[Contact] = close_contacts
-
             self.get_alt_close_and_far(self.contacts_to_query,
                                        self.closer_contacts_alt_computation,
                                        self.further_contacts_alt_computation,
@@ -500,6 +498,14 @@ class NodeLookupTests(unittest.TestCase):
             print("close_contacts", [str(i.id.value)[-3:] for i in close_contacts])
             print("closer_contacts_alt_computation", [str(i.id.value)[-3:] for i in self.closer_contacts_alt_computation])
             print("\n\n")
+
+
+            # Check closer_contacts_alt_computation is right:
+            for contact in self.closer_contacts_alt_computation:
+                print("Distance delta close_alt:", ((contact.id.value ^ id.value) - self.distance) < 0, ((contact.id.value ^ id.value) - self.distance))
+
+            for contact in close_contacts:
+                print("Distance delta close_contacts:", ((contact.id.value ^ id.value) - self.distance) < 0, ((contact.id.value ^ id.value) - self.distance))
 
             self.assertTrue(len(close_contacts) >= len(self.closer_contacts_alt_computation),
                             f"Expected at least as many contacts: {len(close_contacts)} vs {len(self.closer_contacts_alt_computation)}")
@@ -1568,7 +1574,25 @@ class TCPSubnetTests(unittest.TestCase):
         )
 
     def test_unresponsive_node(self):
-        local_ip, port, server, p1, p2, our_id, c1, c2, n1, n2, thread = self.setup()
+        local_ip = "127.0.0.1"
+        port = 7124
+        server = TCPSubnetServer(server_address=(local_ip, port))
+
+        p1 = TCPSubnetProtocol(url=local_ip, port=port, subnet=1)
+        p2 = TCPSubnetProtocol(url=local_ip, port=port, subnet=2)
+        p2.responds = False
+
+        our_id = ID.random_id()
+
+        c1 = Contact(id=our_id, protocol=p1)
+        c2 = Contact(id=ID.random_id(), protocol=p2)
+
+        n1 = Node(c1, VirtualStorage())
+        n2 = Node(c2, VirtualStorage())
+
+        server.register_protocol(p1.subnet, n1)
+        server.register_protocol(p2.subnet, n2)
+        thread = server.thread_start()
 
         test_id = ID.random_id()
         test_value = "Test"

@@ -176,48 +176,70 @@ class Router(BaseRouter):
         Performs main Kademlia Lookup.
         :param key: Key to be looked up
         :param rpc_call: RPC call to be used.
-        :param give_me_all: TODO: Implement.
+        :param give_me_all: If all contacts should be returned or not - for testing purposes mainly.
         :return: returns query result.
         """
-        have_work = True
-        ret = []
         contacted_nodes = []
         # closer_uncontacted_nodes = []
         # further_uncontacted_nodes = []
+        if TRY_CLOSEST_BUCKET:
+            # Spec: The lookup initator starts by picking a nodes from its closest non-empty k-bucket
+            bucket: KBucket = self.find_closest_nonempty_kbucket(key)
 
-        all_nodes = self.node.bucket_list.get_close_contacts(
-            key, self.node.our_contact.id)[0:Constants.K]
+            # Not in spec: sort by the closest nodes in the closest bucket.
+            all_nodes: list[Contact] = self.node.bucket_list.get_close_contacts(
+                key, self.node.our_contact.id)[0:Constants.K]
+            nodes_to_query: list[Contact] = all_nodes[0:Constants.A]
 
-        nodes_to_query: list[Contact] = all_nodes[0:Constants.A]
-
-        for i in nodes_to_query:
-            if i.id.value ^ key.value < self.node.our_contact.id.value ^ key.value:
-                self.closer_contacts.append(i)
-            else:
+            for i in all_nodes[Constants.A + 1:]:
                 self.further_contacts.append(i)
+        else:
+            if DEBUG:
+                all_nodes: list[Contact] = self.node.bucket_list.get_kbucket(key).contacts[0:Constants.K]
+            else:
+                # This is a bad way to get a list of close contacts with virtual nodes because we're always going to
+                # get the closest nodes right at the get go.
+                all_nodes: list[Contact] = self.node.bucket_list.get_close_contacts(
+                    key, self.node.our_contact.id)[0:Constants.K]
+            nodes_to_query: list[Contact] = all_nodes[:Constants.A]
 
-        # all untested contacts just get dumped here.
-        for i in all_nodes[Constants.A + 1:]:
-            self.further_contacts.append(i)
+            # Also not explicitly in spec:
+            # Any closer node in the alpha list is immediately added to our closer contact list
+            # and any further node in the alpha list is immediately added to our further contact list.
+            for n in nodes_to_query:
+                if (n.id ^ key) < (self.node.our_contact.id ^ key):
+                    self.closer_contacts.append(n)
+                else:
+                    self.further_contacts.append(n)
 
-        for i in nodes_to_query:
-            if i not in contacted_nodes:
-                contacted_nodes.append(i)
+            # The remaining contacts not tested yet can be put here.
+            for n in all_nodes[Constants.A + 1:]:
+                self.further_contacts.append(n)
 
-        # In the spec they then send parallel async find_node RPC commands
-        query_result: QueryReturn = (self.query(key, nodes_to_query, rpc_call,
-                                                self.closer_contacts,
-                                                self.further_contacts))
+        # We're about to contact these nodes.
+        for n in nodes_to_query:
+            if n.id not in [i.id for i in contacted_nodes]:
+                contacted_nodes.append(n)
 
-        if query_result["found"]:  # if a node responded
+        # Spec: The initiator then sends parallel, async FIND_NODE RPCs to the "a" nodes it has chosen,
+        # "a" is a system wide parameter, such as 3.
+        query_result: QueryReturn = self.query(key, nodes_to_query, rpc_call, self.closer_contacts,
+                                               self.further_contacts)
+        if query_result["found"]:
+            # For unit testing
+            closer_contacts_unittest = self.closer_contacts
+            further_contacts_unittest = self.further_contacts
             return query_result
 
-        # add any new closer contacts
-        for i in self.closer_contacts:
-            if i.id not in [j.id for j in ret
-                            ]:  # if id does not already exist inside list
-                ret.append(i)
+        # Add any new closer contacts to the list we're going to return.
+        ret: list[Contact] = []
+        for c in self.closer_contacts:
+            if c.id not in [i.id for i in ret]:
+                ret.append(c)
 
+        # Spec: The lookup terminates when the initator has queried and received responses from the k closest nodes
+        # it has seen.
+        have_work = True
         while len(ret) < Constants.K and have_work:
             closer_uncontacted_nodes = [
                 i for i in self.closer_contacts if i not in contacted_nodes
@@ -230,47 +252,57 @@ class Router(BaseRouter):
             have_closer: bool = len(closer_uncontacted_nodes) > 0
             have_further: bool = len(further_uncontacted_nodes) > 0
             have_work: bool = have_closer or have_further
-            """
-            Spec: of the k nodes the initiator has heard of closest 
-            to the target,
-            it picks the 'a' that it has not yet queried and resends 
-            the FIND_NODE RPC to them.
-            """
+
+            # Spec: of the k nodes the initiator has heard of closest to the target,
+            # it picks the 'a' that it has not yet queried and resends the FIND_NODE RPC to them.
             if have_closer:
                 new_nodes_to_query = closer_uncontacted_nodes[:Constants.A]
-                for i in new_nodes_to_query:
-                    if i not in contacted_nodes:
-                        contacted_nodes.append(i)
+                for c in new_nodes_to_query:
+                    if c.id not in [i.id for i in contacted_nodes]:
+                        contacted_nodes.append(c)
 
                 query_result = (self.query(key, new_nodes_to_query, rpc_call,
                                            self.closer_contacts,
                                            self.further_contacts))
 
                 if query_result["found"]:
+                    # For unit testing.
+                    closer_contacts_unittest = self.closer_contacts
+                    further_contacts_unittest = self.further_contacts
                     return query_result
 
             elif have_further:
                 new_nodes_to_query = further_uncontacted_nodes[:Constants.A]
-                for i in new_nodes_to_query:
-                    if i not in contacted_nodes:
-                        contacted_nodes.append(i)
+                for c in further_uncontacted_nodes:
+                    if c not in [i.id for i in contacted_nodes]:
+                        contacted_nodes.append(c)
 
                 query_result = (self.query(key, new_nodes_to_query, rpc_call,
                                            self.closer_contacts,
                                            self.further_contacts))
 
                 if query_result["found"]:
+                    # For unit testing.
+                    closer_contacts_unittest = self.closer_contacts
+                    further_contacts_unittest = self.further_contacts
                     return query_result
+
+        if DEBUG:  # For unit testing
+            closer_contacts_unittest = self.closer_contacts
+            further_contacts_unittest = self.further_contacts
 
         # return k closer nodes sorted by distance,
 
-        contacts = sorted(ret[:Constants.K], key=(lambda x: x.id ^ key))
-        return {
-            "found": False,
-            "contacts": contacts,
-            "val": None,
-            "found_by": None
-        }
+        # Spec (sort of): return max(k) closer nodes, sorted by distance.
+        # For unit testing give_me_all can be true so that we can match against our alternate way of
+        # getting closer contacts.
+        # contacts, val, found, found_by
+        return QueryReturn(
+            found=False,
+            contacts=(ret if give_me_all else sorted(ret, key=lambda c: c.id ^ key)[:Constants.K]),
+            found_by=None,
+            val=None
+        )
 
 
 
@@ -358,13 +390,13 @@ class ParallelRouter(BaseRouter):
         self.stop_work = True
 
     def parallel_found(self, find_result: FindResult) -> tuple[
-        type(FindResult["found"]),
-        bool,
-        type(FindResult["found_contacts"]),
-        type(FindResult["found_by"]),
-        type(FindResult["found_value"])
-    ]:
+            type(FindResult["found"]),
+            bool,
+            type(FindResult["found_contacts"]),
+            type(FindResult["found_by"]),
+            type(FindResult["found_value"])]:
         """
+        # TODO: Fix?
         :param find_result:
         :param found_ret: given as a tuple so that it is used as reference.
         :return:

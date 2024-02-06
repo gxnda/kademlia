@@ -124,7 +124,7 @@ class Node:
         For a new contact, we store values to that contact whose keys
         XOR our_contact are less than the stored keys XOR other_contacts.
         """
-        print("send key values if new contact")
+        # print("send key values if new contact")
         if self._is_new_contact(sender):
             # with self.bucket_list.lock:
             # Clone so we can release the lock.

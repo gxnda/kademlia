@@ -4,11 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="feat: PING WORKS!">
+    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="misc: removed obselete code.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/kademlia/networking.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/networking.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/node.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/node.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/kademlia/protocols.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/protocols.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kademlia/storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/storage.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/unit_tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/unit_tests.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -80,7 +80,8 @@
     "Python tests.Python tests for unit_tests.BucketManagementTests.test_non_responding_contact_delayed_eviction.executor": "Run",
     "Python tests.Python tests for unit_tests.DHTSerialisationTests.executor": "Run",
     "Python tests.Python tests for unit_tests.TCPSubnetTests.executor": "Run",
-    "Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route.executor": "Run",
+    "Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route.executor": "Debug",
+    "Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_value_router.executor": "Run",
     "Python tests.Python tests for unit_tests.TCPSubnetTests.test_ping_route.executor": "Run",
     "Python tests.Python tests for unit_tests.TCPSubnetTests.test_store_route.executor": "Run",
     "Python tests.Python tests for unit_tests.TCPSubnetTests.test_unresponsive_node.executor": "Run",
@@ -115,7 +116,7 @@
       <recent name="C:\Users\gabri\PycharmProjects\P2P\kademlia" />
     </key>
   </component>
-  <component name="RunManager" selected="Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route">
+  <component name="RunManager" selected="Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_value_router">
     <configuration name="P2P-System" type="PythonConfigurationType" factoryName="Python">
       <module name="P2P-System" />
       <option name="ENV_FILES" value="" />
@@ -139,50 +140,20 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="pickler" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="Python tests for unit_tests.TCPSubnetTests" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="P2P-System" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/kademlia" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/kademlia/pickler.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="scratch_2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="P2P-System" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$APPLICATION_CONFIG_DIR$/scratches" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$APPLICATION_CONFIG_DIR$/scratches/scratch_2.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;unit_tests.TCPSubnetTests&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
     <configuration name="Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
@@ -198,6 +169,22 @@
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
       <option name="_new_target" value="&quot;unit_tests.TCPSubnetTests.test_find_nodes_route&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Python tests for unit_tests.TCPSubnetTests.test_find_value_router" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="P2P-System" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;unit_tests.TCPSubnetTests.test_find_value_router&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
@@ -235,19 +222,19 @@
     </configuration>
     <list>
       <item itemvalue="Python.P2P-System" />
-      <item itemvalue="Python.pickler" />
-      <item itemvalue="Python.scratch_2" />
+      <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_value_router" />
       <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_ping_route" />
       <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_store_route" />
       <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route" />
+      <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route" />
+        <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_value_router" />
         <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_store_route" />
+        <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route" />
+        <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests" />
         <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_ping_route" />
-        <item itemvalue="Python.scratch_2" />
-        <item itemvalue="Python.pickler" />
       </list>
     </recent_temporary>
   </component>
@@ -611,23 +598,23 @@
       <option name="project" value="LOCAL" />
       <updated>1707062998360</updated>
     </task>
-    <task id="LOCAL-00115" summary="feat: It kind of works? Just need to decode">
+    <task id="LOCAL-00118" summary="fix: I/O closed fixed (self.wfile is never explicitly closed by me)">
       <option name="closed" value="true" />
-      <created>1707163658478</created>
-      <option name="number" value="00115" />
-      <option name="presentableId" value="LOCAL-00115" />
+      <created>1707169165081</created>
+      <option name="number" value="00118" />
+      <option name="presentableId" value="LOCAL-00118" />
       <option name="project" value="LOCAL" />
-      <updated>1707163658478</updated>
+      <updated>1707169165081</updated>
     </task>
-    <task id="LOCAL-00116" summary="feat: PING WORKS!">
+    <task id="LOCAL-00119" summary="misc: removed obselete code.">
       <option name="closed" value="true" />
-      <created>1707164594806</created>
-      <option name="number" value="00116" />
-      <option name="presentableId" value="LOCAL-00116" />
+      <created>1707169298307</created>
+      <option name="number" value="00119" />
+      <option name="presentableId" value="LOCAL-00119" />
       <option name="project" value="LOCAL" />
-      <updated>1707164594806</updated>
+      <updated>1707169298307</updated>
     </task>
-    <option name="localTasksCounter" value="117" />
+    <option name="localTasksCounter" value="120" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -672,9 +659,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: added new unit test" />
-    <MESSAGE value="docs: had ChatGPT make a couple of docstrings." />
-    <MESSAGE value="fix: changed how errors work within bootstrap()" />
     <MESSAGE value="misc: 1st bootstrap test works, 2nd doesn't (21/31)" />
     <MESSAGE value="checkpoint: fixing unit test error - not fixed yet" />
     <MESSAGE value="fix: fixed DHT.bootstrap(), broke it doing unittesting" />
@@ -697,7 +681,10 @@
     <MESSAGE value="A lot of things&#10;&#10;renamed kademlia.py to helpers.py, so all imports have been redone.&#10;tried to get networking working - didnt work" />
     <MESSAGE value="feat: It kind of works? Just need to decode" />
     <MESSAGE value="feat: PING WORKS!" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: PING WORKS!" />
+    <MESSAGE value="feat: find_node + store work!" />
+    <MESSAGE value="fix: I/O closed fixed (self.wfile is never explicitly closed by me)" />
+    <MESSAGE value="misc: removed obselete code." />
+    <option name="LAST_COMMIT_MESSAGE" value="misc: removed obselete code." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests.coverage" NAME="Unittests for unit_tests Coverage Results" MODIFIED="1703352716012" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -709,7 +696,7 @@
     <SUITE FILE_PATH="coverage/P2P$kademlia.coverage" NAME="kademlia Coverage Results" MODIFIED="1703796464653" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/p2p$scratch.coverage" NAME="scratch Coverage Results" MODIFIED="1706732795734" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
     <SUITE FILE_PATH="coverage/kademlia$networking.coverage" NAME="networking Coverage Results" MODIFIED="1707147615810" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/kademlia" />
-    <SUITE FILE_PATH="coverage/P2P$.coverage" NAME=" Coverage Results" MODIFIED="1707168831044" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/P2P$.coverage" NAME=" Coverage Results" MODIFIED="1707173415117" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/kademlia$.coverage" NAME=" Coverage Results" MODIFIED="1707148239761" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/P2P$pickler.coverage" NAME="pickler Coverage Results" MODIFIED="1707157848987" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/kademlia" />
   </component>

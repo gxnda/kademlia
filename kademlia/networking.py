@@ -35,11 +35,13 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
                                node):  # TODO: Make protected.
         print(1)
         if main.DEBUG:
+            print(node.our_contact.protocol.type)
             if node.our_contact.protocol.type == "TCPSubnetProtocol":
+                print("correct")
                 if not node.our_contact.protocol.responds:
                     # Exceeds 500ms timeout
                     print("[Server] Does not respond, sleeping for timeout.")
-                    sleep(secs=1)
+                    sleep(1)
         print(2)
         try:
             print(3)
