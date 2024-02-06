@@ -4,11 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="feat: PING WORKS!">
+    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="fix: changed imports">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/kademlia/networking.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/networking.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kademlia/protocols.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/protocols.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kademlia/storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/storage.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/unit_tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/unit_tests.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -75,47 +74,47 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python tests.Python tests for unit_tests.BucketManagementTests.test_non_responding_contact_delayed_eviction.executor": "Run",
-    "Python tests.Python tests for unit_tests.DHTSerialisationTests.executor": "Run",
-    "Python tests.Python tests for unit_tests.TCPSubnetTests.executor": "Run",
-    "Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route.executor": "Run",
-    "Python tests.Python tests for unit_tests.TCPSubnetTests.test_ping_route.executor": "Run",
-    "Python tests.Python tests for unit_tests.TCPSubnetTests.test_store_route.executor": "Run",
-    "Python tests.Python tests for unit_tests.TCPSubnetTests.test_unresponsive_node.executor": "Run",
-    "Python tests.Python tests in unit_tests.py.executor": "Run",
-    "Python tests.unit tests.executor": "Run",
-    "Python.PhysicsEngine.executor": "Run",
-    "Python.networking.executor": "Run",
-    "Python.pickler.executor": "Run",
-    "Python.scratch_2.executor": "Run",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "git-widget-placeholder": "master",
-    "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "/home/gabriel/PycharmProjects/kademlia",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.lookFeel",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python tests.Python tests for unit_tests.BucketManagementTests.test_non_responding_contact_delayed_eviction.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for unit_tests.DHTSerialisationTests.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for unit_tests.TCPSubnetTests.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for unit_tests.TCPSubnetTests.test_ping_route.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for unit_tests.TCPSubnetTests.test_store_route.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for unit_tests.TCPSubnetTests.test_unresponsive_node.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests in unit_tests.py.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.unit tests.executor&quot;: &quot;Run&quot;,
+    &quot;Python.PhysicsEngine.executor&quot;: &quot;Run&quot;,
+    &quot;Python.networking.executor&quot;: &quot;Run&quot;,
+    &quot;Python.pickler.executor&quot;: &quot;Run&quot;,
+    &quot;Python.scratch_2.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/gabriel/PycharmProjects/kademlia&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
-      "Python"
+  &quot;keyToStringList&quot;: {
+    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
+      &quot;Python&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\gabri\PycharmProjects\P2P\kademlia" />
     </key>
   </component>
-  <component name="RunManager" selected="Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route">
+  <component name="RunManager" selected="Python tests.Python tests in unit_tests.py">
     <configuration name="P2P-System" type="PythonConfigurationType" factoryName="Python">
       <module name="P2P-System" />
       <option name="ENV_FILES" value="" />
@@ -131,29 +130,6 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="pickler" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="P2P-System" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/kademlia" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/kademlia/pickler.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -233,21 +209,37 @@
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
+    <configuration name="Python tests in unit_tests.py" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="P2P-System" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;$PROJECT_DIR$/unit_tests.py&quot;" />
+      <option name="_new_targetType" value="&quot;PATH&quot;" />
+      <method v="2" />
+    </configuration>
     <list>
       <item itemvalue="Python.P2P-System" />
-      <item itemvalue="Python.pickler" />
       <item itemvalue="Python.scratch_2" />
+      <item itemvalue="Python tests.Python tests in unit_tests.py" />
       <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_ping_route" />
       <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_store_route" />
       <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route" />
-        <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_store_route" />
+        <item itemvalue="Python tests.Python tests in unit_tests.py" />
         <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_ping_route" />
+        <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_store_route" />
+        <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route" />
         <item itemvalue="Python.scratch_2" />
-        <item itemvalue="Python.pickler" />
       </list>
     </recent_temporary>
   </component>
@@ -281,6 +273,7 @@
       <workItem from="1707058400365" duration="42000" />
       <workItem from="1707061747708" duration="3912000" />
       <workItem from="1707142862222" duration="4756000" />
+      <workItem from="1707213991178" duration="2610000" />
     </task>
     <task id="LOCAL-00017" summary="done smth">
       <created>1703342554993</created>
@@ -611,14 +604,6 @@
       <option name="project" value="LOCAL" />
       <updated>1707062998360</updated>
     </task>
-    <task id="LOCAL-00115" summary="feat: It kind of works? Just need to decode">
-      <option name="closed" value="true" />
-      <created>1707163658478</created>
-      <option name="number" value="00115" />
-      <option name="presentableId" value="LOCAL-00115" />
-      <option name="project" value="LOCAL" />
-      <updated>1707163658478</updated>
-    </task>
     <task id="LOCAL-00116" summary="feat: PING WORKS!">
       <option name="closed" value="true" />
       <created>1707164594806</created>
@@ -627,7 +612,15 @@
       <option name="project" value="LOCAL" />
       <updated>1707164594806</updated>
     </task>
-    <option name="localTasksCounter" value="117" />
+    <task id="LOCAL-00117" summary="fix: changed imports">
+      <option name="closed" value="true" />
+      <created>1707214983478</created>
+      <option name="number" value="00117" />
+      <option name="presentableId" value="LOCAL-00117" />
+      <option name="project" value="LOCAL" />
+      <updated>1707214983479</updated>
+    </task>
+    <option name="localTasksCounter" value="118" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -672,7 +665,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: added new unit test" />
     <MESSAGE value="docs: had ChatGPT make a couple of docstrings." />
     <MESSAGE value="fix: changed how errors work within bootstrap()" />
     <MESSAGE value="misc: 1st bootstrap test works, 2nd doesn't (21/31)" />
@@ -697,20 +689,21 @@
     <MESSAGE value="A lot of things&#10;&#10;renamed kademlia.py to helpers.py, so all imports have been redone.&#10;tried to get networking working - didnt work" />
     <MESSAGE value="feat: It kind of works? Just need to decode" />
     <MESSAGE value="feat: PING WORKS!" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: PING WORKS!" />
+    <MESSAGE value="fix: changed imports" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix: changed imports" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests.coverage" NAME="Unittests for unit_tests Coverage Results" MODIFIED="1703352716012" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/kademlia$PhysicsEngine.coverage" NAME="PhysicsEngine Coverage Results" MODIFIED="1707145834916" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="/media/gabriel/ZOLI/ProjectileMotion" />
-    <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests_NodeLookupTests_test_get_close_contacts_ordered.coverage" NAME="Unittests for unit_tests.NodeLookupTests.test_get_close_contacts_ordered Coverage Results" MODIFIED="1703377308442" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/P2P$scratch_2.coverage" NAME="scratch_2 Coverage Results" MODIFIED="1707161695169" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
     <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests_BootstrappingTests_test_bootstrap_outside_bootstrapping_bucket.coverage" NAME="Unittests for unit_tests.BootstrappingTests.test_bootstrap_outside_bootstrapping_bucket Coverage Results" MODIFIED="1704295201404" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/p2p$.coverage" NAME=" Coverage Results" MODIFIED="1706997881210" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/P2P$kademlia.coverage" NAME="kademlia Coverage Results" MODIFIED="1703796464653" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/p2p$scratch.coverage" NAME="scratch Coverage Results" MODIFIED="1706732795734" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
-    <SUITE FILE_PATH="coverage/kademlia$networking.coverage" NAME="networking Coverage Results" MODIFIED="1707147615810" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/kademlia" />
     <SUITE FILE_PATH="coverage/P2P$.coverage" NAME=" Coverage Results" MODIFIED="1707168831044" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/kademlia$.coverage" NAME=" Coverage Results" MODIFIED="1707148239761" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/kademlia$PhysicsEngine.coverage" NAME="PhysicsEngine Coverage Results" MODIFIED="1707145834916" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="/media/gabriel/ZOLI/ProjectileMotion" />
+    <SUITE FILE_PATH="coverage/kademlia$.coverage" NAME=" Coverage Results" MODIFIED="1707216442005" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/P2P$scratch_2.coverage" NAME="scratch_2 Coverage Results" MODIFIED="1707161695169" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
+    <SUITE FILE_PATH="coverage/p2p$scratch.coverage" NAME="scratch Coverage Results" MODIFIED="1706732795734" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
+    <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests.coverage" NAME="Unittests for unit_tests Coverage Results" MODIFIED="1703352716012" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/kademlia$networking.coverage" NAME="networking Coverage Results" MODIFIED="1707147615810" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/kademlia" />
     <SUITE FILE_PATH="coverage/P2P$pickler.coverage" NAME="pickler Coverage Results" MODIFIED="1707157848987" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/kademlia" />
+    <SUITE FILE_PATH="coverage/p2p$.coverage" NAME=" Coverage Results" MODIFIED="1706997881210" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests_NodeLookupTests_test_get_close_contacts_ordered.coverage" NAME="Unittests for unit_tests.NodeLookupTests.test_get_close_contacts_ordered Coverage Results" MODIFIED="1703377308442" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/P2P$kademlia.coverage" NAME="kademlia Coverage Results" MODIFIED="1703796464653" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

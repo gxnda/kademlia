@@ -1450,6 +1450,7 @@ class TCPSubnetTests(unittest.TestCase):
 
         server.register_protocol(p1.subnet, n1)
         server.register_protocol(p2.subnet, n2)
+        print(server.subnets)
         thread = server.thread_start()
 
         return local_ip, port, server, p1, p2, our_id, c1, c2, n1, n2, thread
