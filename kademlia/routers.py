@@ -56,9 +56,12 @@ class BaseRouter:
         found_by: Optional[Contact] = None
 
         other_contacts, val, error = contact.protocol.find_value(self.node.our_contact, key)
-        self.dht.handle_error(error, contact)
+        if self.dht:
+            self.dht.handle_error(error, contact)
+        else:
+            print("[Client] Router: No DHT to handle possible error.\nError:", error)
 
-        if not error.has_error():
+        if not error or not error.has_error():
             if other_contacts is not None:
                 for other_contact in other_contacts:
                     nodes.append(other_contact)

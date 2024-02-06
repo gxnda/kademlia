@@ -625,12 +625,12 @@ class DHTTest(unittest.TestCase):
                   protocol=vp,
                   storage_factory=VirtualStorage,
                   router=Router())
+        print(dht._originator_storage)
         vp.node = dht._router.node
         key = ID.random_id()
         dht.store(key, "Test")
-        return_val = dht.find_value(key)
-
-        self.assertTrue(return_val == "Test",
+        found, contacts, return_val = dht.find_value(key)
+        self.assertTrue(return_val["value"] == "Test",
                         "Expected to get back what we stored.")
 
     def test_value_stored_in_closer_node(self):
@@ -672,7 +672,7 @@ class DHTTest(unittest.TestCase):
 
         # Try and find the value, given our Dht knows about the other contact.
         _, _, retval = dht.find_value(key)
-        self.assertTrue(retval == val,
+        self.assertTrue(retval["value"] == val,
                         "Expected to get back what we stored")
 
     def test_value_stored_in_further_node(self):
@@ -702,8 +702,8 @@ class DHTTest(unittest.TestCase):
         self.assertTrue(store2.contains(key),
                         "Expected other node to HAVE cached the key-value.")
 
-        retval: str = dht.find_value(key)[2]
-        self.assertTrue(retval == val,
+        _, _, retval = dht.find_value(key)
+        self.assertTrue(retval["value"] == val,
                         "Expected to get back what we stored.")
 
     def test_value_stored_gets_propagated(self):
@@ -968,7 +968,7 @@ class BootstrappingTests(unittest.TestCase):
 
         test_cases: list[tuple[int, int]] = [
 
-                (0, 256),              # 7 bits should be set
+                (0, 256),             # 7 bits should be set
                 (256, 1024),          # 2 bits (256 + 512) should be set
                 (65536, 65536 * 2),   # no additional bits should be set.
                 (65536, 65536 * 4),   # 2 bits (65536 and 65536*2) should be set.
@@ -1456,6 +1456,7 @@ class TCPSubnetTests(unittest.TestCase):
 
         server.register_protocol(p1.subnet, n1)
         server.register_protocol(p2.subnet, n2)
+        print(server.subnets)
         thread = server.thread_start()
 
         return local_ip, port, server, p1, p2, our_id, c1, c2, n1, n2, thread

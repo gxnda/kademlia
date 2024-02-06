@@ -6,7 +6,7 @@ from typing import Callable, Optional
 from .buckets import KBucket
 from .constants import Constants
 from .contact import Contact
-from .dictionaries import QueryReturn
+from .dictionaries import QueryReturn, StoreValue
 from .errors import BucketDoesNotContainContactToEvictError, RPCError
 from .id import ID
 from .interfaces import IProtocol, IStorage
@@ -123,7 +123,7 @@ class DHT:
         self._originator_storage.set(key, val)
         self.store_on_closer_contacts(key, val)
 
-    def find_value(self, key: ID) -> tuple[bool, list[Contact] | None, str | None]:
+    def find_value(self, key: ID) -> tuple[bool, list[Contact] | None, StoreValue | None]:
         """
         Attempts to find a given value.
         First it checks our originator storage. If the given key does not have a value in our storage,
@@ -145,7 +145,8 @@ class DHT:
         val: str | None = None
 
         # TODO: Talk about what this does - I haven't made it yet so IDK.
-        our_val: str | None = self._originator_storage.try_get_value(key)[1]
+        found, our_val = self._originator_storage.try_get_value(key)
+        print(found, contacts, our_val)
         if our_val:
             found = True
             val = our_val
@@ -158,10 +159,13 @@ class DHT:
                 val = lookup["val"]
                 # Find the closest contact (other than the one the value was found by)
                 # in which to "cache" the key-value.
-                store_to: Contact | None = [
-                    c for c in lookup["contacts"]
-                    if c != lookup["found_by"]
-                ][0]
+                print(lookup["contacts"], lookup["found_by"])
+
+                store_to: Contact | None = None
+                for c in lookup["contacts"]:
+                    if c.id.value != lookup["found_by"].id.value:
+                        store_to: Contact | None = c
+                        break
 
                 if store_to:
                     separating_nodes: int = self._get_separating_nodes_count(self.our_contact, store_to)
@@ -384,7 +388,11 @@ class DHT:
 
     def _get_separating_nodes_count(self, contact_a: Contact, contact_b: Contact):
         # get all the contacts, ordered by ID
-        all_contacts: list[Contact] = sorted(self.node.bucket_list.contacts, key=lambda c: c.id.value)
+        print("ca", contact_a in self.node.bucket_list.contacts())
+        print("cb", contact_b in self.node.bucket_list.contacts())
+        all_contacts: list[Contact] = sorted(self.node.bucket_list.contacts(), key=lambda c: c.id.value)
+        print([i.id.value for i in self.node.bucket_list.contacts()])
+        print(contact_a.id.value, contact_b.id.value)
         index_a = all_contacts.index(contact_a)
         index_b = all_contacts.index(contact_b)
         return abs(index_a - index_b)

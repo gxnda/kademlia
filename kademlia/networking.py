@@ -1,6 +1,6 @@
 import threading
 from time import sleep
-from typing import Optional, TypedDict
+from typing import Optional, TypedDict, Callable
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import kademlia.main as main
@@ -30,10 +30,11 @@ class Server(HTTPServer):
 class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
 
     def common_request_handler(self,
-                               method_name: str,
-                               common_request: CommonRequest,
-                               node):  # TODO: Make protected.
+                               method_name: str, common_request: CommonRequest, node):  # TODO: Make protected.
         print(1)
+        old_self_instance = self  # To prevent other threads overwriting it,
+        # lock isn't used because I don't want to make the program wait.
+
         if main.DEBUG:
             print(node.our_contact.protocol.type)
             if node.our_contact.protocol.type == "TCPSubnetProtocol":
@@ -46,23 +47,23 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
         try:
             print(3)
             print(node, method_name)
-            method = getattr(node, method_name)
+            method: Callable = getattr(node, method_name)
             print(method)
             print(4)
             response = method(common_request)
             print(5)
             encoded_response = pickler.encode_data(response)
             print("[Server] Sending encoded 200: ", response)
-            self.send_response(code=200)  # , message=encoded_response.decode("latin1"))
+            old_self_instance.send_response(code=200)
 
             # print("Adding headers... - Is wfile closed:", self.wfile.closed)
-            self.send_header("Content-Type", "application/octet-stream")
-            self.end_headers()
+            old_self_instance.send_header("Content-Type", "application/octet-stream")
+            old_self_instance.end_headers()
             # print("Finished headers - Is wfile closed:", self.wfile.closed)
 
             # print("Writing 200...", self.wfile.closed)
-            self.wfile.write(encoded_response)
-            print("[Server] Writing response success!", self.wfile.closed)
+            old_self_instance.wfile.write(encoded_response)
+            print("[Server] Writing response success!", old_self_instance.wfile.closed)
 
         except Exception as e:
             print("[Server] Exception sending response.")
@@ -73,18 +74,18 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             print("[Server] Sending encoded 400:", error_response)
             encoded_response = pickler.encode_data(error_response)
 
-            self.send_header("Content-Type", "application/octet-stream")
-            self.end_headers()
-            self.send_response(code=400)  # , message=encoded_response.decode("latin1"))
+            old_self_instance.send_header("Content-Type", "application/octet-stream")
+            old_self_instance.end_headers()
+            old_self_instance.send_response(code=400)  # , message=encoded_response.decode("latin1"))
 
-            self.wfile.write(encoded_response)
+            old_self_instance.wfile.write(encoded_response)
 
-        # self.wfile.close()
+        # old_self_instance.wfile.close()
         # finally:
-        #     if not self.wfile.closed:
-        #         self.wfile.close()
+        #     if not old_self_instance.wfile.closed:
+        #         old_self_instance.wfile.close()
         #     else:
-        #         print("[Server] Response body was already closed! (What on earth, somethings gone wrong!)")
+        #         print("[Server] Response body was already closed! (What on earth, something's gone wrong!)")
 
     def do_POST(self):
         print("[Server] POST Received.")
@@ -132,7 +133,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             # Because this is for testing on the same PC.
             node = self.server.subnets.get(subnet)  # should be valid if inheriting from SubnetServer?
             if node:
-                print("call req")
+                print("[Server] Request called:", node.bucket_list.buckets)
                 self.common_request_handler(method_name, common_request, node)
                 # print("Starting thread...")
                 # new_thread = threading.Thread(
@@ -185,6 +186,7 @@ class TCPSubnetServer(HTTPServer):
         """
         print("[Server] Stopping server...")
         self.shutdown()
+        self.server_close()
 
     def thread_start(self) -> threading.Thread:
         """
@@ -203,6 +205,7 @@ class TCPSubnetServer(HTTPServer):
         :return:
         """
         self.shutdown()
+        self.server_close()
         thread.join()  # wait for the thread to finish.
         print("[Server] Server stopped.")
 
