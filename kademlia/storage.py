@@ -71,6 +71,10 @@ class SecondaryStorage(IStorage):
         """
         Storage object which reads/writes to a JSON file instead of to memory like how VirtualStorage does.
         the JSON is formatted as dict[int, StoreValue].
+
+        This suffers from the drawbacks of using the JSON library; it writes the entire JSON to memory to read it,
+        this may lead to heap errors. TODO: Do something about this (ijson might work?)
+
         :param filename: Filename to save values to - must end in .json!
         """
         self.filename = filename
