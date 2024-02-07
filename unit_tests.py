@@ -1449,8 +1449,11 @@ class TCPSubnetTests(unittest.TestCase):
     @staticmethod
     def setup():
         local_ip = "127.0.0.1"
-        port = 7124
-        server = TCPSubnetServer(server_address=(local_ip, port))
+        valid_server = False
+        while not valid_server:
+            port = random.randint(10000, 10500)
+            server = TCPSubnetServer(server_address=(local_ip, port))
+            valid_server = True
 
         p1 = TCPSubnetProtocol(url=local_ip, port=port, subnet=1)
         p2 = TCPSubnetProtocol(url=local_ip, port=port, subnet=2)
@@ -1500,9 +1503,11 @@ class TCPSubnetTests(unittest.TestCase):
 
     def test_find_nodes_route(self):
         local_ip = "127.0.0.1"
-        port = 1344
-
-        server = TCPSubnetServer(server_address=(local_ip, port))
+        valid_server = False
+        while not valid_server:
+            port = random.randint(10000, 10500)
+            server = TCPSubnetServer(server_address=(local_ip, port))
+            valid_server = True
 
         p1 = TCPSubnetProtocol(url=local_ip, port=port, subnet=1)
         p2 = TCPSubnetProtocol(url=local_ip, port=port, subnet=2)
@@ -1584,7 +1589,6 @@ class TCPSubnetTests(unittest.TestCase):
         )
 
     def test_unresponsive_node(self):
-        sleep(3)
         local_ip = "127.0.0.1"
         port = 7124
         server = TCPSubnetServer(server_address=(local_ip, port))

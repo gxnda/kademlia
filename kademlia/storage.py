@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import ijson
+
 from kademlia.dictionaries import StoreValue
 from kademlia.id import ID
 from kademlia.interfaces import IStorage
@@ -60,3 +62,15 @@ class VirtualStorage(IStorage):
             ret = True
 
         return ret, val
+
+
+class SecondaryStorage(IStorage):
+    def __init__(self, filename: str):
+        """
+        Storage object which reads/writes to a JSON file instead of to memory like how VirtualStorage does.
+        :param filename: Filename to save values to - must end in .json!
+        """
+        self.filename = filename
+
+    def save_to_file(self):
+        with
