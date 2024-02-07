@@ -144,36 +144,44 @@ class DHT:
         val: str | None = None
 
         found, our_val = self._originator_storage.try_get_value(key)
+        # TODO: There has to be a better way to do this.
         if our_val:
             found = True
             val = our_val
-
-
         else:
-            lookup: QueryReturn = self._router.lookup(
-                key, self._router.rpc_find_value)
-            if lookup["found"]:
+            found, our_val = self._republish_storage.try_get_value(key)
+            if our_val:
                 found = True
-                contacts = None
-                val = lookup["val"]
-                # Find the closest contact (other than the one the value was found by)
-                # in which to "cache" the key-value.
-                print(lookup["contacts"], lookup["found_by"])
+                val = our_val
+            else:
+                found, our_val = self._cache_storage.try_get_value(key)
+                if our_val:
+                    val = our_val
+                else:
+                    lookup: QueryReturn = self._router.lookup(
+                        key, self._router.rpc_find_value)
+                    if lookup["found"]:
+                        found = True
+                        contacts = None
+                        val = lookup["val"]
+                        # Find the closest contact (other than the one the value was found by)
+                        # in which to "cache" the key-value.
+                        print(lookup["contacts"], lookup["found_by"])
 
-                store_to: Contact | None = None
-                for c in lookup["contacts"]:
-                    if c.id.value != lookup["found_by"].id.value:
-                        store_to: Contact | None = c
-                        break
+                        store_to: Contact | None = None
+                        for c in lookup["contacts"]:
+                            if c.id.value != lookup["found_by"].id.value:
+                                store_to: Contact | None = c
+                                break
 
-                if store_to:
-                    separating_nodes: int = self._get_separating_nodes_count(self.our_contact, store_to)
-                    print("Separating nodes:", separating_nodes)
-                    exp_time_sec: int = int(
-                        Constants.EXPIRATION_TIME_SEC / (2 ** separating_nodes)
-                    )
-                    error: RPCError = store_to.protocol.store(self.node.our_contact, key, lookup["val"])
-                    self.handle_error(error, store_to)
+                        if store_to:
+                            separating_nodes: int = self._get_separating_nodes_count(self.our_contact, store_to)
+                            print("Separating nodes:", separating_nodes)
+                            exp_time_sec: int = int(
+                                Constants.EXPIRATION_TIME_SEC / (2 ** separating_nodes)
+                            )
+                            error: RPCError = store_to.protocol.store(self.node.our_contact, key, lookup["val"])
+                            self.handle_error(error, store_to)
 
         return found, contacts, val
 
