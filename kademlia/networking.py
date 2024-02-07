@@ -31,27 +31,21 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
 
     def common_request_handler(self,
                                method_name: str, common_request: CommonRequest, node):  # TODO: Make protected.
-        print(1)
         old_self_instance = self  # To prevent other threads overwriting it,
         # lock isn't used because I don't want to make the program wait.
 
+        # Test what happens if a node does not respond
         if main.DEBUG:
-            print(node.our_contact.protocol.type)
             if node.our_contact.protocol.type == "TCPSubnetProtocol":
-                print("correct")
                 if not node.our_contact.protocol.responds:
                     # Exceeds 500ms timeout
                     print("[Server] Does not respond, sleeping for timeout.")
                     sleep(1)
-        print(2)
+
         try:
-            print(3)
-            print(node, method_name)
             method: Callable = getattr(node, method_name)
-            print(method)
-            print(4)
+            # Calls method, eg: server_store.
             response = method(common_request)
-            print(5)
             encoded_response = pickler.encode_data(response)
             print("[Server] Sending encoded 200: ", response)
             old_self_instance.send_response(code=200)
@@ -63,7 +57,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
 
             # print("Writing 200...", self.wfile.closed)
             old_self_instance.wfile.write(encoded_response)
-            print("[Server] Writing response success!", old_self_instance.wfile.closed)
+            print("[Server] Writing response success!")
 
         except Exception as e:
             print("[Server] Exception sending response.")
@@ -103,7 +97,6 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
         # print("[Server] Request received:", decoded_request)
         request_dict = decoded_request
         path: str = self.path
-        print(path)
         # Remove "/"
         # Prefix our call with "server_" so that the method name is unambiguous.
         method_name: str = "server_" + path[1:]  # path.substring(2)
@@ -115,7 +108,6 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             request_type: Optional[TypedDict] = None
 
         # if we know what the request wants (if it's a ping/find_node RPC etc.)
-        print(request_type)
         if request_type:
             subnet: int = request_dict["subnet"]
             common_request: CommonRequest = CommonRequest(

@@ -404,8 +404,8 @@ class DHT:
                            f"list contains: {[str(i.id) for i in self.node.bucket_list.contacts()]}")
 
         all_contacts: list[Contact] = sorted(self.node.bucket_list.contacts(), key=lambda c: c.id.value)
-        print([i.id.value for i in self.node.bucket_list.contacts()])
-        print(contact_a.id.value, contact_b.id.value)
+        # print([i.id.value for i in self.node.bucket_list.contacts()])
+        # print(contact_a.id.value, contact_b.id.value)
         index_a = all_contacts.index(contact_a)
         index_b = all_contacts.index(contact_b)
         return abs(index_a - index_b)

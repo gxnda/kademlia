@@ -626,7 +626,7 @@ class DHTTest(unittest.TestCase):
                   protocol=vp,
                   storage_factory=VirtualStorage,
                   router=Router())
-        print(dht._originator_storage)
+        # print(dht._originator_storage)
         vp.node = dht._router.node
         key = ID.random_id()
         dht.store(key, "Test")
@@ -1464,7 +1464,7 @@ class TCPSubnetTests(unittest.TestCase):
 
         server.register_protocol(p1.subnet, n1)
         server.register_protocol(p2.subnet, n2)
-        print(server.subnets)
+        # print(server.subnets)
         thread = server.thread_start()
 
         return local_ip, port, server, p1, p2, our_id, c1, c2, n1, n2, thread
@@ -1492,13 +1492,12 @@ class TCPSubnetTests(unittest.TestCase):
 
         self.assertTrue(n2.storage.contains(test_id),
                        "Expected remote peer to have value.")
-        self.assertTrue(n2.storage.get(test_id) == test_value,
+        self.assertTrue(n2.storage.get(test_id)["value"] == test_value,
                         "Expected remote peer to contain stored value.")
 
         server.thread_stop(thread)
 
     def test_find_nodes_route(self):
-        sleep(3)
         local_ip = "127.0.0.1"
         port = 1344
 
@@ -1551,7 +1550,6 @@ class TCPSubnetTests(unittest.TestCase):
         server.thread_stop(thread)
 
     def test_find_value_router(self):
-        sleep(3)
         local_ip, port, server, p1, p2, our_id, c1, c2, n1, n2, thread = self.setup()
 
         # Node 2 knows about another contact that isn't us
@@ -1610,7 +1608,7 @@ class TCPSubnetTests(unittest.TestCase):
         test_value = "Test"
 
         error: RPCError = p2.store(c1, test_id, test_value)
-
+        print("Error:", error)
         self.assertTrue(
             error.timeout_error,
             "Expected timeout when contacting unresponsive node."

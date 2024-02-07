@@ -98,16 +98,13 @@ class Node:
         print("find_value called")
         if sender.id == self.our_contact.id:
             raise SendingQueryToSelfError("Sender cannot be ourselves.")
-        print(1)
         self.send_key_values_if_new_contact(sender)
-        print(2)
         if self.storage.contains(key):
             return None, self.storage.get(key)
         elif self.cache_storage.contains(key):
             return None, self.cache_storage.get(key)
         else:
             return self.bucket_list.get_close_contacts(key, sender.id), None
-        print(3)
 
     def send_key_values_if_new_contact(self, sender: Contact) -> None:
         """
@@ -181,6 +178,7 @@ class Node:
         return {"random_id": request["random_id"]}
 
     def server_store(self, request: CommonRequest) -> dict:
+        print("[Server] Server store called.")
         protocol: IProtocol = request["protocol"]
         self.store(
             sender=Contact(

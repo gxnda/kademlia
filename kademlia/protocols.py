@@ -305,16 +305,16 @@ class TCPSubnetProtocol(IProtocol):
         ret = None
 
         try:
-            print(f"Running Store POST to http://{self.url}:{self.port}/store")
+            print(f"[Client] Running Store POST to http://{self.url}:{self.port}/store")
             ret = requests.post(
                 url=f"http://{self.url}:{self.port}/store",
                 data=encoded_data,
                 timeout=Constants.REQUEST_TIMEOUT
             )
-            print("Store POST done!")
+            print("[Client] Store POST done!")
 
         except requests.Timeout as t:
-            print("Timeout error", t)
+            print("[Client] Timeout error when contacting node.")
             timeout_error = True
             error = t
 

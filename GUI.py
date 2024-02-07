@@ -62,7 +62,7 @@ class BootstrapFrame(ctk.CTkFrame):
 
     def _connect(self):
         """Attempts to bootstrap Kademlia connection from a given IP and port number"""
-        print("Connecting to bootstrap server...")
+        print("[GUI] Connecting to bootstrap server...")
 
 
 if __name__ == "__main__":

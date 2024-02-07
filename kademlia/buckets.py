@@ -214,14 +214,14 @@ class BucketList:
         # with self.lock:
         kbucket: KBucket = self.get_kbucket(contact.id)
         if kbucket.contains(contact.id):
-            print("Contact already in KBucket.")
+            print("[Client] Contact already in KBucket.")
             # replace contact, then touch it
             kbucket.replace_contact(contact)
 
         elif kbucket.is_full():
-            print("Kbucket is full.")
+            print("[Client] Kbucket is full.")
             if self.can_split(kbucket):
-                print("Splitting!")
+                print("[Client] Splitting!")
                 # Split then try again
                 k1, k2 = kbucket.split()
                 # print(f"K1: {len(k1.contacts)}, K2: {len(k2.contacts)}, Buckets: {self.buckets}")
@@ -236,26 +236,26 @@ class BucketList:
                 )  # Unless k <= 0, This should never cause a recursive loop
 
             else:
-                print("cannot split")
+                print("[Client] Cannot split")
                 last_seen_contact: Contact = sorted(
                     kbucket.contacts, key=lambda c: c.last_seen)[0]
                 error: RPCError | None = last_seen_contact.protocol.ping(
                     self.our_contact)
                 if error:
                     # Unresponsive
-                    print("Node is unresponsive")
+                    print("[Client] Node is unresponsive")
                     if self.DHT:  # tests may not initialise a DHT
                         self.DHT.delay_eviction(last_seen_contact, contact)
                 else:
                     # still can't add the contact ,so put it into the pending list
-                    print("Node is responsive.")
+                    print("[Client] Node is responsive.")
                     if self.DHT:
-                        print("add to pending.")
+                        print("[Client] Adding node to DHT pending...")
                         self.DHT.add_to_pending(contact)
 
         else:
             # Bucket is not full, nothing special happens.
-            print("Adding contact.")
+            print("[Client] Adding contact to bucket.")
             kbucket.add_contact(contact)
 
     def get_close_contacts(self, key: ID, exclude: ID) -> list[Contact]:
