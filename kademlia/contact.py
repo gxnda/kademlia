@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import Optional
 
-from .id import ID
-from .interfaces import IProtocol
-from .main import DEBUG
+from kademlia.id import ID
+from kademlia.interfaces import IProtocol
+from kademlia.main import DEBUG
 
 
 class Contact:

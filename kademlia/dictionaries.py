@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import Callable, TypedDict
 
-from .contact import Contact
-from .id import ID
+from kademlia.contact import Contact
+from kademlia.id import ID
 
 
 class QueryReturn(TypedDict):
