@@ -28,6 +28,19 @@ def select_random(arr: list, freq: int) -> list:
     return random.sample(arr, freq)
 
 
+def get_closest_number_index(numbers, target):
+    closest_index = 0
+    closest_difference = abs(numbers[0] - target)
+
+    for i in range(1, len(numbers)):
+        difference = abs(numbers[i] - target)
+        if difference < closest_difference:
+            closest_difference = difference
+            closest_index = i
+
+    return closest_index
+
+
 # class ContactListAndError(TypedDict):
 #     contacts: list[Contact]
 #     error: RPCError

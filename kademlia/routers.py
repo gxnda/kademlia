@@ -183,8 +183,8 @@ class Router(BaseRouter):
         :return: returns query result.
         """
         contacted_nodes = []
-        # closer_uncontacted_nodes = []
-        # further_uncontacted_nodes = []
+        closer_uncontacted_nodes = []
+        further_uncontacted_nodes = []
         if TRY_CLOSEST_BUCKET:
             # Spec: The lookup initator starts by picking a nodes from its closest non-empty k-bucket
             bucket: KBucket = self.find_closest_nonempty_kbucket(key)

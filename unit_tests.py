@@ -280,6 +280,7 @@ class ForceFailedAddTest(unittest.TestCase):
                 "Expected new contact NOT to replace an older contact.")
 
 
+# 3 Here don't work
 class NodeLookupTests(unittest.TestCase):
 
     def test_get_close_contacts_ordered(self):
@@ -515,7 +516,7 @@ class NodeLookupTests(unittest.TestCase):
                 self.assertTrue(c in close_contacts, 
                                 "somehow a close contact in the computation is not in the originals?")
 
-    def dont_test_simple_all_closer_contacts(self):
+    def test_simple_all_closer_contacts(self):
         # setup
         # by selecting our node ID to zero, we ensure that all distances of other nodes 
         # are greater than the distance to our node.
@@ -552,13 +553,13 @@ class NodeLookupTests(unittest.TestCase):
         # This is because we added K node's contacts to router,
         # so it shouldn't have split.
         contacts_to_query = router.node.bucket_list.buckets[0].contacts
-        
+
         contacts = router.lookup(key=key, 
                                  rpc_call=router.rpc_find_nodes, 
                                  give_me_all=True)
 
         # Make sure lookup returns K contacts.
-        self.assertTrue(len(contacts) == Constants.K, "Expected K closer contacts.")
+        self.assertTrue(len(contacts) == Constants.K, f"Expected K closer contacts, got {len(contacts)}.")
 
         # Make sure it realises all contacts should be closer than 2**160 - 1.
         self.assertTrue(len(router.closer_contacts) == Constants.K,
@@ -566,7 +567,7 @@ class NodeLookupTests(unittest.TestCase):
 
         self.assertTrue(len(router.further_contacts) == 0, "Expected no further contacts.")
 
-    def dont_test_simple_all_further_contacts(self):
+    def test_simple_all_further_contacts(self):
         # setup
         # by selecting our node ID to zero, we ensure that all distances of other nodes 
         # are greater than the distance to our node.

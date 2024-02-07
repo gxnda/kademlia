@@ -4,15 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="misc: removed obselete code.">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="fix: fixed print statements and store">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GUI.py" beforeDir="false" afterPath="$PROJECT_DIR$/GUI.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kademlia/buckets.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/buckets.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/kademlia/dht.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/dht.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/helpers.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/helpers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/kademlia/networking.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/networking.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kademlia/node.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/node.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kademlia/protocols.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/protocols.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/routers.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/routers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/unit_tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/unit_tests.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -81,8 +78,21 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Python tests.Python tests for unit_tests.AddContactTest.executor": "Run",
     "Python tests.Python tests for unit_tests.BucketManagementTests.test_non_responding_contact_delayed_eviction.executor": "Run",
     "Python tests.Python tests for unit_tests.DHTSerialisationTests.executor": "Run",
+    "Python tests.Python tests for unit_tests.DHTTest.executor": "Run",
+    "Python tests.Python tests for unit_tests.DHTTest.test_local_store_find_value.executor": "Run",
+    "Python tests.Python tests for unit_tests.DHTTest.test_value_propagates_to_closer_node.executor": "Run",
+    "Python tests.Python tests for unit_tests.DHTTest.test_value_stored_gets_propagated.executor": "Run",
+    "Python tests.Python tests for unit_tests.DHTTest.test_value_stored_in_closer_node.executor": "Run",
+    "Python tests.Python tests for unit_tests.DHTTest.test_value_stored_in_further_node.executor": "Run",
+    "Python tests.Python tests for unit_tests.ForceFailedAddTest.executor": "Run",
+    "Python tests.Python tests for unit_tests.KBucketTest.executor": "Run",
+    "Python tests.Python tests for unit_tests.KBucketTest.test_add_to_kbucket.executor": "Run",
+    "Python tests.Python tests for unit_tests.NodeLookupTests.executor": "Run",
+    "Python tests.Python tests for unit_tests.NodeLookupTests.test_simple_all_closer_contacts.executor": "Run",
+    "Python tests.Python tests for unit_tests.NodeLookupTests.test_simple_all_further_contacts.executor": "Run",
     "Python tests.Python tests for unit_tests.TCPSubnetTests.executor": "Run",
     "Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route.executor": "Run",
     "Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_value_router.executor": "Run",
@@ -120,7 +130,7 @@
       <recent name="C:\Users\gabri\PycharmProjects\P2P\kademlia" />
     </key>
   </component>
-  <component name="RunManager" selected="Python tests.Python tests for unit_tests.TCPSubnetTests.test_unresponsive_node">
+  <component name="RunManager" selected="Python tests.Python tests for unit_tests.DHTTest.test_value_propagates_to_closer_node">
     <configuration name="P2P-System" type="PythonConfigurationType" factoryName="Python">
       <module name="P2P-System" />
       <option name="ENV_FILES" value="" />
@@ -144,7 +154,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="Python tests for unit_tests.TCPSubnetTests" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+    <configuration name="Python tests for unit_tests.DHTTest" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="P2P-System" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -156,11 +166,11 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;unit_tests.TCPSubnetTests&quot;" />
+      <option name="_new_target" value="&quot;unit_tests.DHTTest&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+    <configuration name="Python tests for unit_tests.DHTTest.test_local_store_find_value" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="P2P-System" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -172,11 +182,11 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;unit_tests.TCPSubnetTests.test_find_nodes_route&quot;" />
+      <option name="_new_target" value="&quot;unit_tests.DHTTest.test_local_store_find_value&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Python tests for unit_tests.TCPSubnetTests.test_find_value_router" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+    <configuration name="Python tests for unit_tests.DHTTest.test_value_propagates_to_closer_node" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="P2P-System" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -188,11 +198,11 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;unit_tests.TCPSubnetTests.test_find_value_router&quot;" />
+      <option name="_new_target" value="&quot;unit_tests.DHTTest.test_value_propagates_to_closer_node&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Python tests for unit_tests.TCPSubnetTests.test_store_route" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+    <configuration name="Python tests for unit_tests.DHTTest.test_value_stored_gets_propagated" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="P2P-System" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -204,11 +214,11 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;unit_tests.TCPSubnetTests.test_store_route&quot;" />
+      <option name="_new_target" value="&quot;unit_tests.DHTTest.test_value_stored_gets_propagated&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Python tests for unit_tests.TCPSubnetTests.test_unresponsive_node" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+    <configuration name="Python tests for unit_tests.DHTTest.test_value_stored_in_further_node" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="P2P-System" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -220,25 +230,25 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;unit_tests.TCPSubnetTests.test_unresponsive_node&quot;" />
+      <option name="_new_target" value="&quot;unit_tests.DHTTest.test_value_stored_in_further_node&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
     <list>
       <item itemvalue="Python.P2P-System" />
-      <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_unresponsive_node" />
-      <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_value_router" />
-      <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_store_route" />
-      <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route" />
-      <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests" />
+      <item itemvalue="Python tests.Python tests for unit_tests.DHTTest" />
+      <item itemvalue="Python tests.Python tests for unit_tests.DHTTest.test_local_store_find_value" />
+      <item itemvalue="Python tests.Python tests for unit_tests.DHTTest.test_value_propagates_to_closer_node" />
+      <item itemvalue="Python tests.Python tests for unit_tests.DHTTest.test_value_stored_gets_propagated" />
+      <item itemvalue="Python tests.Python tests for unit_tests.DHTTest.test_value_stored_in_further_node" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_unresponsive_node" />
-        <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route" />
-        <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_store_route" />
-        <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_value_router" />
-        <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests" />
+        <item itemvalue="Python tests.Python tests for unit_tests.DHTTest.test_value_propagates_to_closer_node" />
+        <item itemvalue="Python tests.Python tests for unit_tests.DHTTest" />
+        <item itemvalue="Python tests.Python tests for unit_tests.DHTTest.test_local_store_find_value" />
+        <item itemvalue="Python tests.Python tests for unit_tests.DHTTest.test_value_stored_in_further_node" />
+        <item itemvalue="Python tests.Python tests for unit_tests.DHTTest.test_value_stored_gets_propagated" />
       </list>
     </recent_temporary>
   </component>
@@ -272,7 +282,7 @@
       <workItem from="1707058400365" duration="42000" />
       <workItem from="1707061747708" duration="3912000" />
       <workItem from="1707142862222" duration="4756000" />
-      <workItem from="1707301906072" duration="2742000" />
+      <workItem from="1707301906072" duration="7124000" />
     </task>
     <task id="LOCAL-00017" summary="done smth">
       <created>1703342554993</created>
@@ -603,14 +613,6 @@
       <option name="project" value="LOCAL" />
       <updated>1707062998360</updated>
     </task>
-    <task id="LOCAL-00118" summary="fix: I/O closed fixed (self.wfile is never explicitly closed by me)">
-      <option name="closed" value="true" />
-      <created>1707169165081</created>
-      <option name="number" value="00118" />
-      <option name="presentableId" value="LOCAL-00118" />
-      <option name="project" value="LOCAL" />
-      <updated>1707169165081</updated>
-    </task>
     <task id="LOCAL-00119" summary="misc: removed obselete code.">
       <option name="closed" value="true" />
       <created>1707169298307</created>
@@ -619,7 +621,15 @@
       <option name="project" value="LOCAL" />
       <updated>1707169298307</updated>
     </task>
-    <option name="localTasksCounter" value="120" />
+    <task id="LOCAL-00120" summary="fix: fixed print statements and store">
+      <option name="closed" value="true" />
+      <created>1707305357016</created>
+      <option name="number" value="00120" />
+      <option name="presentableId" value="LOCAL-00120" />
+      <option name="project" value="LOCAL" />
+      <updated>1707305357016</updated>
+    </task>
+    <option name="localTasksCounter" value="121" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -664,7 +674,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="misc: 1st bootstrap test works, 2nd doesn't (21/31)" />
     <MESSAGE value="checkpoint: fixing unit test error - not fixed yet" />
     <MESSAGE value="fix: fixed DHT.bootstrap(), broke it doing unittesting" />
     <MESSAGE value="misc: change to workspace" />
@@ -689,7 +698,8 @@
     <MESSAGE value="feat: find_node + store work!" />
     <MESSAGE value="fix: I/O closed fixed (self.wfile is never explicitly closed by me)" />
     <MESSAGE value="misc: removed obselete code." />
-    <option name="LAST_COMMIT_MESSAGE" value="misc: removed obselete code." />
+    <MESSAGE value="fix: fixed print statements and store" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix: fixed print statements and store" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests.coverage" NAME="Unittests for unit_tests Coverage Results" MODIFIED="1703352716012" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -698,10 +708,11 @@
     <SUITE FILE_PATH="coverage/P2P$scratch_2.coverage" NAME="scratch_2 Coverage Results" MODIFIED="1707161695169" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
     <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests_BootstrappingTests_test_bootstrap_outside_bootstrapping_bucket.coverage" NAME="Unittests for unit_tests.BootstrappingTests.test_bootstrap_outside_bootstrapping_bucket Coverage Results" MODIFIED="1704295201404" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/p2p$.coverage" NAME=" Coverage Results" MODIFIED="1706997881210" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/P2P$networking.coverage" NAME="networking Coverage Results" MODIFIED="1707310332024" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/kademlia" />
     <SUITE FILE_PATH="coverage/P2P$kademlia.coverage" NAME="kademlia Coverage Results" MODIFIED="1703796464653" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/p2p$scratch.coverage" NAME="scratch Coverage Results" MODIFIED="1706732795734" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
     <SUITE FILE_PATH="coverage/kademlia$networking.coverage" NAME="networking Coverage Results" MODIFIED="1707147615810" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/kademlia" />
-    <SUITE FILE_PATH="coverage/P2P$.coverage" NAME=" Coverage Results" MODIFIED="1707304565767" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/P2P$.coverage" NAME=" Coverage Results" MODIFIED="1707311440266" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/kademlia$.coverage" NAME=" Coverage Results" MODIFIED="1707148239761" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/P2P$pickler.coverage" NAME="pickler Coverage Results" MODIFIED="1707157848987" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/kademlia" />
   </component>

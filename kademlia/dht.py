@@ -3,6 +3,7 @@ import threading
 from datetime import datetime, timedelta
 from typing import Callable, Optional
 
+from . import helpers
 from .buckets import KBucket
 from .constants import Constants
 from .contact import Contact
@@ -138,18 +139,16 @@ class DHT:
         contacts_queried: list[Contact] = []
 
         # ret (found: False, contacts: None, val: None)
-        found: bool = False
         contacts: list[Contact] | None = None
-        # TODO: This is never called again??
         # - Add to docstring when finished
         val: str | None = None
 
-        # TODO: Talk about what this does - I haven't made it yet so IDK.
         found, our_val = self._originator_storage.try_get_value(key)
-        print("try_get_value result:", found, contacts, our_val)
         if our_val:
             found = True
             val = our_val
+
+
         else:
             lookup: QueryReturn = self._router.lookup(
                 key, self._router.rpc_find_value)
@@ -395,20 +394,11 @@ class DHT:
         :return:
         """
         # get all the contacts, ordered by ID
-        if contact_a not in self.node.bucket_list.contacts():
-            raise KeyError(f"Contact not in list: {str(contact_a.id)},"
-                           f"list contains: {[str(i.id) for i in self.node.bucket_list.contacts()]}")
-
-        if contact_b not in self.node.bucket_list.contacts():
-            raise KeyError(f"Contact not in list: {str(contact_b.id)},"
-                           f"list contains: {[str(i.id) for i in self.node.bucket_list.contacts()]}")
-
         all_contacts: list[Contact] = sorted(self.node.bucket_list.contacts(), key=lambda c: c.id.value)
-        # print([i.id.value for i in self.node.bucket_list.contacts()])
-        # print(contact_a.id.value, contact_b.id.value)
-        index_a = all_contacts.index(contact_a)
-        index_b = all_contacts.index(contact_b)
-        return abs(index_a - index_b)
+        index_a = helpers.get_closest_number_index([i.id.value for i in all_contacts], contact_a.id.value)
+        index_b = helpers.get_closest_number_index([i.id.value for i in all_contacts], contact_b.id.value)
+        count = abs(index_a - index_b)
+        return count
 
     def handle_error(self, error: RPCError | None, contact: Contact) -> None:
         """
