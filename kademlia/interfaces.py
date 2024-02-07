@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from datetime import datetime
 
+from kademlia.dictionaries import StoreValue
 from kademlia.errors import RPCError
 from kademlia.id import ID
 
@@ -17,7 +18,7 @@ class IStorage:
         pass
 
     @abstractmethod
-    def get(self, key: ID | int) -> str:
+    def get(self, key: ID | int) -> StoreValue:
         pass
 
     @abstractmethod

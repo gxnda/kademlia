@@ -139,6 +139,15 @@ class StoreResponse(BaseResponse):
 
 
 class StoreValue(TypedDict):
+    """
+    Has attributes:
+
+    value: str
+
+    republish_timestamp: datetime
+
+    expiration_time: int
+    """
     value: str
     republish_timestamp: datetime
     expiration_time: int

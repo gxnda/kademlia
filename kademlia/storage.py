@@ -1,6 +1,6 @@
 from datetime import datetime
-
-import ijson
+import json
+from typing import Optional
 
 from kademlia.dictionaries import StoreValue
 from kademlia.id import ID
@@ -19,7 +19,7 @@ class VirtualStorage(IStorage):
         """
         Returns a boolean stating whether a key is storing something.
         """
-        return key.value in list(self._store.keys())
+        return key.value in self.get_keys()
 
     def get(self, key: ID | int) -> StoreValue:
         """
@@ -38,7 +38,9 @@ class VirtualStorage(IStorage):
         return self._store[key]["republish_timestamp"]
 
     def set(self, key: ID, value: str, expiration_time_sec: int = 0) -> None:
-        self._store[key.value] = StoreValue(value=value, expiration_time=expiration_time_sec)
+        self._store[key.value] = StoreValue(value=value,
+                                            expiration_time=expiration_time_sec,
+                                            republish_timestamp=datetime.now())
         self.touch(key.value)
 
     def get_expiration_time_sec(self, key: int) -> int:
@@ -55,10 +57,10 @@ class VirtualStorage(IStorage):
         self._store[key]["republish_timestamp"] = datetime.now()
 
     def try_get_value(self, key: ID) -> tuple[bool, int | str | None]:
-        val = None
+        val: Optional[str] = None
         ret = False
         if key.value in self._store:
-            val = self._store[key.value]
+            val = self._store[key.value]["value"]
             ret = True
 
         return ret, val
@@ -68,9 +70,69 @@ class SecondaryStorage(IStorage):
     def __init__(self, filename: str):
         """
         Storage object which reads/writes to a JSON file instead of to memory like how VirtualStorage does.
+        the JSON is formatted as dict[int, StoreValue].
         :param filename: Filename to save values to - must end in .json!
         """
         self.filename = filename
 
-    def save_to_file(self):
-        with
+    def set(self, key: ID, value: str | bytes, expiration_time_sec: int = 0) -> None:
+        with open(self.filename) as f:
+            json_data: dict[int, StoreValue] = json.load(f)
+            to_store: StoreValue = StoreValue(
+                value=value,
+                expiration_time=expiration_time_sec,
+                republish_timestamp=datetime.now()
+            )
+            json_data[key.value] = to_store
+
+    def contains(self, key: ID) -> bool:
+        with open(self.filename) as f:
+            json_data: dict[int, StoreValue] = json.load(f)
+            return key.value in json_data
+
+    def get_timestamp(self, key: int) -> datetime:
+        with open(self.filename) as f:
+            json_data: dict[int, StoreValue] = json.load(f)
+            return json_data[key]["republish_timestamp"]
+
+    def get(self, key: ID | int) -> StoreValue:
+        with open(self.filename) as f:
+            json_data: dict[int, StoreValue] = json.load(f)
+            if isinstance(key, ID):
+                return json_data[key.value]
+            elif isinstance(key, int):
+                return json_data[key]
+            else:
+                raise TypeError("'get()' parameter 'key' must be type ID or int.")
+
+    def get_expiration_time_sec(self, key: int) -> int:
+        with open(self.filename) as f:
+            json_data: dict[int, StoreValue] = json.load(f)
+            return json_data[key]["expiration_time"]
+
+    def remove(self, key: int) -> None:
+        with open(self.filename) as f:
+            json_data: dict[int, StoreValue] = json.load(f)
+            if key in json_data:
+                json_data.pop(key, None)
+
+    def get_keys(self) -> list[int]:
+        with open(self.filename) as f:
+            json_data: dict[int, StoreValue] = json.load(f)
+            return list(json_data.keys())
+
+    def touch(self, key: int) -> None:
+        with open(self.filename) as f:
+            json_data: dict[int, StoreValue] = json.load(f)
+            json_data[key]["republish_timestamp"] = datetime.now()
+
+    def try_get_value(self, key: ID) -> tuple[bool, int | str]:
+        with open(self.filename) as f:
+            json_data: dict[int, StoreValue] = json.load(f)
+            val = None
+            ret = False
+            if key.value in json_data:
+                val = json_data[key.value]["value"]
+                ret = True
+
+        return ret, val
