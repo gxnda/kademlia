@@ -4,10 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="fix: more fixes">
+    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="misc: reformatted the file.">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/dht.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/dht.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/dictionaries.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/dictionaries.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/helpers.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/helpers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/kademlia/interfaces.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/interfaces.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/unit_tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/unit_tests.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,7 +35,6 @@
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="RESET_MODE" value="HARD" />
-    <option name="UPDATE_TYPE" value="REBASE" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
   &quot;lastFilter&quot;: {
@@ -60,6 +62,9 @@
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="QODANA_PROBLEMS_VIEW_TAB" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
@@ -114,7 +119,7 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.lookFeel",
+    "settings.editor.selected.configurable": "preferences.editor.code.editing",
     "vue.rearranger.settings.migration": "true"
   },
   "keyToStringList": {
@@ -123,12 +128,17 @@
     ]
   }
 }]]></component>
+  <component name="QodanaReportsService">
+    <option name="descriptions">
+      <ReportDescription localRun="true" path="C:\Users\gabri\AppData\Local\Temp\qodana_output\qodana.sarif.json" reportGuid="8d1ce7e9-33e4-4bb7-a336-9609e866e1c0" reportId="P2P/qodana/2024-02-08" />
+    </option>
+  </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\gabri\PycharmProjects\P2P\kademlia" />
     </key>
   </component>
-  <component name="RunManager" selected="Python tests.Python tests for unit_tests.Chapter10Tests.test_new_contact_gets_stored_contacts">
+  <component name="RunManager" selected="Python tests.Python tests in unit_tests.py">
     <configuration name="P2P-System" type="PythonConfigurationType" factoryName="Python">
       <module name="P2P-System" />
       <option name="ENV_FILES" value="" />
@@ -216,7 +226,7 @@
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Python tests for unit_tests.DHTTest.test_value_stored_in_further_node" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+    <configuration name="Python tests in unit_tests.py" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="P2P-System" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -228,25 +238,25 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;unit_tests.DHTTest.test_value_stored_in_further_node&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <option name="_new_target" value="&quot;$PROJECT_DIR$/unit_tests.py&quot;" />
+      <option name="_new_targetType" value="&quot;PATH&quot;" />
       <method v="2" />
     </configuration>
     <list>
       <item itemvalue="Python.P2P-System" />
+      <item itemvalue="Python tests.Python tests in unit_tests.py" />
       <item itemvalue="Python tests.Python tests for unit_tests.Chapter10Tests.test_new_contact_gets_stored_contacts" />
       <item itemvalue="Python tests.Python tests for unit_tests.DHTTest" />
       <item itemvalue="Python tests.Python tests for unit_tests.DHTTest.test_local_store_find_value" />
       <item itemvalue="Python tests.Python tests for unit_tests.DHTTest.test_value_propagates_to_closer_node" />
-      <item itemvalue="Python tests.Python tests for unit_tests.DHTTest.test_value_stored_in_further_node" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python tests.Python tests in unit_tests.py" />
         <item itemvalue="Python tests.Python tests for unit_tests.Chapter10Tests.test_new_contact_gets_stored_contacts" />
         <item itemvalue="Python tests.Python tests for unit_tests.DHTTest.test_value_propagates_to_closer_node" />
         <item itemvalue="Python tests.Python tests for unit_tests.DHTTest" />
         <item itemvalue="Python tests.Python tests for unit_tests.DHTTest.test_local_store_find_value" />
-        <item itemvalue="Python tests.Python tests for unit_tests.DHTTest.test_value_stored_in_further_node" />
       </list>
     </recent_temporary>
   </component>
@@ -281,7 +291,7 @@
       <workItem from="1707061747708" duration="3912000" />
       <workItem from="1707142862222" duration="4756000" />
       <workItem from="1707301906072" duration="9370000" />
-      <workItem from="1707407536519" duration="2651000" />
+      <workItem from="1707407536519" duration="4091000" />
     </task>
     <task id="LOCAL-00017" summary="done smth">
       <created>1703342554993</created>
@@ -612,23 +622,23 @@
       <option name="project" value="LOCAL" />
       <updated>1707062998360</updated>
     </task>
-    <task id="LOCAL-00121" summary="fix: more fixes">
+    <task id="LOCAL-00123" summary="fix: fixed test_new_contact_gets_stored_contacts">
       <option name="closed" value="true" />
-      <created>1707314217654</created>
-      <option name="number" value="00121" />
-      <option name="presentableId" value="LOCAL-00121" />
+      <created>1707411419526</created>
+      <option name="number" value="00123" />
+      <option name="presentableId" value="LOCAL-00123" />
       <option name="project" value="LOCAL" />
-      <updated>1707314217656</updated>
+      <updated>1707411419527</updated>
     </task>
-    <task id="LOCAL-00122" summary="fix: more fixes">
+    <task id="LOCAL-00124" summary="misc: reformatted the file.">
       <option name="closed" value="true" />
-      <created>1707317898519</created>
-      <option name="number" value="00122" />
-      <option name="presentableId" value="LOCAL-00122" />
+      <created>1707411636655</created>
+      <option name="number" value="00124" />
+      <option name="presentableId" value="LOCAL-00124" />
       <option name="project" value="LOCAL" />
-      <updated>1707317898519</updated>
+      <updated>1707411636655</updated>
     </task>
-    <option name="localTasksCounter" value="123" />
+    <option name="localTasksCounter" value="125" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -673,8 +683,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix: fixed DHT.bootstrap(), broke it doing unittesting" />
-    <MESSAGE value="misc: change to workspace" />
     <MESSAGE value="started on chapter 9" />
     <MESSAGE value="misc: DHT._node is no longer protected + linting." />
     <MESSAGE value="misc: linting." />
@@ -698,7 +706,9 @@
     <MESSAGE value="misc: removed obselete code." />
     <MESSAGE value="fix: fixed print statements and store" />
     <MESSAGE value="fix: more fixes" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix: more fixes" />
+    <MESSAGE value="fix: fixed test_new_contact_gets_stored_contacts" />
+    <MESSAGE value="misc: reformatted the file." />
+    <option name="LAST_COMMIT_MESSAGE" value="misc: reformatted the file." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests.coverage" NAME="Unittests for unit_tests Coverage Results" MODIFIED="1703352716012" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -711,7 +721,7 @@
     <SUITE FILE_PATH="coverage/P2P$kademlia.coverage" NAME="kademlia Coverage Results" MODIFIED="1703796464653" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/p2p$scratch.coverage" NAME="scratch Coverage Results" MODIFIED="1706732795734" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
     <SUITE FILE_PATH="coverage/kademlia$networking.coverage" NAME="networking Coverage Results" MODIFIED="1707147615810" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/kademlia" />
-    <SUITE FILE_PATH="coverage/P2P$.coverage" NAME=" Coverage Results" MODIFIED="1707410666594" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/P2P$.coverage" NAME=" Coverage Results" MODIFIED="1707411446362" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/kademlia$.coverage" NAME=" Coverage Results" MODIFIED="1707148239761" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/P2P$pickler.coverage" NAME="pickler Coverage Results" MODIFIED="1707157848987" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/kademlia" />
   </component>

@@ -379,7 +379,7 @@ class DHT:
         ]
 
         for k in keys_pending_republish:
-            key: ID = ID(k)
+            key: ID = k
             # Just use close contacts, don't do a lookup TODO: why?
             contacts = self.node.bucket_list.get_close_contacts(
                 key, self.node.our_contact.id)

@@ -44,4 +44,3 @@ def get_closest_number_index(numbers, target):
 # class ContactListAndError(TypedDict):
 #     contacts: list[Contact]
 #     error: RPCError
-
