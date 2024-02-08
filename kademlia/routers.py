@@ -269,9 +269,9 @@ class Router(BaseRouter):
                                            self.further_contacts))
 
                 if query_result["found"]:
-                    # For unit testing.
-                    closer_contacts_unittest = self.closer_contacts
-                    further_contacts_unittest = self.further_contacts
+                    # # For unit testing.
+                    # closer_contacts_unittest = self.closer_contacts
+                    # further_contacts_unittest = self.further_contacts
                     return query_result
 
             elif have_further:
@@ -285,14 +285,14 @@ class Router(BaseRouter):
                                            self.further_contacts))
 
                 if query_result["found"]:
-                    # For unit testing.
-                    closer_contacts_unittest = self.closer_contacts
-                    further_contacts_unittest = self.further_contacts
+                    # # For unit testing.
+                    # closer_contacts_unittest = self.closer_contacts
+                    # further_contacts_unittest = self.further_contacts
                     return query_result
 
-        if DEBUG:  # For unit testing
-            closer_contacts_unittest = self.closer_contacts
-            further_contacts_unittest = self.further_contacts
+        # if DEBUG:  # For unit testing
+        #     closer_contacts_unittest = self.closer_contacts
+        #     further_contacts_unittest = self.further_contacts
 
         # return k closer nodes sorted by distance,
 
