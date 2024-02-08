@@ -134,11 +134,11 @@ class SecondaryStorage(IStorage):
     def try_get_value(self, key: ID) -> tuple[bool, int | str]:
         with open(self.filename) as f:
             json_data: dict[int, StoreValue] = json.load(f)
-            val = None
-            ret = False
-            if key.value in json_data:
-                val = json_data[key.value]["value"]
-                ret = True
+        val = None
+        ret = False
+        if key.value in json_data:
+            val = json_data[key.value]["value"]
+            ret = True
 
         return ret, val
 
