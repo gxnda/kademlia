@@ -143,12 +143,21 @@ class SecondaryStorage(IStorage):
         return ret, val
 
     def set_file(self, key: ID, filename: str, expiration_time_sec: int = 0) -> None:
+        """
+        Adds a file to storage file, it does this by loading ALL of the file to be added to memory,
+        and then pasting it into the storage file ALSO loaded into memory D:
+        :param key:
+        :param filename:
+        :param expiration_time_sec:
+        :return:
+        """
         with open(filename) as f:
             file_data = f.read()
-            data_dict = {"filename": filename, "file_data": file_data}
-            encoded_data: bytes = pickler.plain_encode_data(data=data_dict)
-            self.set(
-                key=key,
-                value=encoded_data,
-                expiration_time_sec=expiration_time_sec
-            )
+        data_dict = {"filename": filename, "file_data": file_data}
+        encoded_data: bytes = pickler.plain_encode_data(data=data_dict)
+        encoded_data_str = encoded_data.decode("utf-8")
+        self.set(
+            key=key,
+            value=encoded_data_str,
+            expiration_time_sec=expiration_time_sec
+        )
