@@ -17,7 +17,7 @@ class QueryReturn(TypedDict):
 
 class FindResult(TypedDict):
     found: bool
-    found_by: Contact
+    found_by: Contact | None
     found_value: str
     found_contacts: list[Contact]
 
