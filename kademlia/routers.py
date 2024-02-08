@@ -444,7 +444,7 @@ class ParallelRouter(BaseRouter):
 
             nodes_to_query: list[Contact] = all_nodes[0:Constants.A]
 
-            # Also not explicity in specification:
+            # Also not explicitly in specification:
             # any closer node in the alpha list is immediately added to our closer contact list,
             # and any further node in the alpha list is immediately added to our further contact list.
             for c in nodes_to_query:
@@ -463,7 +463,7 @@ class ParallelRouter(BaseRouter):
             if c.id not in [i.id for i in contacted_nodes]:
                 contacted_nodes.append(c)
 
-        # Spec: the initiator then sends parallel asynchronous FIND_NODE RPCS to the
+        # Spec: the initiator then sends parallel asynchronous FIND_NODE RPCs to the
         # Constants.A nodes it has chosen, Constants.A is a system-wide concurrency parameter,
         # such as 3.
 
