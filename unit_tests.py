@@ -1432,8 +1432,8 @@ class TCPSubnetTests(unittest.TestCase):
             server = TCPSubnetServer(server_address=(local_ip, port))
             valid_server = True
 
-        p1 = TCPSubnetProtocol(url=local_ip, port=port, subnet=1)
-        p2 = TCPSubnetProtocol(url=local_ip, port=port, subnet=2)
+        p1: TCPSubnetProtocol = TCPSubnetProtocol(url=local_ip, port=port, subnet=1)
+        p2: TCPSubnetProtocol = TCPSubnetProtocol(url=local_ip, port=port, subnet=2)
 
         our_id = ID.random_id()
 

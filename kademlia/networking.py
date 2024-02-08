@@ -2,7 +2,7 @@ import random
 import threading
 from time import sleep
 from typing import Optional, TypedDict, Callable
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
 
 import kademlia.main as main
 import kademlia.pickler as pickler
@@ -146,7 +146,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             # context.close_connection = True
 
 
-class TCPSubnetServer(HTTPServer):
+class TCPSubnetServer(ThreadingHTTPServer):
     def __init__(self, server_address: tuple[str, int]):
         HTTPServer.__init__(
             self,
@@ -206,7 +206,7 @@ class TCPSubnetServer(HTTPServer):
         self.subnets[subnet] = node
 
 
-class TCPServer(HTTPServer):  # TODO: Create.
+class TCPServer(ThreadingHTTPServer):  # TODO: Create.
     def __init__(self, node):
         server_address: tuple[str, int] = (node.our_contact.protocol.ip, node.our_contact.protocol.port)
         HTTPServer.__init__(

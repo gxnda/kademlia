@@ -172,6 +172,10 @@ class TCPSubnetProtocol(IProtocol):
         The caller is responsible for checking the timeoutError flag
         to make sure null contacts is not the result of a timeout
         error.
+
+        :param sender: Sender to find value from
+        :param key: Key to check for value from key-value pair
+        :return: contacts, value, RPCError
         """
         random_id = ID.random_id()
         encoded_data = encode_data(
@@ -214,15 +218,18 @@ class TCPSubnetProtocol(IProtocol):
             ret_decoded = pickler.decode_data(encoded_data)
 
         try:
+            print("trying")
             contacts = []
             if ret_decoded:
                 if ret_decoded["contacts"]:
                     for c in ret_decoded["contacts"]:
+                        print(c)
                         new_contact = Contact(
                             c["protocol"],  # instantiate_protocol
                             ID(c["contact"])
                         )
                         contacts.append(new_contact)
+                        print("about to return")
                         return [c for c in contacts if c.protocol is not None], \
                             ret_decoded["value"], \
                             get_rpc_error(
@@ -230,6 +237,8 @@ class TCPSubnetProtocol(IProtocol):
                                     random_id=random_id.value,
                                     error_message=str(error))
                             )
+                else:
+                    return [], ""
         except Exception as e:
             rpc_error = RPCError(str(e))
             rpc_error.protocol_error = True
