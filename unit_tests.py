@@ -1,23 +1,22 @@
-import unittest
 import random
-from time import sleep
+import unittest
 
 from kademlia.buckets import BucketList, KBucket
 from kademlia.constants import Constants
 from kademlia.contact import Contact
 from kademlia.dht import DHT
 from kademlia.errors import RPCError, TooManyContactsError
+from kademlia.helpers import DEBUG
 from kademlia.id import ID
 from kademlia.networking import TCPSubnetServer
 from kademlia.node import Node
 from kademlia.protocols import TCPSubnetProtocol, VirtualProtocol
 from kademlia.routers import ParallelRouter, Router
 from kademlia.storage import VirtualStorage
-from kademlia.helpers import DEBUG
-
 
 if DEBUG:
     random.seed(1)
+
 
 def setup_split_failure(bucket_list=None):
     # force host node ID to < 2 ** 159 so the node ID is not in the
@@ -248,36 +247,36 @@ class ForceFailedAddTest(unittest.TestCase):
         bucket_list: BucketList = setup_split_failure()
 
         self.assertTrue(len(bucket_list.buckets) == 2,
-                f"Bucket split should have occurred. Number of buckets should be 2, is {len(bucket_list.buckets)}.")
+                        f"Bucket split should have occurred. Number of buckets should be 2, is {len(bucket_list.buckets)}.")
 
         self.assertTrue(len(bucket_list.buckets[0].contacts) == 1,
-                "Expected 1 contact in bucket 0.")
+                        "Expected 1 contact in bucket 0.")
 
         self.assertTrue(len(bucket_list.buckets[1].contacts) == 20,
-                "Expected 20 contacts in bucket 1.")
+                        "Expected 20 contacts in bucket 1.")
 
         # This next contact should not split the bucket as
         # depth == 5 and therefore adding the contact will fail.
 
         # Any unique ID >= 2^159 will do.
 
-        id = 2**159 + 4
+        id = 2 ** 159 + 4
 
         new_contact = Contact(id=ID(id),
                               protocol=dummy_contact.protocol)
         bucket_list.add_contact(new_contact)
 
         self.assertTrue(len(bucket_list.buckets) == 2,
-                f"Bucket split should have occured. Number of buckets should be 2, is {len(bucket_list.buckets)}.")
+                        f"Bucket split should have occured. Number of buckets should be 2, is {len(bucket_list.buckets)}.")
 
         self.assertTrue(len(bucket_list.buckets[0].contacts) == 1,
-                "Expected 1 contact in bucket 0.")
+                        "Expected 1 contact in bucket 0.")
 
         self.assertTrue(len(bucket_list.buckets[1].contacts) == 20,
-                "Expected 20 contacts in bucket 1.")
+                        "Expected 20 contacts in bucket 1.")
 
         self.assertTrue(new_contact not in bucket_list.buckets[1].contacts,
-                "Expected new contact NOT to replace an older contact.")
+                        "Expected new contact NOT to replace an older contact.")
 
 
 # 3 Here don't work
@@ -413,7 +412,7 @@ class NodeLookupTests(unittest.TestCase):
             self.nodes.append(node)
 
         # TODO: Remove shell loops, just keeping them atm bc its how it is in book.
-        
+
         for n in self.nodes:
             # fix protocols
             n.our_contact.protocol = VirtualProtocol(n)
@@ -434,7 +433,7 @@ class NodeLookupTests(unittest.TestCase):
         # TODO: Check this returns A contacts - also it could error if len(contacts) < A
         self.contacts_to_query: list[Contact] = \
             self.router.node.bucket_list.get_kbucket(key).contacts[:Constants.A]
-        
+
         self.closer_contacts: list[Contact] = []
         self.further_contacts: list[Contact] = []
 
@@ -444,9 +443,9 @@ class NodeLookupTests(unittest.TestCase):
         self.nearest_contact_node = sorted(self.contacts_to_query,
                                            key=lambda contacts_to_query_nodes: contacts_to_query_nodes.id ^ key)[0]
         self.distance = self.nearest_contact_node.id ^ key
-        
-    def get_alt_close_and_far(self, contacts_to_query: list[Contact], 
-                              closer: list[Contact], 
+
+    def get_alt_close_and_far(self, contacts_to_query: list[Contact],
+                              closer: list[Contact],
                               further: list[Contact],
                               nodes: list[Node],
                               key: ID,  # I think this is needed.
@@ -472,11 +471,13 @@ class NodeLookupTests(unittest.TestCase):
 
             for close_contact_of_contacted_node in close_contacts_of_contacted_node:
                 # Which of these contacts are closer?
-                if close_contact_of_contacted_node.id.value ^ key.value < distance and close_contact_of_contacted_node.id.value not in [c.id.value for c in closer]:
+                if close_contact_of_contacted_node.id.value ^ key.value < distance and close_contact_of_contacted_node.id.value not in [
+                    c.id.value for c in closer]:
                     closer.append(close_contact_of_contacted_node)
 
                 # Which of these contacts are farther?
-                if close_contact_of_contacted_node.id.value ^ key.value >= distance and close_contact_of_contacted_node.id.value not in [c.id.value for c in further]:
+                if close_contact_of_contacted_node.id.value ^ key.value >= distance and close_contact_of_contacted_node.id.value not in [
+                    c.id.value for c in further]:
                     further.append(close_contact_of_contacted_node)
 
     def test_lookup(self):
@@ -494,26 +495,28 @@ class NodeLookupTests(unittest.TestCase):
                                        self.closer_contacts_alt_computation,
                                        self.further_contacts_alt_computation,
                                        self.nodes,
-                                       key=id, 
+                                       key=id,
                                        distance=self.distance)
 
             print("close_contacts", [str(i.id.value)[-3:] for i in close_contacts])
-            print("closer_contacts_alt_computation", [str(i.id.value)[-3:] for i in self.closer_contacts_alt_computation])
+            print("closer_contacts_alt_computation",
+                  [str(i.id.value)[-3:] for i in self.closer_contacts_alt_computation])
             print("\n\n")
-
 
             # Check closer_contacts_alt_computation is right:
             for contact in self.closer_contacts_alt_computation:
-                print("Distance delta close_alt:", ((contact.id.value ^ id.value) - self.distance) < 0, ((contact.id.value ^ id.value) - self.distance))
+                print("Distance delta close_alt:", ((contact.id.value ^ id.value) - self.distance) < 0,
+                      ((contact.id.value ^ id.value) - self.distance))
 
             for contact in close_contacts:
-                print("Distance delta close_contacts:", ((contact.id.value ^ id.value) - self.distance) < 0, ((contact.id.value ^ id.value) - self.distance))
+                print("Distance delta close_contacts:", ((contact.id.value ^ id.value) - self.distance) < 0,
+                      ((contact.id.value ^ id.value) - self.distance))
 
             self.assertTrue(len(close_contacts) >= len(self.closer_contacts_alt_computation),
                             f"Expected at least as many contacts: {len(close_contacts)} vs {len(self.closer_contacts_alt_computation)}")
 
             for c in self.closer_contacts_alt_computation:
-                self.assertTrue(c in close_contacts, 
+                self.assertTrue(c in close_contacts,
                                 "somehow a close contact in the computation is not in the originals?")
 
     def test_simple_all_closer_contacts(self):
@@ -554,8 +557,8 @@ class NodeLookupTests(unittest.TestCase):
         # so it shouldn't have split.
         contacts_to_query = router.node.bucket_list.buckets[0].contacts
 
-        contacts = router.lookup(key=key, 
-                                 rpc_call=router.rpc_find_nodes, 
+        contacts = router.lookup(key=key,
+                                 rpc_call=router.rpc_find_nodes,
                                  give_me_all=True)
 
         # Make sure lookup returns K contacts.
@@ -575,27 +578,27 @@ class NodeLookupTests(unittest.TestCase):
         # Create a router with the largest ID possible.
         router = Router(Node(Contact(id=ID(0), protocol=None), VirtualStorage()))
         nodes: list[Node] = []
-    
+
         for n in range(Constants.K):
             # Create a node with id of a power of 2, up to 2**20.
             node = Node(Contact(id=ID(2 ** n), protocol=None), storage=VirtualStorage())
             nodes.append(node)
-    
+
         # Fixup protocols
         for n in nodes:
             n.our_contact.protocol = VirtualProtocol(n)
-    
+
         # add all contacts in our node list to the router.
         for n in nodes:
             router.node.bucket_list.add_contact(n.our_contact)
-    
+
         # let all of them know where the others are:
         # (add each nodes contact to each nodes bucket_list)
         for n in nodes:
             for n_other in nodes:
                 if n != n_other:
                     n.bucket_list.add_contact(n_other.our_contact)
-    
+
         # select the key such that n ^ 0 == n (TODO: Why?)
         # this ensures the distance metric uses only the node ID,
         # which makes for an integer difference for distance, not an XOR distance.
@@ -604,18 +607,18 @@ class NodeLookupTests(unittest.TestCase):
         # This is because we added K node's contacts to router,
         # so it shouldn't have split.
         contacts_to_query = router.node.bucket_list.buckets[0].contacts
-    
-        contacts = router.lookup(key=key, 
-                                 rpc_call=router.rpc_find_nodes, 
+
+        contacts = router.lookup(key=key,
+                                 rpc_call=router.rpc_find_nodes,
                                  give_me_all=True)
-    
+
         # Make sure lookup returns K contacts.
         self.assertTrue(len(contacts) == Constants.K, "Expected K closer contacts.")
-    
+
         # Make sure it realises all contacts should be further than the ID 0.
         self.assertTrue(len(router.further_contacts) == Constants.K,
                         "All contacts should be further than the ID 0.")
-    
+
         self.assertTrue(len(router.closer_contacts) == 0, "Expected no closer contacts.")
 
 
@@ -741,7 +744,6 @@ class DHTTest(unittest.TestCase):
                         "Expected the other peer to have stored the key-value.")
 
     def test_value_propagates_to_closer_node(self):
-
         vp1 = VirtualProtocol()
         vp2 = VirtualProtocol()
         vp3 = VirtualProtocol()
@@ -801,6 +803,7 @@ class DHTParallelTest(unittest.TestCase):
     """
     The exact same as DHTTest, but with the asynchronous router instead of the normal router.
     """
+
     def test_local_store_find_value(self):
         vp = VirtualProtocol()
         # Below line should contain VirtualStorage(), which I don't have?
@@ -921,7 +924,6 @@ class DHTParallelTest(unittest.TestCase):
                         "Expected the other peer to have stored the key-value.")
 
     def test_value_propagates_to_closer_node(self):
-
         vp1 = VirtualProtocol()
         vp2 = VirtualProtocol()
         vp3 = VirtualProtocol()
@@ -977,11 +979,11 @@ class BootstrappingTests(unittest.TestCase):
 
         test_cases: list[tuple[int, int]] = [
 
-                (0, 256),             # 7 bits should be set
-                (256, 1024),          # 2 bits (256 + 512) should be set
-                (65536, 65536 * 2),   # no additional bits should be set.
-                (65536, 65536 * 4),   # 2 bits (65536 and 65536*2) should be set.
-                (65536, 65536 * 16)   # 4 bits (65536, 65536*2, 65536*4, 65536*8) set.
+            (0, 256),  # 7 bits should be set
+            (256, 1024),  # 2 bits (256 + 512) should be set
+            (65536, 65536 * 2),  # no additional bits should be set.
+            (65536, 65536 * 4),  # 2 bits (65536 and 65536*2) should be set.
+            (65536, 65536 * 16)  # 4 bits (65536, 65536*2, 65536*4, 65536*8) set.
         ]
         for test_case in test_cases:
             low = test_case[0]
@@ -1154,11 +1156,11 @@ class BucketManagementTests(unittest.TestCase):
         """
         dht = DHT(ID(0), VirtualProtocol(), storage_factory=VirtualStorage, router=Router())
         bucket_list: BucketList = setup_split_failure(dht.node.bucket_list)
-        self.assertTrue(len(bucket_list.buckets) == 2, 
-                       "Bucket split should have occurred.")
-        self.assertTrue(len(bucket_list.buckets[0].contacts) == 1, 
-                       "Expected 1 contact in bucket 0.")
-        self.assertTrue(len(bucket_list.buckets[1].contacts) == 20, 
+        self.assertTrue(len(bucket_list.buckets) == 2,
+                        "Bucket split should have occurred.")
+        self.assertTrue(len(bucket_list.buckets[0].contacts) == 1,
+                        "Expected 1 contact in bucket 0.")
+        self.assertTrue(len(bucket_list.buckets[1].contacts) == 20,
                         "Expected 20 contacts in bucket 1.")
 
         # The bucket is now full. Pick the first contact, as it is last 
@@ -1182,20 +1184,20 @@ class BucketManagementTests(unittest.TestCase):
 
         for _ in range(Constants.EVICTION_LIMIT):
             bucket_list.add_contact(non_responding_contact)
-        
-        self.assertTrue(len(bucket_list.buckets[1].contacts) == 20, 
+
+        self.assertTrue(len(bucket_list.buckets[1].contacts) == 20,
                         "Expected 20 contacts in bucket 1.")
 
         # Verify can_split -> pending eviction happened
-        self.assertTrue(len(dht.pending_contacts) == 0, 
+        self.assertTrue(len(dht.pending_contacts) == 0,
                         "Pending contact list should now be empty.")
-        self.assertFalse(non_responding_contact in bucket_list.contacts(), 
+        self.assertFalse(non_responding_contact in bucket_list.contacts(),
                          "Expected bucket to NOT contain non-responding contact.")
 
-        self.assertTrue(next_new_contact in bucket_list.contacts(), 
-                       "Expected bucket to contain new contact.")
+        self.assertTrue(next_new_contact in bucket_list.contacts(),
+                        "Expected bucket to contain new contact.")
 
-        self.assertTrue(len(dht.eviction_count) == 0, 
+        self.assertTrue(len(dht.eviction_count) == 0,
                         "Expected no contacts to be pending eviction.")
 
     def test_non_responding_contact_delayed_eviction(self):
@@ -1239,7 +1241,7 @@ class BucketManagementTests(unittest.TestCase):
                         "Expected one pending contact.")
         self.assertTrue(next_new_contact in dht.pending_contacts,
                         "Expected pending contact to be the 21st contact.")
-        self.assertTrue(len(dht.eviction_count) == 1, 
+        self.assertTrue(len(dht.eviction_count) == 1,
                         "Expected one contact to be pending eviction.")
 
 
@@ -1322,7 +1324,7 @@ class DHTSerialisationTests(unittest.TestCase):
             storage_factory=VirtualStorage
         )
         dht.save("kademlia/dht.pickle")
-        
+
         new_dht = DHT.load("kademlia/dht.pickle")
 
         self.assertTrue(
@@ -1341,23 +1343,23 @@ class DHTSerialisationTests(unittest.TestCase):
             router=Router(),
             storage_factory=VirtualStorage
         )
-        
+
         node = Node(
-            Contact(dht.our_id), 
+            Contact(dht.our_id),
             storage=VirtualStorage()
         )
         dht._router.node = node
-        
+
         dht.save("kademlia/dht.pickle")
-    
+
         new_dht = DHT.load("kademlia/dht.pickle")
-    
+
         self.assertTrue(
             type(dht) == type(new_dht),
-            "Saved and loaded DHT are not the same type. " \
+            "Saved and loaded DHT are not the same type. "
             f"{type(dht)} vs {type(new_dht)}"
         )
-        
+
         self.assertTrue(
             dht._router.node.our_contact.id == new_dht._router.node.our_contact.id,
             "Saved and loaded DHT is not identical to the original."
@@ -1365,8 +1367,8 @@ class DHTSerialisationTests(unittest.TestCase):
 
     def second_dht_serialisation_test(self):
         p1: TCPSubnetProtocol = TCPSubnetProtocol(
-            "http://127.0.0.1/", 
-            7124, 
+            "http://127.0.0.1/",
+            7124,
             1
         )
 
@@ -1423,6 +1425,8 @@ class TCPSubnetTests(unittest.TestCase):
     def setup():
         local_ip = "127.0.0.1"
         valid_server = False
+        server = None
+        port = 1
         while not valid_server:
             port = random.randint(10000, 10500)
             server = TCPSubnetServer(server_address=(local_ip, port))
@@ -1468,8 +1472,8 @@ class TCPSubnetTests(unittest.TestCase):
         p2.store(sender, test_id, test_value)
 
         self.assertTrue(n2.storage.contains(test_id),
-                       "Expected remote peer to have value.")
-        self.assertTrue(n2.storage.get(test_id)["value"] == test_value,
+                        "Expected remote peer to have value.")
+        self.assertTrue(n2.storage.get(test_id) == test_value,
                         "Expected remote peer to contain stored value.")
 
         server.thread_stop(thread)
@@ -1477,6 +1481,8 @@ class TCPSubnetTests(unittest.TestCase):
     def test_find_nodes_route(self):
         local_ip = "127.0.0.1"
         valid_server = False
+        port = None
+        server = None
         while not valid_server:
             port = random.randint(10000, 10500)
             server = TCPSubnetServer(server_address=(local_ip, port))

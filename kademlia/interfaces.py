@@ -17,7 +17,7 @@ class IStorage:
         pass
 
     @abstractmethod
-    def get(self, key: ID | int):
+    def get(self, key: ID | int) -> str:
         """
 
         :param key:
