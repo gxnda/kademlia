@@ -124,7 +124,7 @@ class DHT:
         self._originator_storage.set(key, val)
         self.store_on_closer_contacts(key, val)
 
-    def find_value(self, key: ID) -> tuple[bool, list[Contact] | None, StoreValue | None]:
+    def find_value(self, key: ID) -> tuple[bool, list[Contact] | None, str | None]:
         """
         Attempts to find a given value.
         First it checks our originator storage. If the given key does not have a value in our storage,
@@ -500,12 +500,9 @@ class DHT:
         """
         contact: Optional[Contact] = None
         # lock(self.pending_contacts)
-        temp_arr = []
-        for c1 in self.pending_contacts:
-            if self.node.bucket_list.get_kbucket(c1.id) == bucket:
-                contacts_sorted_by_lastseen = sorted(bucket.contacts, key=lambda c2: c2.last_seen)
-                contact = contacts_sorted_by_lastseen[-1]  # get last
-                break
+        contact = sorted([c for c in self.pending_contacts if
+                         self.node.bucket_list.get_kbucket(c.id) == bucket],
+                         key=lambda c: c.last_seen)[-1]
 
         if contact is not None:
             self.pending_contacts.remove(contact)

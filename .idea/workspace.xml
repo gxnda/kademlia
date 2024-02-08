@@ -4,9 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="misc: adding UML">
+    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="misc: find value test almost works">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/buckets.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/buckets.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/dht.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/dht.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/node.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/node.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/kademlia/protocols.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/protocols.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kademlia/routers.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/routers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/unit_tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/unit_tests.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -75,58 +79,63 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Python tests.Python tests for unit_tests.AddContactTest.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.BucketManagementTests.test_non_responding_contact_delayed_eviction.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.Chapter10Tests.test_new_contact_gets_stored_contacts.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.DHTSerialisationTests.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.DHTTest.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.DHTTest.test_local_store_find_value.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.DHTTest.test_value_propagates_to_closer_node.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.DHTTest.test_value_stored_gets_propagated.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.DHTTest.test_value_stored_in_closer_node.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.DHTTest.test_value_stored_in_further_node.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.ForceFailedAddTest.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.KBucketTest.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.KBucketTest.test_add_to_kbucket.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.NodeLookupTests.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.NodeLookupTests.test_simple_all_closer_contacts.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.NodeLookupTests.test_simple_all_further_contacts.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.TCPSubnetTests.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_value_router.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.TCPSubnetTests.test_ping_route.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.TCPSubnetTests.test_store_route.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for unit_tests.TCPSubnetTests.test_unresponsive_node.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests in unit_tests.py.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Unittests for unit_tests.TCPSubnetTests.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Unittests for unit_tests.TCPSubnetTests.test_find_value_router.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.unit tests.executor&quot;: &quot;Run&quot;,
-    &quot;Python.PhysicsEngine.executor&quot;: &quot;Run&quot;,
-    &quot;Python.networking.executor&quot;: &quot;Run&quot;,
-    &quot;Python.pickler.executor&quot;: &quot;Run&quot;,
-    &quot;Python.scratch_2.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/gabriel/PycharmProjects/kademlia&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python tests.Python tests for unit_tests.AddContactTest.executor": "Run",
+    "Python tests.Python tests for unit_tests.BucketManagementTests.executor": "Run",
+    "Python tests.Python tests for unit_tests.BucketManagementTests.test_non_responding_contact_delayed_eviction.executor": "Run",
+    "Python tests.Python tests for unit_tests.BucketManagementTests.test_non_responding_contact_evicted.executor": "Run",
+    "Python tests.Python tests for unit_tests.Chapter10Tests.test_new_contact_gets_stored_contacts.executor": "Run",
+    "Python tests.Python tests for unit_tests.DHTSerialisationTests.executor": "Run",
+    "Python tests.Python tests for unit_tests.DHTTest.executor": "Run",
+    "Python tests.Python tests for unit_tests.DHTTest.test_local_store_find_value.executor": "Run",
+    "Python tests.Python tests for unit_tests.DHTTest.test_value_propagates_to_closer_node.executor": "Run",
+    "Python tests.Python tests for unit_tests.DHTTest.test_value_stored_gets_propagated.executor": "Run",
+    "Python tests.Python tests for unit_tests.DHTTest.test_value_stored_in_closer_node.executor": "Run",
+    "Python tests.Python tests for unit_tests.DHTTest.test_value_stored_in_further_node.executor": "Run",
+    "Python tests.Python tests for unit_tests.ForceFailedAddTest.executor": "Run",
+    "Python tests.Python tests for unit_tests.KBucketTest.executor": "Run",
+    "Python tests.Python tests for unit_tests.KBucketTest.test_add_to_kbucket.executor": "Run",
+    "Python tests.Python tests for unit_tests.NodeLookupTests.executor": "Run",
+    "Python tests.Python tests for unit_tests.NodeLookupTests.test_simple_all_closer_contacts.executor": "Run",
+    "Python tests.Python tests for unit_tests.NodeLookupTests.test_simple_all_further_contacts.executor": "Run",
+    "Python tests.Python tests for unit_tests.TCPSubnetTests.executor": "Run",
+    "Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_nodes_route.executor": "Run",
+    "Python tests.Python tests for unit_tests.TCPSubnetTests.test_find_value_router.executor": "Run",
+    "Python tests.Python tests for unit_tests.TCPSubnetTests.test_ping_route.executor": "Run",
+    "Python tests.Python tests for unit_tests.TCPSubnetTests.test_store_route.executor": "Run",
+    "Python tests.Python tests for unit_tests.TCPSubnetTests.test_unresponsive_node.executor": "Run",
+    "Python tests.Python tests in unit_tests.py.executor": "Run",
+    "Python tests.Unittests for unit_tests.DHTTest.executor": "Run",
+    "Python tests.Unittests for unit_tests.DHTTest.test_value_propagates_to_closer_node.executor": "Run",
+    "Python tests.Unittests for unit_tests.TCPSubnetTests.executor": "Run",
+    "Python tests.Unittests for unit_tests.TCPSubnetTests.test_find_value_router.executor": "Run",
+    "Python tests.Unittests for unit_tests.executor": "Run",
+    "Python tests.unit tests.executor": "Run",
+    "Python.PhysicsEngine.executor": "Run",
+    "Python.networking.executor": "Run",
+    "Python.pickler.executor": "Run",
+    "Python.scratch_2.executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "master",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "/home/gabriel/PycharmProjects/kademlia",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
-      &quot;Python&quot;
+  "keyToStringList": {
+    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
+      "Python"
     ]
   }
-}</component>
+}]]></component>
   <component name="QodanaReportsService">
     <option name="descriptions">
       <ReportDescription localRun="true" path="C:\Users\gabri\AppData\Local\Temp\qodana_output\qodana.sarif.json" reportGuid="8d1ce7e9-33e4-4bb7-a336-9609e866e1c0" reportId="P2P/qodana/2024-02-08" />
@@ -137,7 +146,7 @@
       <recent name="C:\Users\gabri\PycharmProjects\P2P\kademlia" />
     </key>
   </component>
-  <component name="RunManager" selected="Python tests.Unittests for unit_tests.TCPSubnetTests.test_find_value_router">
+  <component name="RunManager" selected="Python tests.Python tests in unit_tests.py">
     <configuration name="P2P-System" type="PythonConfigurationType" factoryName="Python">
       <module name="P2P-System" />
       <option name="ENV_FILES" value="" />
@@ -161,7 +170,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="Python tests for unit_tests.Chapter10Tests.test_new_contact_gets_stored_contacts" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+    <configuration name="Python tests for unit_tests.BucketManagementTests" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="P2P-System" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -173,11 +182,11 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;unit_tests.Chapter10Tests.test_new_contact_gets_stored_contacts&quot;" />
+      <option name="_new_target" value="&quot;unit_tests.BucketManagementTests&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Python tests for unit_tests.DHTTest.test_value_propagates_to_closer_node" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+    <configuration name="Python tests for unit_tests.BucketManagementTests.test_non_responding_contact_delayed_eviction" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="P2P-System" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -189,7 +198,23 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;unit_tests.DHTTest.test_value_propagates_to_closer_node&quot;" />
+      <option name="_new_target" value="&quot;unit_tests.BucketManagementTests.test_non_responding_contact_delayed_eviction&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Python tests for unit_tests.BucketManagementTests.test_non_responding_contact_evicted" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="P2P-System" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;unit_tests.BucketManagementTests.test_non_responding_contact_evicted&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
@@ -209,7 +234,7 @@
       <option name="_new_targetType" value="&quot;PATH&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Unittests for unit_tests.TCPSubnetTests" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+    <configuration name="Unittests for unit_tests" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
       <module name="P2P-System" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -221,41 +246,25 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;unit_tests.TCPSubnetTests&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
-    <configuration name="Unittests for unit_tests.TCPSubnetTests.test_find_value_router" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
-      <module name="P2P-System" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="C:\Users\gabri\PycharmProjects\P2P\venv\Scripts\python.exe" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;unit_tests.TCPSubnetTests.test_find_value_router&quot;" />
+      <option name="_new_target" value="&quot;unit_tests&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
     <list>
       <item itemvalue="Python.P2P-System" />
-      <item itemvalue="Python tests.Python tests for unit_tests.Chapter10Tests.test_new_contact_gets_stored_contacts" />
-      <item itemvalue="Python tests.Python tests for unit_tests.DHTTest.test_value_propagates_to_closer_node" />
+      <item itemvalue="Python tests.Python tests for unit_tests.BucketManagementTests" />
+      <item itemvalue="Python tests.Python tests for unit_tests.BucketManagementTests.test_non_responding_contact_delayed_eviction" />
+      <item itemvalue="Python tests.Python tests for unit_tests.BucketManagementTests.test_non_responding_contact_evicted" />
+      <item itemvalue="Python tests.Unittests for unit_tests" />
       <item itemvalue="Python tests.Python tests in unit_tests.py" />
-      <item itemvalue="Python tests.Unittests for unit_tests.TCPSubnetTests" />
-      <item itemvalue="Python tests.Unittests for unit_tests.TCPSubnetTests.test_find_value_router" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python tests.Unittests for unit_tests.TCPSubnetTests.test_find_value_router" />
-        <item itemvalue="Python tests.Unittests for unit_tests.TCPSubnetTests" />
         <item itemvalue="Python tests.Python tests in unit_tests.py" />
-        <item itemvalue="Python tests.Python tests for unit_tests.Chapter10Tests.test_new_contact_gets_stored_contacts" />
-        <item itemvalue="Python tests.Python tests for unit_tests.DHTTest.test_value_propagates_to_closer_node" />
+        <item itemvalue="Python tests.Python tests for unit_tests.BucketManagementTests" />
+        <item itemvalue="Python tests.Python tests for unit_tests.BucketManagementTests.test_non_responding_contact_evicted" />
+        <item itemvalue="Python tests.Python tests for unit_tests.BucketManagementTests.test_non_responding_contact_delayed_eviction" />
+        <item itemvalue="Python tests.Unittests for unit_tests" />
       </list>
     </recent_temporary>
   </component>
@@ -293,7 +302,7 @@
       <workItem from="1707407536519" duration="5427000" />
       <workItem from="1707417530581" duration="74000" />
       <workItem from="1707417616721" duration="31000" />
-      <workItem from="1707417657318" duration="1845000" />
+      <workItem from="1707417657318" duration="8073000" />
     </task>
     <task id="LOCAL-00017" summary="done smth">
       <created>1703342554993</created>
@@ -624,14 +633,6 @@
       <option name="project" value="LOCAL" />
       <updated>1707062998360</updated>
     </task>
-    <task id="LOCAL-00125" summary="chore: linting">
-      <option name="closed" value="true" />
-      <created>1707412453950</created>
-      <option name="number" value="00125" />
-      <option name="presentableId" value="LOCAL-00125" />
-      <option name="project" value="LOCAL" />
-      <updated>1707412453950</updated>
-    </task>
     <task id="LOCAL-00126" summary="misc: adding UML">
       <option name="closed" value="true" />
       <created>1707417863076</created>
@@ -640,7 +641,15 @@
       <option name="project" value="LOCAL" />
       <updated>1707417863076</updated>
     </task>
-    <option name="localTasksCounter" value="127" />
+    <task id="LOCAL-00127" summary="misc: find value test almost works">
+      <option name="closed" value="true" />
+      <created>1707420362792</created>
+      <option name="number" value="00127" />
+      <option name="presentableId" value="LOCAL-00127" />
+      <option name="project" value="LOCAL" />
+      <updated>1707420362792</updated>
+    </task>
+    <option name="localTasksCounter" value="128" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -685,7 +694,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="misc: linting." />
     <MESSAGE value="feat: added shell (?) functions for some TCP requests." />
     <MESSAGE value="feat: added CommonRequest class + linting" />
     <MESSAGE value="fix: tried to get TypedDict requests working" />
@@ -710,13 +718,36 @@
     <MESSAGE value="misc: reformatted the file." />
     <MESSAGE value="chore: linting" />
     <MESSAGE value="misc: adding UML" />
-    <option name="LAST_COMMIT_MESSAGE" value="misc: adding UML" />
+    <MESSAGE value="misc: find value test almost works" />
+    <option name="LAST_COMMIT_MESSAGE" value="misc: find value test almost works" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/kademlia/buckets.py</url>
+          <line>220</line>
+          <option name="timeStamp" value="11" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/kademlia/buckets.py</url>
+          <line>222</line>
+          <option name="timeStamp" value="12" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/kademlia/buckets.py</url>
+          <line>235</line>
+          <option name="timeStamp" value="13" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests.coverage" NAME="Unittests for unit_tests Coverage Results" MODIFIED="1703352716012" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/P2P$Unittests_for_unit_tests_TCPSubnetTests.coverage" NAME="Unittests for unit_tests.TCPSubnetTests Coverage Results" MODIFIED="1707412564612" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/kademlia$PhysicsEngine.coverage" NAME="PhysicsEngine Coverage Results" MODIFIED="1707145834916" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="/media/gabriel/ZOLI/ProjectileMotion" />
     <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests_NodeLookupTests_test_get_close_contacts_ordered.coverage" NAME="Unittests for unit_tests.NodeLookupTests.test_get_close_contacts_ordered Coverage Results" MODIFIED="1703377308442" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/P2P$Unittests_for_unit_tests.coverage" NAME="Unittests for unit_tests Coverage Results" MODIFIED="1707423310316" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/P2P$scratch_2.coverage" NAME="scratch_2 Coverage Results" MODIFIED="1707161695169" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
     <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests_BootstrappingTests_test_bootstrap_outside_bootstrapping_bucket.coverage" NAME="Unittests for unit_tests.BootstrappingTests.test_bootstrap_outside_bootstrapping_bucket Coverage Results" MODIFIED="1704295201404" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/p2p$.coverage" NAME=" Coverage Results" MODIFIED="1706997881210" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -724,9 +755,11 @@
     <SUITE FILE_PATH="coverage/P2P$kademlia.coverage" NAME="kademlia Coverage Results" MODIFIED="1703796464653" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/p2p$scratch.coverage" NAME="scratch Coverage Results" MODIFIED="1706732795734" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
     <SUITE FILE_PATH="coverage/kademlia$networking.coverage" NAME="networking Coverage Results" MODIFIED="1707147615810" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/kademlia" />
-    <SUITE FILE_PATH="coverage/P2P$.coverage" NAME=" Coverage Results" MODIFIED="1707412489362" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/P2P$.coverage" NAME=" Coverage Results" MODIFIED="1707426950517" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/kademlia$.coverage" NAME=" Coverage Results" MODIFIED="1707148239761" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/P2P$pickler.coverage" NAME="pickler Coverage Results" MODIFIED="1707157848987" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/kademlia" />
-    <SUITE FILE_PATH="coverage/P2P$Unittests_for_unit_tests_TCPSubnetTests_test_find_value_router.coverage" NAME="Unittests for unit_tests.TCPSubnetTests.test_find_value_router Coverage Results" MODIFIED="1707420062476" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/P2P$Unittests_for_unit_tests_DHTTest.coverage" NAME="Unittests for unit_tests.DHTTest Coverage Results" MODIFIED="1707422153571" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/P2P$Unittests_for_unit_tests_TCPSubnetTests_test_find_value_router.coverage" NAME="Unittests for unit_tests.TCPSubnetTests.test_find_value_router Coverage Results" MODIFIED="1707422990568" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/P2P$Unittests_for_unit_tests_DHTTest_test_value_propagates_to_closer_node.coverage" NAME="Unittests for unit_tests.DHTTest.test_value_propagates_to_closer_node Coverage Results" MODIFIED="1707422122907" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

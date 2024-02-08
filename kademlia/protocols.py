@@ -245,7 +245,7 @@ class TCPSubnetProtocol(IProtocol):
         except Exception as e:
             rpc_error = RPCError(str(e))
             rpc_error.protocol_error = True
-            print(f"Error performing find_value: {rpc_error}")
+            print(f"[Client] Error performing find_value: {rpc_error}")
             return None, None, rpc_error
 
     def ping(self, sender: Contact) -> RPCError:
@@ -271,12 +271,12 @@ class TCPSubnetProtocol(IProtocol):
             print(f"[Client] Received HTTP Response from {ret.url} with code {ret.status_code}")
 
         except requests.Timeout as t:
-            print("Timeout error", t)
+            print("[Client] Ping timeout error: ", t)
             timeout_error = True
             error = t
 
         except Exception as e:
-            print("Exception!", e)
+            print("[ERROR] [Client] Other exception thrown (Ping): ", e)
             # request timed out.
             timeout_error = False
             error = e

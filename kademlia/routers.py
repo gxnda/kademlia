@@ -402,15 +402,15 @@ class ParallelRouter(BaseRouter):
 
         if find_result["found"]:
             # lock(find_result["found_contacts"]
-            with found_ret:
-                found_ret["found"] = True
-                found_ret["contacts"] = find_result["found_contacts"]
-                found_ret["found_by"] = find_result["found_by"]
-                found_ret["val"] = find_result["found_value"]
+            # lock found ret
+            found_ret["found"] = True
+            found_ret["contacts"] = find_result["found_contacts"]
+            found_ret["found_by"] = find_result["found_by"]
+            found_ret["val"] = find_result["found_value"]
 
         return find_result["found"], found_ret
 
-    def lookup(self, key: ID, rpc_call: Callable, give_me_all: bool = False) -> QueryReturn:  # TODO: Very much incomplete
+    def lookup(self, key: ID, rpc_call: Callable, give_me_all: bool = False) -> QueryReturn:
 
         if not isinstance(self.node, Node):
             raise TypeError("ParallelRouter must have instance node.")

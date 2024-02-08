@@ -635,7 +635,8 @@ class DHTTest(unittest.TestCase):
         key = ID.random_id()
         dht.store(key, "Test")
         found, contacts, return_val = dht.find_value(key)
-        self.assertTrue(return_val["value"] == "Test",
+        print(found, contacts, return_val)
+        self.assertTrue(return_val == "Test",
                         "Expected to get back what we stored.")
 
     def test_value_stored_in_closer_node(self):
@@ -678,7 +679,7 @@ class DHTTest(unittest.TestCase):
 
         # Try and find the value, given our Dht knows about the other contact.
         _, _, retval = dht.find_value(key)
-        self.assertTrue(retval["value"] == val,
+        self.assertTrue(retval == val,
                         "Expected to get back what we stored")
 
     def test_value_stored_in_further_node(self):
@@ -709,7 +710,7 @@ class DHTTest(unittest.TestCase):
                         "Expected other node to HAVE cached the key-value.")
 
         _, _, retval = dht.find_value(key)
-        self.assertTrue(retval["value"] == val,
+        self.assertTrue(retval == val,
                         "Expected to get back what we stored.")
 
     def test_value_stored_gets_propagated(self):
@@ -814,7 +815,7 @@ class DHTParallelTest(unittest.TestCase):
         vp.node = dht._router.node
         key = ID.random_id()
         dht.store(key, "Test")
-        return_val = dht.find_value(key)
+        _, _, return_val = dht.find_value(key)
 
         self.assertTrue(return_val == "Test",
                         "Expected to get back what we stored.")
@@ -888,7 +889,7 @@ class DHTParallelTest(unittest.TestCase):
         self.assertTrue(store2.contains(key),
                         "Expected other node to HAVE cached the key-value.")
 
-        retval: str = dht.find_value(key)[2]["value"]
+        retval: str = dht.find_value(key)[2]
         self.assertTrue(retval == val,
                         "Expected to get back what we stored.")
 
@@ -1167,15 +1168,17 @@ class BucketManagementTests(unittest.TestCase):
         # seen (they are added in chronological order.)
 
         non_responding_contact: Contact = bucket_list.buckets[1].contacts[0]
+        print(non_responding_contact.id)
         # Since the protocols are shared, we need to assign 
         # a unique protocol for this node for testing.
         vp_unresponding: VirtualProtocol = VirtualProtocol(
             non_responding_contact.protocol.node,
             False
         )
+        non_responding_contact.protocol = vp_unresponding
 
         next_new_contact = Contact(
-            ID(2 ** 159),
+            ID(2 ** 159 + 1),
             dht.our_contact.protocol
         )
 
@@ -1183,10 +1186,13 @@ class BucketManagementTests(unittest.TestCase):
         # Which will trigger the eviction algorithm.
 
         for _ in range(Constants.EVICTION_LIMIT):
-            bucket_list.add_contact(non_responding_contact)
+            bucket_list.add_contact(next_new_contact)
 
         self.assertTrue(len(bucket_list.buckets[1].contacts) == 20,
                         "Expected 20 contacts in bucket 1.")
+
+        self.assertTrue(len(bucket_list.buckets[0].contacts) == 1,
+                        f"Expected 1 contact in bucket 0, got {len(bucket_list.buckets[0].contacts)}.")
 
         # Verify can_split -> pending eviction happened
         self.assertTrue(len(dht.pending_contacts) == 0,
@@ -1229,14 +1235,19 @@ class BucketManagementTests(unittest.TestCase):
 
         # set up the next new contact (it can respond.)
         next_new_contact = Contact(
-            id=ID(2 ** 159),
+            id=ID(2 ** 159 + 1),
             protocol=dht.our_contact.protocol
         )
         bucket_list.add_contact(next_new_contact)
 
         self.assertTrue(len(bucket_list.buckets[1].contacts) == 20,
-                        "Expecting 20 contacts in bucket 1.")
+                        f"Expecting 20 contacts in bucket 1, got {len(bucket_list.buckets[0].contacts)}")
+
+        self.assertTrue(len(bucket_list.buckets[0].contacts) == 1,
+                        f"Expected 1 contact in bucket 0, got {len(bucket_list.buckets[0].contacts)}")
+
         # Verify can_split -> Evict happened.
+
         self.assertTrue(len(dht.pending_contacts) == 1,
                         "Expected one pending contact.")
         self.assertTrue(next_new_contact in dht.pending_contacts,
@@ -1542,9 +1553,9 @@ class TCPSubnetTests(unittest.TestCase):
 
         test_id = ID.random_id()
         test_value = "Test"
-        print("[Client] Store starting...")
+        print("[Unit test] Store starting...")
         p2.store(sender=c1, key=test_id, val=test_value)
-        print("[Client] Store done.")
+        print("[Unit test] Store done.")
         self.assertTrue(
             n2.storage.contains(test_id),
             "Expected remote peer to have value."
@@ -1555,13 +1566,13 @@ class TCPSubnetTests(unittest.TestCase):
             "Expected node to store the correct value."
         )
 
-        print("[Client] Find value starting...")
+        print("[Unit test] Find value starting...")
         contacts, val, error = p2.find_value(c1, test_id)
-        print("[Client] Find value received:", contacts, val, error)
-        print("[Client] Find value done.")
+        print("[Unit test] Find value received:", contacts, val, error)
+        print("[Unit test] Find value done.")
 
-        self.assertTrue(
-            contacts is None, "Expected to find value."  # huh?
+        self.assertFalse(
+            contacts, "Expected to find value."  # huh?
         )
 
         self.assertTrue(
