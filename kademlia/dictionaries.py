@@ -148,6 +148,6 @@ class StoreValue(TypedDict):
 
     expiration_time: int
     """
-    value: str
+    value: str | bytes
     republish_timestamp: datetime
     expiration_time: int

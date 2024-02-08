@@ -2,6 +2,7 @@ from datetime import datetime
 import json
 from typing import Optional
 
+from kademlia import pickler
 from kademlia.dictionaries import StoreValue
 from kademlia.id import ID
 from kademlia.interfaces import IStorage
@@ -140,3 +141,14 @@ class SecondaryStorage(IStorage):
                 ret = True
 
         return ret, val
+
+    def set_file(self, key: ID, filename: str, expiration_time_sec: int = 0) -> None:
+        with open(filename) as f:
+            file_data = f.read()
+            data_dict = {"filename": filename, "file_data": file_data}
+            encoded_data: bytes = pickler.plain_encode_data(data=data_dict)
+            self.set(
+                key=key,
+                value=encoded_data,
+                expiration_time_sec=expiration_time_sec
+            )

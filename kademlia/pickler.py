@@ -12,9 +12,34 @@ def encode_data(data: dict) -> bytes:
     return pickle.dumps(data)
 
 
+def plain_encode_data(data: dict) -> bytes:
+    """
+    Takes in a dictionary, encodes all values using pickle, in order to retain objects
+    over HTTP.
+    The dictionary is then converted to a string using json.dumps()
+    """
+    return pickle.dumps(data)
+
+
 def decode_data(encoded_data: bytes) -> dict:
     """
     Takes in a string, decodes all pickled byte strings of the string dictionary 
+    into python objects, and returns the decoded dictionary.
+    """
+    try:
+        if isinstance(encoded_data, bytes):
+            decoded_data = pickle.loads(encoded_data)
+        else:
+            raise TypeError(f"Encoded data should be type bytes, found type {type(encoded_data)}")
+
+    except Exception as error:
+        raise DataDecodingError("Error decoding data.") from error
+    return decoded_data
+
+
+def plain_decode_data(encoded_data: bytes) -> dict:
+    """
+    Takes in a string, decodes all pickled byte strings of the string dictionary
     into python objects, and returns the decoded dictionary.
     """
     try:
