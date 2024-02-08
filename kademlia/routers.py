@@ -308,7 +308,6 @@ class Router(BaseRouter):
         )
 
 
-
 class ParallelRouter(BaseRouter):
     def __init__(self, node: Node = None):
         # TODO: Should these be empty?
@@ -392,12 +391,7 @@ class ParallelRouter(BaseRouter):
         self.dequeue_remaining_work()
         self.stop_work = True
 
-    def parallel_found(self, find_result: FindResult) -> tuple[
-            type(FindResult["found"]),
-            bool,
-            type(FindResult["found_contacts"]),
-            type(FindResult["found_by"]),
-            type(FindResult["found_value"])]:
+    def parallel_found(self, find_result: FindResult, found_ret: QueryReturn) -> tuple[bool, QueryReturn]:
         """
         # TODO: Fix?
         :param find_result:
@@ -405,28 +399,30 @@ class ParallelRouter(BaseRouter):
         :return:
         """
         # lock(locker)
+
         if find_result["found"]:
             # lock(find_result["found_contacts"]
-            found_ret = (True, find_result["found_contacts"], find_result["found_by"], find_result["found_value"])
+            with found_ret:
+                found_ret["found"] = True
+                found_ret["contacts"] = find_result["found_contacts"]
+                found_ret["found_by"] = find_result["found_by"]
+                found_ret["val"] = find_result["found_value"]
 
-        return find_result["found"], True, find_result["found_contacts"], find_result["found_by"], find_result["found_value"]
+        return find_result["found"], found_ret
 
-    def lookup(self, key: ID, rpc_call: Callable, give_me_all: bool = False):  # TODO: Very much incomplete
+    def lookup(self, key: ID, rpc_call: Callable, give_me_all: bool = False) -> QueryReturn:  # TODO: Very much incomplete
 
         if not isinstance(self.node, Node):
             raise TypeError("ParallelRouter must have instance node.")
 
         stop_work: bool = False
         have_work: bool = True
-        find_result: FindResult = FindResult()
+        find_result: FindResult = FindResult(found=False, found_by=None, found_value="", found_contacts=[])
         ret: list[Contact] = []
         contacted_nodes: list[Contact] = []
         closer_contacts: list[Contact] = []
         further_contacts: list[Contact] = []
-        found: bool = False
-        contacts: list[Contact] = []
-        found_by: Optional[Contact] = None
-        val: str = ""
+        found_return = QueryReturn(found=False, found_by=None, val="", contacts=[])
 
         # TODO: Why do I do this?
         if TRY_CLOSEST_BUCKET:
@@ -491,8 +487,14 @@ class ParallelRouter(BaseRouter):
         while len(ret) < Constants.K and have_work:
             sleep(Constants.RESPONSE_WAIT_TIME)  # Should this be time.sleep or asyncio.sleep, or threading ?
 
-            found_return = self.parallel_found(find_result)
-            if found_return:
+            found, found_return = self.parallel_found(find_result, found_return)
+            if found:
+
+                # For unit testing
+                if DEBUG:
+                    closer_contacts_unit_test = closer_contacts
+                    further_contacts_unit_test = further_contacts
+
                 self.stop_remaining_work()
                 return found_return
 

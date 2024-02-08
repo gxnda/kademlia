@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import Callable, TypedDict
 
-from .contact import Contact
-from .id import ID
+from kademlia.contact import Contact
+from kademlia.id import ID
 
 
 class QueryReturn(TypedDict):
@@ -17,7 +17,7 @@ class QueryReturn(TypedDict):
 
 class FindResult(TypedDict):
     found: bool
-    found_by: Contact
+    found_by: Contact | None
     found_value: str
     found_contacts: list[Contact]
 
@@ -139,6 +139,15 @@ class StoreResponse(BaseResponse):
 
 
 class StoreValue(TypedDict):
+    """
+    Has attributes:
+
     value: str
+
+    republish_timestamp: datetime
+
+    expiration_time: int
+    """
+    value: str | bytes
     republish_timestamp: datetime
     expiration_time: int
