@@ -885,7 +885,7 @@ class DHTParallelTest(unittest.TestCase):
         self.assertTrue(store2.contains(key),
                         "Expected other node to HAVE cached the key-value.")
 
-        retval: str = dht.find_value(key)[2]
+        retval: str = dht.find_value(key)[2]["value"]
         self.assertTrue(retval == val,
                         "Expected to get back what we stored.")
 
@@ -1244,77 +1244,50 @@ class BucketManagementTests(unittest.TestCase):
 
 
 class Chapter10Tests(unittest.TestCase):
-    def TestNewContactGetsStoredContacts(self):
+    def test_new_contact_gets_stored_contacts(self):
         """
-        Storing key-values onto the new node when a new node registers.
+        Verify that we get stored values whose keys ^ contact ID are less than stored keys ^ other contacts.
 
         There’s a lot of setup here for creating two existing contacts and two 
         key-values whose IDs have been specifically set. See the comments for 
         the XOR distance “math.”
         """
-        existing: Node = Node(
-            contact=Contact(
-                id=ID.mid(),
-                protocol=None
-            ),
-            storage=VirtualStorage()
-        )
-        
-        val_1: str = "Value 1"
-        val_mid: str = "Value mid"
 
-        # The existing node stores two items, one with an ID "hash" of 1, the other
-        # with ID.max
+        # Set up a node at the midpoint
+        # The existing node haas the ID 10000...
+        existing: Node = Node(Contact(ID.mid(), None), VirtualStorage())
+        val_1 = "Value 1"
+        val_mid = "Value mid"
 
-        # simple storage, rather than executing the code for store.
+        # The existing node stores the 2 items, one with an ID "hash" of 1, the other with ID.max.
+        # Simple storage rather than executing the code for store.
         existing.simply_store(ID(1), val_1)
         existing.simply_store(ID.mid(), val_mid)
 
-        self.assertTrue(
-            len(existing.storage.get_keys()) == 2,
-            "Expected the existing node to have 2 key-values."
-        )
+        self.assertTrue(len(existing.storage.get_keys()) == 2,
+                        f"Expected the existing node to have 2 key-values. {existing.storage.get_keys()}")
 
-        # Create a contact in the existing node's bucket list that is 
-        # closer to one of the values.
-        # The contact has prefix 01000...
-        other_contact: Contact = Contact(
-            # TODO: should this be 2 ** 159?
-            id=ID(0).set_bit(158),
-            protocol=None
-        )
-        other: Node = Node(
-            contact=other_contact,
-            storage=VirtualStorage()
-        )
+        # Create a contact in the existing node's bucket list that is closer to one of the values.
+        # This contact has the prefix 0100000...
+        other_contact = Contact(ID(2 ** 158), None)
+        other = Node(other_contact, VirtualStorage())
         existing.bucket_list.buckets[0].contacts.append(other_contact)
-        # The unseen contact has a prefix 0110000...
-        unseenvp: VirtualProtocol = VirtualProtocol()
 
-        unseen_contact: Contact = Contact(
-            id=ID(0).set_bit(157),
-            protocol=unseenvp
-        )
+        # The unseen contact has prefix 0110000...
+        unseen_vp = VirtualProtocol()
+        unseen_contact = Contact(ID(2 ** 158 + 2 ** 157), unseen_vp)
+        unseen = Node(unseen_contact, VirtualStorage())
+        unseen_vp.node = unseen  # final fixup
 
-        unseen: Node = Node(
-            contact=unseen_contact,
-            storage=VirtualStorage()
-        )
+        self.assertTrue(len(unseen.storage.get_keys()) == 0, "The unseen node shouldn't have any key-values!")
 
-        unseenvp.node = unseen  # final fixup
+        # An unseen node pings, and we should get back val_min only as ID(1) ^ ID.mid() < ID.max() ^ ID.mid()
 
-        self.assertTrue(
-            len(unseen.storage.get_keys()) == 0,
-            "The unseen node shouldn't have any key-values."
-        )
-        # An unseen node pings, and we should get back val_min only.
-        # as ID(1) ^ ID.mid() < ID.max ^ ID.mid()
-        self.assertTrue(
-            ID(1) ^ ID.mid() < ID.max ^ ID.mid(),
-            "ID XORing is not working as intended."
-        )
+        self.assertTrue(ID(1) ^ ID.mid() < ID.max() ^ ID.mid(), (f"Fundamental issue with ID class. "
+                                                                 f"\n{ID(ID(1) ^ ID.mid()).bin()} \nvs "
+                                                                 f"\n{ID(ID.max() ^ ID.mid()).bin()}"))
+        existing.ping(unseen_contact)
 
-        existing.ping(sender=unseen_contact)
         # Contacts   V1        V2
         # 1000000 00...0001 10...0000
         # 0100000
@@ -1336,7 +1309,7 @@ class Chapter10Tests(unittest.TestCase):
 
         self.assertTrue(
             unseen.storage.get(ID.mid()) == val_mid,
-            "Expected val_mid value to match."
+            f"Expected val_mid value to match, got {unseen.storage.get(ID.mid())}"
         )
 
 

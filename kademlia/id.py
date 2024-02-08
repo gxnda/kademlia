@@ -113,7 +113,7 @@ class ID:
         returns middle of the road ID
         :return: middle ID.
         """
-        return ID(2**159)
+        return ID(2**159 - 1)  # Should this be  ID(2**159)? But then ID(1) ^ ID.mid() > ID.mid() ^ ID.max()
 
     @classmethod
     def min(cls):

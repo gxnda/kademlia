@@ -19,16 +19,16 @@ class VirtualStorage(IStorage):
         """
         return key.value in list(self._store.keys())
 
-    def get(self, key: ID | int) -> StoreValue:
+    def get(self, key: ID | int) -> str:
         """
         Returns stored value, associated with given key value.
         :param key: Type ID or Integer, key value to be searched.
         :return:
         """
         if isinstance(key, ID):
-            return self._store[key.value]
+            return self._store[key.value]["value"]
         elif isinstance(key, int):
-            return self._store[key]
+            return self._store[key]["value"]
         else:
             raise TypeError("'get()' parameter 'key' must be type ID or int.")
 
@@ -36,7 +36,9 @@ class VirtualStorage(IStorage):
         return self._store[key]["republish_timestamp"]
 
     def set(self, key: ID, value: str, expiration_time_sec: int = 0) -> None:
-        self._store[key.value] = StoreValue(value=value, expiration_time=expiration_time_sec)
+        self._store[key.value] = StoreValue(value=value,
+                                            expiration_time=expiration_time_sec,
+                                            republish_timestamp=datetime.now())
         self.touch(key.value)
 
     def get_expiration_time_sec(self, key: int) -> int:
