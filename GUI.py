@@ -1,19 +1,20 @@
-from subprocess import check_call
+import customtkinter as ctk
 
-
-try:
-    import customtkinter as ctk
-except ImportError:
-    check_call(["pip", "install", "customtkinter"])
-    import customtkinter as ctk
 
 """
 ├── User Interface
-│   ├── Main Menu
-│   ├── Download Menu
-│   ├── Upload Menu
-│   ├── Search Menu
-│   └── Shared Files Menu
+│   ├── Join
+│   │   ├── Settings
+│   │   ├── Load an existing network
+│   │   └── Bootstrap into a new network
+│   ├── Main menu
+│   │   ├── Settings
+│   │   ├── Download a file
+│   │   ├── Add a file for upload
+│   │   ├── Remove a file for upload
+│   │   ├── Leave network
+│   │   └── Search using key
+
 
 open UserInterface(), then check if the user is in a network already or not
 - the k-buckets are stored in a JSON file, which is used to check this, 
