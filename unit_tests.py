@@ -1557,6 +1557,7 @@ class TCPSubnetTests(unittest.TestCase):
 
         print("[Client] Find value starting...")
         contacts, val, error = p2.find_value(c1, test_id)
+        print("[Client] Find value received:", contacts, val, error)
         print("[Client] Find value done.")
 
         self.assertTrue(

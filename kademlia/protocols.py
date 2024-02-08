@@ -163,7 +163,7 @@ class TCPSubnetProtocol(IProtocol):
             print("[Client] Exception thrown: ", e)
             return None, error
 
-    def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, str | None, RPCError]:
+    def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, str | None, RPCError | None]:
         """
         Attempt to find the value in the peer network.
 
@@ -218,27 +218,30 @@ class TCPSubnetProtocol(IProtocol):
             ret_decoded = pickler.decode_data(encoded_data)
 
         try:
-            print("trying")
             contacts = []
             if ret_decoded:
                 if ret_decoded["contacts"]:
                     for c in ret_decoded["contacts"]:
-                        print(c)
                         new_contact = Contact(
                             c["protocol"],  # instantiate_protocol
                             ID(c["contact"])
                         )
                         contacts.append(new_contact)
                         print("about to return")
-                        return [c for c in contacts if c.protocol is not None], \
-                            ret_decoded["value"], \
-                            get_rpc_error(
-                                random_id, ret_decoded, timeout_error, ErrorResponse(
-                                    random_id=random_id.value,
-                                    error_message=str(error))
-                            )
-                else:
-                    return [], ""
+
+                return [c for c in contacts if c.protocol is not None], \
+                    ret_decoded["value"], \
+                    get_rpc_error(
+                        random_id, ret_decoded, timeout_error, ErrorResponse(
+                            random_id=random_id.value,
+                            error_message=str(error))
+                    )
+            else:
+                return [c for c in contacts if c.protocol is not None], "", get_rpc_error(
+                        random_id, ret_decoded, timeout_error, ErrorResponse(
+                            random_id=random_id.value,
+                            error_message=str(error))
+                    )
         except Exception as e:
             rpc_error = RPCError(str(e))
             rpc_error.protocol_error = True

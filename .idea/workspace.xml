@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="chore: linting">
+    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="misc: adding UML">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kademlia/networking.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/networking.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/kademlia/protocols.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/protocols.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/unit_tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/unit_tests.py" afterDir="false" />
     </list>
@@ -294,6 +293,7 @@
       <workItem from="1707407536519" duration="5427000" />
       <workItem from="1707417530581" duration="74000" />
       <workItem from="1707417616721" duration="31000" />
+      <workItem from="1707417657318" duration="1845000" />
     </task>
     <task id="LOCAL-00017" summary="done smth">
       <created>1703342554993</created>
@@ -624,14 +624,6 @@
       <option name="project" value="LOCAL" />
       <updated>1707062998360</updated>
     </task>
-    <task id="LOCAL-00124" summary="misc: reformatted the file.">
-      <option name="closed" value="true" />
-      <created>1707411636655</created>
-      <option name="number" value="00124" />
-      <option name="presentableId" value="LOCAL-00124" />
-      <option name="project" value="LOCAL" />
-      <updated>1707411636655</updated>
-    </task>
     <task id="LOCAL-00125" summary="chore: linting">
       <option name="closed" value="true" />
       <created>1707412453950</created>
@@ -640,7 +632,15 @@
       <option name="project" value="LOCAL" />
       <updated>1707412453950</updated>
     </task>
-    <option name="localTasksCounter" value="126" />
+    <task id="LOCAL-00126" summary="misc: adding UML">
+      <option name="closed" value="true" />
+      <created>1707417863076</created>
+      <option name="number" value="00126" />
+      <option name="presentableId" value="LOCAL-00126" />
+      <option name="project" value="LOCAL" />
+      <updated>1707417863076</updated>
+    </task>
+    <option name="localTasksCounter" value="127" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -685,7 +685,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="misc: DHT._node is no longer protected + linting." />
     <MESSAGE value="misc: linting." />
     <MESSAGE value="feat: added shell (?) functions for some TCP requests." />
     <MESSAGE value="feat: added CommonRequest class + linting" />
@@ -710,7 +709,8 @@
     <MESSAGE value="fix: fixed test_new_contact_gets_stored_contacts" />
     <MESSAGE value="misc: reformatted the file." />
     <MESSAGE value="chore: linting" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore: linting" />
+    <MESSAGE value="misc: adding UML" />
+    <option name="LAST_COMMIT_MESSAGE" value="misc: adding UML" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests.coverage" NAME="Unittests for unit_tests Coverage Results" MODIFIED="1703352716012" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -727,6 +727,6 @@
     <SUITE FILE_PATH="coverage/P2P$.coverage" NAME=" Coverage Results" MODIFIED="1707412489362" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/kademlia$.coverage" NAME=" Coverage Results" MODIFIED="1707148239761" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/P2P$pickler.coverage" NAME="pickler Coverage Results" MODIFIED="1707157848987" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/kademlia" />
-    <SUITE FILE_PATH="coverage/P2P$Unittests_for_unit_tests_TCPSubnetTests_test_find_value_router.coverage" NAME="Unittests for unit_tests.TCPSubnetTests.test_find_value_router Coverage Results" MODIFIED="1707416485825" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/P2P$Unittests_for_unit_tests_TCPSubnetTests_test_find_value_router.coverage" NAME="Unittests for unit_tests.TCPSubnetTests.test_find_value_router Coverage Results" MODIFIED="1707420062476" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
