@@ -30,10 +30,18 @@ class GUI(ctk.CTk):
         self.geometry("600x500")
         self.title("Kademlia")
         # self.set_appearance_mode("dark")
-        settings_icon = ctk.CTkImage(file=r"assets/settings_icon.png", width=50, height=50)
-        self.settings_button = ctk.CTkButton(self, image=settings_icon, text="", bg_color="transparent")
+        dark_icon = Image.open(r"assets/settings_icon_light.png")
+        light_icon = Image.open(r"assets/settings_icon_dark.png")
+        settings_icon = ctk.CTkImage(light_image=light_icon, dark_image=dark_icon, size=(30, 30))
+        self.settings_button = ctk.CTkButton(self, image=settings_icon, text="",
+                                             bg_color="transparent", fg_color="transparent",
+                                             width=28, command=self.open_settings)
         self.load_join_window()
         self.add_settings()
+
+    def open_settings(self):
+        # TODO: Create
+        pass
 
     def add_settings(self):
         self.settings_button.pack(side=ctk.RIGHT, anchor=ctk.SE, padx=10, pady=10)
