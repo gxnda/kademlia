@@ -1,6 +1,9 @@
+from socket import gethostname
+
 import customtkinter as ctk
 from PIL import Image
 
+import kademlia as k
 
 """
 ├── User Interface
@@ -23,13 +26,44 @@ and if the user is not in a network, the user is prompted to join a network.
 """
 
 
-class GUI(ctk.CTk):
-    def __init__(self):
+class KademliaFonts:
+    pass
+
+
+class Settings(ctk.CTk):
+    def __init__(self, dht: k.dht.DHT, appearance_mode="dark"):
+        super().__init__()
+        ctk.set_appearance_mode(appearance_mode)
+
+        self.dht: k.dht.DHT = dht
+
+        self.geometry("600x300")
+        self.title("Kademlia Settings")
+
+        self.export_dht_button = ctk.CTkButton(self, text="Export", command=self.export_dht)
+        self.export_dht_button.pack(padx=20, pady=10)
+
+        self.view_contact_button = ctk.CTkButton(self, text="View our contact", command=self.view_contact)
+        self.view_contact_button.pack(padx=20, pady=10)
+
+    def export_dht(self):
+        # TODO: Create
+        pass
+
+    def view_contact(self):
+        # TODO: Create
+        pass
+
+
+class MainGUI(ctk.CTk):
+    def __init__(self, appearance_mode="dark"):
         ctk.CTk.__init__(self)
+
+        self.initialise_kademlia()
 
         self.geometry("600x500")
         self.title("Kademlia")
-        # self.set_appearance_mode("dark")
+        ctk.set_appearance_mode(appearance_mode)
         dark_icon = Image.open(r"assets/settings_icon_light.png")
         light_icon = Image.open(r"assets/settings_icon_dark.png")
         settings_icon = ctk.CTkImage(light_image=light_icon, dark_image=dark_icon, size=(30, 30))
@@ -37,19 +71,45 @@ class GUI(ctk.CTk):
                                              bg_color="transparent", fg_color="transparent",
                                              width=28, command=self.open_settings)
         self.load_join_window()
-        self.add_settings()
+        self.add_settings_icon()
+
+    def initialise_kademlia(self):
+        print("[Initialisation] Initialising Kademlia")
+
+        our_id = k.id.ID.random_id()
+        our_ip = gethostname()
+        print(f"[Initialisation] Our hostname is {our_ip}.")
+
+        valid_port = None
+        for port in range(10000, 30000):
+            if k.networking.port_is_free(port):
+                valid_port = port
+                break
+        if not valid_port:
+            raise OSError("No ports free!")
+
+        print(f"[Initialisation] Port free at {valid_port}, creating us here.")
+
+        protocol = k.protocols.TCPSubnetProtocol(
+            url=our_ip, port=valid_port
+        )
+
+        self.dht = k.dht.DHT(
+            id=our_id
+            protocol=
+        )
 
     def open_settings(self):
-        # TODO: Create
+        settings_window = Settings(dht=self.dht)
         pass
 
-    def add_settings(self):
+    def add_settings_icon(self):
         self.settings_button.pack(side=ctk.RIGHT, anchor=ctk.SE, padx=10, pady=10)
 
     def clear_screen(self):
         for child in self.winfo_children():
             child.destroy()
-        self.add_settings()
+        self.add_settings_icon()
 
     def load_join_window(self):
         join = JoinWindow(parent=self)
@@ -63,29 +123,23 @@ class JoinWindow(ctk.CTkFrame):
           ├── Load an existing network
           └── Bootstrap into a new network
     """
-    def __init__(self, parent: GUI, **kwargs):
+    def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
         ctk.CTkFrame.__init__(self, parent, **kwargs)
 
-        self.configure(fg_color="transparent")
+        self.configure(fg_color=fg_color)
 
         join_title = ctk.CTkLabel(master=self, text="Join a Network", font=("Aharoni", 20, "bold"))
         join_title.pack(padx=50, pady=20)
 
-        self.settings_button = ctk.CTkButton(master=self, text="Settings", command=self.handle_settings_click)
-        # self.settings_button.grid(row=2, column=1, padx=5, pady=10)
-        self.settings_button.pack(padx=50, pady=10)
-
-        self.load_button = ctk.CTkButton(master=self, text="Load an existing network", command=self.handle_load_click)
+        self.load_button = ctk.CTkButton(master=self, text="Load an existing network",
+                                         command=self.handle_load_click)
         # self.load_button.grid(row=3, column=1, padx=5, pady=10)
         self.load_button.pack(padx=50, pady=10)
 
-        self.bootstrap_button = ctk.CTkButton(master=self, text="Join a new network", command=self.handle_bootstrap_click)
+        self.bootstrap_button = ctk.CTkButton(master=self, text="Join a new network",
+                                              command=self.handle_bootstrap_click)
         # self.bootstrap_button.grid(row=4, column=1, padx=5, pady=10)
         self.bootstrap_button.pack(padx=50, pady=10)
-
-    def handle_settings_click(self):
-        # TODO: Create.
-        pass
 
     def handle_load_click(self):
         # TODO: Create
@@ -113,7 +167,8 @@ class BootstrapFrame(ctk.CTkFrame):
         self.port_entry = ctk.CTkEntry(master=self, width=150)
         self.port_entry.grid(row=1, column=1, padx=5, pady=10, sticky="ew")
 
-        self.connect_button = ctk.CTkButton(master=self, text="Connect", command=self.bootstrap)
+        self.connect_button = ctk.CTkButton(master=self, text="Connect",
+                                            command=self.bootstrap)
         self.connect_button.grid(row=2, column=1, padx=5,pady=10)
     
 
@@ -127,5 +182,5 @@ if __name__ == "__main__":
     # app.load_bootstrap_window()
     # app.mainloop()
 
-    app = GUI()
+    app = MainGUI("light")
     app.mainloop()
