@@ -4,11 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="feat: Added TCPServer, HTTPRequestHandler, and expanded on GUI">
+    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="feat: added DHT initialisation">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/GUI.py" beforeDir="false" afterPath="$PROJECT_DIR$/GUI.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kademlia/dht.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/dht.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kademlia/storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/kademlia/storage.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -147,7 +145,7 @@
       <recent name="C:\Users\gabri\PycharmProjects\P2P\kademlia" />
     </key>
   </component>
-  <component name="RunManager" selected="Python tests.Python tests for unit_tests.TCPSubnetTests">
+  <component name="RunManager" selected="Python.GUI">
     <configuration name="GUI" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="P2P-System" />
       <option name="ENV_FILES" value="" />
@@ -268,8 +266,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests" />
         <item itemvalue="Python.GUI" />
+        <item itemvalue="Python tests.Python tests for unit_tests.TCPSubnetTests" />
         <item itemvalue="Python tests.Python tests in unit_tests.py" />
         <item itemvalue="Python tests.Python tests for unit_tests.BucketManagementTests" />
         <item itemvalue="Python tests.Python tests for unit_tests.BucketManagementTests.test_non_responding_contact_evicted" />
@@ -311,7 +309,7 @@
       <workItem from="1707417530581" duration="74000" />
       <workItem from="1707417616721" duration="31000" />
       <workItem from="1707417657318" duration="8073000" />
-      <workItem from="1707502586799" duration="11205000" />
+      <workItem from="1707502586799" duration="13098000" />
     </task>
     <task id="LOCAL-00017" summary="done smth">
       <created>1703342554993</created>
@@ -642,14 +640,6 @@
       <option name="project" value="LOCAL" />
       <updated>1707062998360</updated>
     </task>
-    <task id="LOCAL-00133" summary="feat: settings icon works">
-      <option name="closed" value="true" />
-      <created>1707509055983</created>
-      <option name="number" value="00133" />
-      <option name="presentableId" value="LOCAL-00133" />
-      <option name="project" value="LOCAL" />
-      <updated>1707509055983</updated>
-    </task>
     <task id="LOCAL-00134" summary="feat: Added TCPServer, HTTPRequestHandler, and expanded on GUI">
       <option name="closed" value="true" />
       <created>1707514142412</created>
@@ -658,7 +648,15 @@
       <option name="project" value="LOCAL" />
       <updated>1707514142412</updated>
     </task>
-    <option name="localTasksCounter" value="135" />
+    <task id="LOCAL-00135" summary="feat: added DHT initialisation">
+      <option name="closed" value="true" />
+      <created>1707516034442</created>
+      <option name="number" value="00135" />
+      <option name="presentableId" value="LOCAL-00135" />
+      <option name="project" value="LOCAL" />
+      <updated>1707516034442</updated>
+    </task>
+    <option name="localTasksCounter" value="136" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -703,7 +701,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="I PUT IT ALL IN THE WRONG BRANCH OMG" />
     <MESSAGE value="feat: added lots of missing functions, such as KBucket.evict_contact() and DHT.evict_contact()" />
     <MESSAGE value="feat: removed all redundant functions in Router - they already existed in BaseRouter" />
     <MESSAGE value="feat: created threading.Timer(), and renamed queue to my_queues to prevent import errors." />
@@ -728,7 +725,8 @@
     <MESSAGE value="misc: updating GUI" />
     <MESSAGE value="feat: settings icon works" />
     <MESSAGE value="feat: Added TCPServer, HTTPRequestHandler, and expanded on GUI" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: Added TCPServer, HTTPRequestHandler, and expanded on GUI" />
+    <MESSAGE value="feat: added DHT initialisation" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: added DHT initialisation" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -756,7 +754,7 @@
     <SUITE FILE_PATH="coverage/P2P$Unittests_for_unit_tests_TCPSubnetTests.coverage" NAME="Unittests for unit_tests.TCPSubnetTests Coverage Results" MODIFIED="1707412564612" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/kademlia$PhysicsEngine.coverage" NAME="PhysicsEngine Coverage Results" MODIFIED="1707145834916" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="/media/gabriel/ZOLI/ProjectileMotion" />
     <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests_NodeLookupTests_test_get_close_contacts_ordered.coverage" NAME="Unittests for unit_tests.NodeLookupTests.test_get_close_contacts_ordered Coverage Results" MODIFIED="1703377308442" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/P2P$GUI.coverage" NAME="GUI Coverage Results" MODIFIED="1707510668624" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/P2P$GUI.coverage" NAME="GUI Coverage Results" MODIFIED="1707516974783" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/P2P$Unittests_for_unit_tests.coverage" NAME="Unittests for unit_tests Coverage Results" MODIFIED="1707423310316" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/P2P$scratch_2.coverage" NAME="scratch_2 Coverage Results" MODIFIED="1707161695169" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
     <SUITE FILE_PATH="coverage/p2p$Unittests_for_unit_tests_BootstrappingTests_test_bootstrap_outside_bootstrapping_bucket.coverage" NAME="Unittests for unit_tests.BootstrappingTests.test_bootstrap_outside_bootstrapping_bucket Coverage Results" MODIFIED="1704295201404" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

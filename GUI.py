@@ -4,7 +4,7 @@ from socket import gethostname
 import customtkinter as ctk
 from PIL import Image
 
-import kademlia as k
+from kademlia import dht, id, networking, protocols, node, contact, storage, routers
 
 """
 ├── User Interface
@@ -32,14 +32,17 @@ class KademliaFonts:
 
 
 class Settings(ctk.CTk):
-    def __init__(self, dht: k.dht.DHT, appearance_mode="dark"):
+    def __init__(self, hash_table: dht.DHT, appearance_mode="dark"):
         super().__init__()
         ctk.set_appearance_mode(appearance_mode)
 
-        self.dht: k.dht.DHT = dht
+        self.dht: dht.DHT = hash_table
 
-        self.geometry("600x300")
+        self.geometry("200x200")
         self.title("Kademlia Settings")
+
+        self.settings_title = ctk.CTkLabel(self, text="Settings", font=("Aharoni", 20, "bold"))
+        self.settings_title.pack(padx=20, pady=30)
 
         self.export_dht_button = ctk.CTkButton(self, text="Export", command=self.export_dht)
         self.export_dht_button.pack(padx=20, pady=10)
@@ -48,7 +51,7 @@ class Settings(ctk.CTk):
         self.view_contact_button.pack(padx=20, pady=10)
 
     def export_dht(self):
-        # TODO: Create
+        self.dht.save
         pass
 
     def view_contact(self):
@@ -59,11 +62,13 @@ class Settings(ctk.CTk):
 class MainGUI(ctk.CTk):
     def __init__(self, appearance_mode="dark"):
         ctk.CTk.__init__(self)
+        self.appearance_mode = appearance_mode
+        self.geometry("600x500")
+        self.title("Kademlia")
 
         self.initialise_kademlia()
 
-        self.geometry("600x500")
-        self.title("Kademlia")
+        print(self.dht.__dict__)
         ctk.set_appearance_mode(appearance_mode)
         dark_icon = Image.open(r"assets/settings_icon_light.png")
         light_icon = Image.open(r"assets/settings_icon_dark.png")
@@ -84,13 +89,13 @@ class MainGUI(ctk.CTk):
         #     (Should still work for external references, just a bit iffy)
         print("[Initialisation] Initialising Kademlia.")
 
-        our_id = k.id.ID.random_id()
+        our_id = id.ID.random_id()
         our_ip = gethostname()
         print(f"[Initialisation] Our hostname is {our_ip}.")
 
         valid_port = None
         for port in range(10000, 30000):
-            if k.networking.port_is_free(port):
+            if networking.port_is_free(port):
                 valid_port = port
                 break
         if not valid_port:
@@ -98,31 +103,35 @@ class MainGUI(ctk.CTk):
 
         print(f"[Initialisation] Port free at {valid_port}, creating our node here.")
 
-        protocol = k.protocols.TCPSubnetProtocol(
+        protocol = protocols.TCPSubnetProtocol(
             url=our_ip, port=valid_port, subnet=1
         )
 
-        our_node = k.node.Node(
-            contact=k.contact.Contact(
+        our_node = node.Node(
+            contact=contact.Contact(
                 id=our_id,
                 protocol=protocol
             ),
-            storage=k.storage.SecondaryStorage(f"{our_id.value}/node.json"),
-            cache_storage=k.storage.VirtualStorage()
+            storage=storage.SecondaryStorage(f"{our_id.value}/node.json"),
+            cache_storage=storage.VirtualStorage()
         )
 
-        self.dht = k.dht.DHT(
+        self.dht: dht.DHT = dht.DHT(
             id=our_id,
             protocol=protocol,
-            originator_storage=k.storage.SecondaryStorage(f"{our_id.value}/originator_storage.json"),
-            republish_storage=k.storage.SecondaryStorage(f"{our_id.value}/republish_storage.json"),
-            cache_storage=k.storage.VirtualStorage(),
-            router=k.routers.ParallelRouter(our_node)
+            originator_storage=storage.SecondaryStorage(f"{our_id.value}/originator_storage.json"),
+            republish_storage=storage.SecondaryStorage(f"{our_id.value}/republish_storage.json"),
+            cache_storage=storage.VirtualStorage(),
+            router=routers.ParallelRouter(our_node)
         )
 
     def open_settings(self):
-        settings_window = Settings(dht=self.dht)
-        settings_thread = threading.Thread(target=settings_window.mainloop)
+        settings_window = Settings(hash_table=self.dht, appearance_mode=self.appearance_mode)
+        settings_window.mainloop()
+
+    def thread_open_settings(self):
+        settings_thread = threading.Thread(target=self.open_settings, daemon=True)
+        settings_thread.daemon = True  # Dies when program ends.
         settings_thread.start()
 
     def add_settings_icon(self):
@@ -177,11 +186,11 @@ class BootstrapFrame(ctk.CTkFrame):
         
         ctk.CTkFrame.__init__(self, root, **kwargs)
         
-        IP_text = ctk.CTkLabel(master=self, text="IP Address: ")
-        IP_text.grid(row=0, column=0, padx=5, pady=10, sticky="nsew")
+        ip_text = ctk.CTkLabel(master=self, text="IP Address: ")
+        ip_text.grid(row=0, column=0, padx=5, pady=10, sticky="nsew")
         
         self.IP_entry = ctk.CTkEntry(master=self, width=150)
-        self.IP_entry.grid(row=0, column=1, padx=5,pady=10, sticky="ew")
+        self.IP_entry.grid(row=0, column=1, padx=5, pady=10, sticky="ew")
 
         port_text = ctk.CTkLabel(master=self, text="Port: ")
         port_text.grid(row=1, column=0, padx=5, pady=10, sticky="nsew")
@@ -191,7 +200,7 @@ class BootstrapFrame(ctk.CTkFrame):
 
         self.connect_button = ctk.CTkButton(master=self, text="Connect",
                                             command=self.bootstrap)
-        self.connect_button.grid(row=2, column=1, padx=5,pady=10)
+        self.connect_button.grid(row=2, column=1, padx=5, pady=10)
 
     def bootstrap(self):
         """Attempts to bootstrap Kademlia connection from a given IP and port number"""
@@ -205,3 +214,4 @@ if __name__ == "__main__":
 
     app = MainGUI("light")
     app.mainloop()
+    print("Done!")
