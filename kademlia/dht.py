@@ -3,17 +3,17 @@ import threading
 from datetime import datetime, timedelta
 from typing import Callable, Optional
 
-from . import helpers
-from .buckets import KBucket
-from .constants import Constants
-from .contact import Contact
-from .dictionaries import QueryReturn, StoreValue
-from .errors import BucketDoesNotContainContactToEvictError, RPCError
-from .id import ID
-from .interfaces import IProtocol, IStorage
-from .node import Node
-from .routers import BaseRouter
-from .storage import VirtualStorage
+from kademlia import helpers
+from kademlia.buckets import KBucket
+from kademlia.constants import Constants
+from kademlia.contact import Contact
+from kademlia.dictionaries import QueryReturn, StoreValue
+from kademlia.errors import BucketDoesNotContainContactToEvictError, RPCError
+from kademlia.id import ID
+from kademlia.interfaces import IProtocol, IStorage
+from kademlia.node import Node
+from kademlia.routers import BaseRouter
+from kademlia.storage import VirtualStorage, SecondaryStorage
 
 
 class DHT:
@@ -52,7 +52,7 @@ class DHT:
         the originator_storage to be a SQL database, and the republish store to be a
         key-value database.
 
-        :param id: ID associated with the DHT. TODO: More info.
+        :param id: ID associated with the DHT.
 
         :param protocol: Protocol implemented by the DHT.
 
@@ -60,19 +60,23 @@ class DHT:
         if specific mechanisms are not provided.
 
         :param originator_storage: Pre-existing storage object to be used for main
-        storage. TODO: Is this right?
+        storage.
 
         :param republish_storage: This contains key-values that have been republished
-        by other peers. TODO: Is this right?
+        by other peers.
 
         :param cache_storage: Short term storage.
 
-        :param router: Router object associated with the DHT. TODO: Is this right?
+        :param router: Router object associated with the DHT.
         """
 
         if originator_storage:
             self._originator_storage = originator_storage
         elif storage_factory:
+            # if storage_factory == SecondaryStorage:
+            #     self._originator_storage = storage_factory(
+            #         filename=f"{id.value}/originator_storage.json")
+            # else:
             self._originator_storage = storage_factory()
         else:
             raise TypeError(
@@ -82,6 +86,10 @@ class DHT:
         if republish_storage:
             self._republish_storage = republish_storage
         elif storage_factory:
+            # if storage_factory == SecondaryStorage:
+            #     self._republish_storage = storage_factory(
+            #         filename=f"{id.value}/republish_storage.json")
+            # else:
             self._republish_storage = storage_factory()
         else:
             raise TypeError(
@@ -91,6 +99,10 @@ class DHT:
         if cache_storage:
             self._cache_storage = cache_storage
         elif storage_factory:
+            # if storage_factory == SecondaryStorage:
+            #     self._cache_storage = storage_factory(
+            #         filename=f"{id.value}/cache_storage.json")
+            # else:
             self._cache_storage = storage_factory()
         else:
             raise TypeError(

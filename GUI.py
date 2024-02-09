@@ -1,3 +1,4 @@
+import threading
 from socket import gethostname
 
 import customtkinter as ctk
@@ -74,7 +75,14 @@ class MainGUI(ctk.CTk):
         self.add_settings_icon()
 
     def initialise_kademlia(self):
-        print("[Initialisation] Initialising Kademlia")
+        """
+        Initialises Kademlia protocol.
+        :return:
+        """
+        # TODO: This still uses kademlia.networking.TCPSubnetProtocol,
+        #     kademlia.networking.TCPProtocol will be ideal in the future.
+        #     (Should still work for external references, just a bit iffy)
+        print("[Initialisation] Initialising Kademlia.")
 
         our_id = k.id.ID.random_id()
         our_ip = gethostname()
@@ -88,20 +96,34 @@ class MainGUI(ctk.CTk):
         if not valid_port:
             raise OSError("No ports free!")
 
-        print(f"[Initialisation] Port free at {valid_port}, creating us here.")
+        print(f"[Initialisation] Port free at {valid_port}, creating our node here.")
 
         protocol = k.protocols.TCPSubnetProtocol(
-            url=our_ip, port=valid_port
+            url=our_ip, port=valid_port, subnet=1
+        )
+
+        our_node = k.node.Node(
+            contact=k.contact.Contact(
+                id=our_id,
+                protocol=protocol
+            ),
+            storage=k.storage.SecondaryStorage(f"{our_id.value}/node.json"),
+            cache_storage=k.storage.VirtualStorage()
         )
 
         self.dht = k.dht.DHT(
-            id=our_id
-            protocol=
+            id=our_id,
+            protocol=protocol,
+            originator_storage=k.storage.SecondaryStorage(f"{our_id.value}/originator_storage.json"),
+            republish_storage=k.storage.SecondaryStorage(f"{our_id.value}/republish_storage.json"),
+            cache_storage=k.storage.VirtualStorage(),
+            router=k.routers.ParallelRouter(our_node)
         )
 
     def open_settings(self):
         settings_window = Settings(dht=self.dht)
-        pass
+        settings_thread = threading.Thread(target=settings_window.mainloop)
+        settings_thread.start()
 
     def add_settings_icon(self):
         self.settings_button.pack(side=ctk.RIGHT, anchor=ctk.SE, padx=10, pady=10)
@@ -170,7 +192,6 @@ class BootstrapFrame(ctk.CTkFrame):
         self.connect_button = ctk.CTkButton(master=self, text="Connect",
                                             command=self.bootstrap)
         self.connect_button.grid(row=2, column=1, padx=5,pady=10)
-    
 
     def bootstrap(self):
         """Attempts to bootstrap Kademlia connection from a given IP and port number"""

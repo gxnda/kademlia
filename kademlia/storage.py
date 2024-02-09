@@ -76,6 +76,9 @@ class SecondaryStorage(IStorage):
         This suffers from the drawbacks of using the JSON library; it writes the entire JSON to memory to read it,
         this may lead to heap errors. TODO: Do something about this (ijson might work?)
 
+        Another drawback of this is that this will not be saved by DHT.save() - so all files stored inside this object
+        would be lost!  # TODO: Fix this.
+
         :param filename: Filename to save values to - must end in .json!
         """
         self.filename = filename
