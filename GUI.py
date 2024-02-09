@@ -24,25 +24,67 @@ and if the user is not in a network, the user is prompted to join a network.
 
 class GUI(ctk.CTk):
     def __init__(self):
-        super().__init__()
-        
+        ctk.CTk.__init__(self)
+
         self.geometry("600x500")
-        self.title("Kademlia P2P System")
+        self.title("Kademlia")
         # self.set_appearance_mode("dark")
+
+        self.load_join_window()
 
     def clear_screen(self):
         for child in self.winfo_children():
             child.destroy()
 
-    def load_bootstrap_window(self):
-        bootstrap = BootstrapFrame(self)
-        bootstrap.pack(padx=20, pady=20)
+    def load_join_window(self):
+        join = JoinWindow(parent=self)
+        join.pack(padx=20, pady=20)
+
+
+class JoinWindow(ctk.CTkFrame):
+    """
+      └── Join
+          ├── Settings
+          ├── Load an existing network
+          └── Bootstrap into a new network
+    """
+    def __init__(self, parent: GUI, **kwargs):
+        ctk.CTkFrame.__init__(self, parent, **kwargs)
+
+        self.configure(fg_color="transparent")
+
+        join_title = ctk.CTkLabel(master=self, text="Join a Network", font=("Aharoni", 20, "bold"))
+        join_title.pack(padx=50, pady=20)
+
+        self.settings_button = ctk.CTkButton(master=self, text="Settings", command=self.handle_settings_click)
+        # self.settings_button.grid(row=2, column=1, padx=5, pady=10)
+        self.settings_button.pack(padx=50, pady=10)
+
+        self.load_button = ctk.CTkButton(master=self, text="Load an existing network", command=self.handle_load_click)
+        # self.load_button.grid(row=3, column=1, padx=5, pady=10)
+        self.load_button.pack(padx=50, pady=10)
+
+        self.bootstrap_button = ctk.CTkButton(master=self, text="Join a new network", command=self.handle_bootstrap_click)
+        # self.bootstrap_button.grid(row=4, column=1, padx=5, pady=10)
+        self.bootstrap_button.pack(padx=50, pady=10)
+
+    def handle_settings_click(self):
+        # TODO: Create.
+        pass
+
+    def handle_load_click(self):
+        # TODO: Create
+        pass
+
+    def handle_bootstrap_click(self):
+        # TODO: Create
+        pass
 
 
 class BootstrapFrame(ctk.CTkFrame):
     def __init__(self, root, **kwargs):
         
-        super().__init__(root, **kwargs)
+        ctk.CTkFrame.__init__(self, root, **kwargs)
         
         IP_text = ctk.CTkLabel(master=self, text="IP Address: ")
         IP_text.grid(row=0, column=0, padx=5, pady=10, sticky="nsew")
@@ -50,23 +92,25 @@ class BootstrapFrame(ctk.CTkFrame):
         self.IP_entry = ctk.CTkEntry(master=self, width=150)
         self.IP_entry.grid(row=0, column=1, padx=5,pady=10, sticky="ew")
 
-
-        port_text = ctk.CTkLabel(master=self, text="Port (optional): ")
+        port_text = ctk.CTkLabel(master=self, text="Port: ")
         port_text.grid(row=1, column=0, padx=5, pady=10, sticky="nsew")
 
         self.port_entry = ctk.CTkEntry(master=self, width=150)
         self.port_entry.grid(row=1, column=1, padx=5, pady=10, sticky="ew")
 
-        self.connect_button = ctk.CTkButton(master=self, text="Connect", command=self._connect)
+        self.connect_button = ctk.CTkButton(master=self, text="Connect", command=self.bootstrap)
         self.connect_button.grid(row=2, column=1, padx=5,pady=10)
     
 
-    def _connect(self):
+    def bootstrap(self):
         """Attempts to bootstrap Kademlia connection from a given IP and port number"""
         print("[GUI] Connecting to bootstrap server...")
 
 
 if __name__ == "__main__":
+    # app = GUI()
+    # app.load_bootstrap_window()
+    # app.mainloop()
+
     app = GUI()
-    app.load_bootstrap_window()
     app.mainloop()
