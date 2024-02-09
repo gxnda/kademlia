@@ -1,4 +1,5 @@
 import customtkinter as ctk
+from PIL import Image
 
 
 """
@@ -29,12 +30,18 @@ class GUI(ctk.CTk):
         self.geometry("600x500")
         self.title("Kademlia")
         # self.set_appearance_mode("dark")
-
+        settings_icon = ctk.CTkImage(file=r"assets/settings_icon.png", width=50, height=50)
+        self.settings_button = ctk.CTkButton(self, image=settings_icon, text="", bg_color="transparent")
         self.load_join_window()
+        self.add_settings()
+
+    def add_settings(self):
+        self.settings_button.pack(side=ctk.RIGHT, anchor=ctk.SE, padx=10, pady=10)
 
     def clear_screen(self):
         for child in self.winfo_children():
             child.destroy()
+        self.add_settings()
 
     def load_join_window(self):
         join = JoinWindow(parent=self)
