@@ -230,6 +230,9 @@ class MainGUI(ctk.CTk):
             router=routers.ParallelRouter(our_node)
         )
 
+        self.server = networking.TCPSubnetServer((our_ip, valid_port))
+        self.server.thread_start()
+
     def open_settings(self):
         settings_window = Settings(hash_table=self.dht, appearance_mode=self.appearance_mode)
         settings_window.mainloop()
@@ -405,7 +408,7 @@ class BootstrapFromJSON(ctk.CTkFrame):
             if known_url and known_port and known_url:
                 BootstrapFrame.bootstrap(
                     parent=self.parent,
-                    known_id=known_id,
+                    known_id=id.ID(known_id),
                     known_url=known_url,
                     known_port=known_port
                 )
