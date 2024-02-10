@@ -1,4 +1,6 @@
 import threading
+import json
+from os.path import exists
 
 import customtkinter as ctk
 from PIL import Image
@@ -37,20 +39,41 @@ class ContactViewer(ctk.CTk):
         super().__init__()
         ctk.set_appearance_mode(appearance_mode)
 
+        self.id = id
+        self.url = url
+        self.port = port
+        self.protocol_type = protocol_type
+
         self.settings_title = ctk.CTkLabel(self, text="Our Contact:", font=Fonts.title_font)
         self.settings_title.pack(padx=20, pady=30)
 
-        self.id = ctk.CTkLabel(self, text=f"ID: {id}", font=Fonts.text_font)
+        self.id = ctk.CTkLabel(self, text=f"ID: {self.id}", font=Fonts.text_font)
         self.id.pack(padx=20, pady=10)
 
-        self.protocol_type = ctk.CTkLabel(self, text=f"Protocol type: {protocol_type}", font=Fonts.text_font)
+        self.protocol_type = ctk.CTkLabel(self, text=f"Protocol type: {self.protocol_type}", font=Fonts.text_font)
         self.protocol_type.pack(padx=20, pady=10)
 
-        self.url = ctk.CTkLabel(self, text=f"URL: {url}", font=Fonts.text_font)
+        self.url = ctk.CTkLabel(self, text=f"URL: {self.url}", font=Fonts.text_font)
         self.url.pack(padx=20, pady=10)
 
-        self.port = ctk.CTkLabel(self, text=f"Port: {port}", font=Fonts.text_font)
+        self.port = ctk.CTkLabel(self, text=f"Port: {self.port}", font=Fonts.text_font)
         self.port.pack(padx=20, pady=10)
+
+        self.export_button = ctk.CTkButton(self, text="Export our contact", font=Fonts.text_font,
+                                           command=self.export_contact)
+        self.export_button.pack(padx=20, pady=10)
+
+    def export_contact(self, filename="our_contact.json"):
+        contact_dict = {
+            "url": self.url,
+            "port": self.port,
+            "protocol_type": self.protocol_type,
+            "id": self.id
+        }
+        print("[INFO] Exporting our contact...")
+        with open(filename, "w") as f:
+            json.dump(contact_dict, f)
+        print(f"[INFO] Exported our contact to {filename}")
 
 
 class Settings(ctk.CTk):
@@ -216,6 +239,11 @@ class MainGUI(ctk.CTk):
         bootstrap = BootstrapFrame(parent=self)
         bootstrap.pack(padx=20, pady=20)
 
+    def make_bootstrap_from_json_frame(self):
+        self.clear_screen()
+        bootstrap_from_json = BootstrapFromJSON(parent=self)
+        bootstrap_from_json.pack(padx=20, pady=20)
+
     def make_network_page(self):
         self.clear_screen()
         # TODO: Create.
@@ -286,6 +314,64 @@ class JoinFrame(ctk.CTkFrame):
             child.destroy()
 
 
+class BootstrapFromJSON(ctk.CTkFrame):
+    def __init__(self, parent: MainGUI, **kwargs):
+        ctk.CTkFrame.__init__(self, parent, **kwargs)
+        self.configure(fg_color="transparent")
+        self.parent = parent
+
+        self.title = ctk.CTkLabel(self, text="Bootstrap from JSON", font=Fonts.title_font)
+        self.title.grid(row=0, column=0, columnspan=2, padx=10, pady=20)
+
+        filename_label = ctk.CTkLabel(master=self, text="Filename:", font=Fonts.text_font)
+        filename_label.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
+
+        self.filename_entry = ctk.CTkEntry(master=self, width=150, font=Fonts.text_font)
+        self.filename_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+
+        self.back_button = ctk.CTkButton(master=self, text="Back", font=Fonts.text_font,
+                                         command=self.parent.make_join_dht_frame)
+        self.back_button.grid(row=2, column=0, columnspan=1, padx=10, pady=10)
+
+        self.load_button = ctk.CTkButton(master=self, text="Load", font=Fonts.text_font,
+                                         command=self.load_json)
+        self.load_button.grid(row=2, column=1, columnspan=1, padx=10, pady=10)
+
+    def load_json(self):
+        filename = self.filename_entry.get().strip("\n")
+        if not exists(filename):
+            self.parent.show_error("Couldn't find file to bootstrap from.")
+        else:
+            with open(filename, "r") as f:
+                contact_dict = json.load(f)
+
+            known_id = None
+            if "id" in contact_dict:
+                known_id = contact_dict["id"]
+            else:
+                self.parent.show_error("File to bootstrap from had no \nparameter 'id'.")
+
+            known_url = None
+            if "url" in contact_dict:
+                known_url = contact_dict["url"]
+            else:
+                self.parent.show_error("File to bootstrap from had no \nparameter 'url'.")
+
+            known_port = None
+            if "port" in contact_dict:
+                known_port = contact_dict["port"]
+            else:
+                self.parent.show_error("File to bootstrap from had no \nparameter 'port'.")
+
+            if known_url and known_port and known_url:
+                BootstrapFrame.bootstrap(
+                    parent=self.parent,
+                    known_id=known_id,
+                    known_url=known_url,
+                    known_port=known_port
+                )
+
+
 class BootstrapFrame(ctk.CTkFrame):
     def __init__(self, parent: MainGUI, **kwargs):
         
@@ -318,9 +404,17 @@ class BootstrapFrame(ctk.CTkFrame):
                                                    command=self.parent.make_join_dht_frame)
         self.return_to_menu_button.grid(row=4, column=0, columnspan=1, padx=5, pady=10)
 
+        self.load_from_json_button = ctk.CTkButton(self, text="Load from file", font=Fonts.text_font,
+                                                   command=self.load_known_peer_from_file)
+        self.load_from_json_button.grid(row=4, column=1, columnspan=1, padx=5, pady=10)
+
         self.connect_button = ctk.CTkButton(master=self, text="Connect", font=Fonts.text_font,
                                             command=self.handle_bootstrap)
-        self.connect_button.grid(row=4, column=1, columnspan=1, padx=5, pady=10)
+        self.connect_button.grid(row=5, column=0, columnspan=2, padx=5, pady=10)
+
+    def load_known_peer_from_file(self):
+        self.parent.make_bootstrap_from_json_frame()
+
 
     def handle_bootstrap(self):
         valid = False
@@ -353,7 +447,8 @@ class BootstrapFrame(ctk.CTkFrame):
         if valid:
             self.bootstrap(known_id, known_ip, known_port)
 
-    def bootstrap(self, known_id: id.ID, known_url: str, known_port: int):
+    @classmethod
+    def bootstrap(cls, parent: MainGUI, known_id: id.ID, known_url: str, known_port: int):
         """Attempts to bootstrap Kademlia connection from a known contact"""
         known_protocol = protocols.TCPSubnetProtocol(
             url=known_url, port=known_port, subnet=1  # TODO: Replace with TCPProtocol
@@ -364,7 +459,7 @@ class BootstrapFrame(ctk.CTkFrame):
             protocol=known_protocol
         )
         print("[GUI] Bootstrapping from known contact")
-        self.parent.dht.bootstrap(known_contact)
+        parent.dht.bootstrap(known_contact)
 
         print("[GUI] Connecting to bootstrap server...")
 
