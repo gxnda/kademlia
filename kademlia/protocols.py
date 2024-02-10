@@ -355,7 +355,7 @@ class TCPSubnetProtocol(IProtocol):
 
 class TCPProtocol(IProtocol):
 
-    def __init__(self, url: str, port: int, subnet: int):
+    def __init__(self, url: str, port: int):
         self.url = url
         self.port = port
         self.responds = True
