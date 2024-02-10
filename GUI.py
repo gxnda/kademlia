@@ -104,16 +104,27 @@ class Settings(ctk.CTk):
         contact_viewer.mainloop()
 
 
+class ErrorWindow(ctk.CTk):
+    def __init__(self, error_message: str):
+        super().__init__()
+        self.title = ctk.CTkLabel(self, text="Error", font=Fonts.title_font)
+        self.title.pack(padx=20, pady=20)
+
+        self.error_message = ctk.CTkLabel(self, text=error_message, font=Fonts.text_font)
+        self.error_message.pack(padx=20, pady=10)
+
+
 class MainGUI(ctk.CTk):
     def __init__(self, appearance_mode="dark"):
         ctk.CTk.__init__(self)
         self.appearance_mode = appearance_mode
+        ctk.set_appearance_mode(appearance_mode)
         # self.geometry("600x500")
         self.title("Kademlia")
 
+        # Create our contact - this should be overwritten if bootstrapping.
         self.initialise_kademlia()
 
-        ctk.set_appearance_mode(appearance_mode)
         self.make_join_dht_frame()
 
     def initialise_kademlia(self):
@@ -167,6 +178,10 @@ class MainGUI(ctk.CTk):
         settings_window.mainloop()
 
     def thread_open_settings(self):
+        """
+        Opens the server window in a thread - this is not recommended to use.
+        :return:
+        """
         settings_thread = threading.Thread(target=self.open_settings, daemon=True)
         settings_thread.daemon = True  # Dies when program ends.
         settings_thread.start()
@@ -178,6 +193,7 @@ class MainGUI(ctk.CTk):
         self.settings_button = ctk.CTkButton(self, image=settings_icon, text="",
                                              bg_color="transparent", fg_color="transparent",
                                              width=28, command=self.open_settings)
+
         self.settings_button.pack(side=ctk.BOTTOM, anchor=ctk.S, padx=10, pady=10)
 
     def clear_screen(self):
@@ -195,9 +211,19 @@ class MainGUI(ctk.CTk):
         load_dht = LoadDHTFrame(parent=self)
         load_dht.pack(padx=20, pady=20)
 
+    def make_bootstrap_frame(self):
+        self.clear_screen()
+        bootstrap = BootstrapFrame(parent=self)
+        bootstrap.pack(padx=20, pady=20)
+
     def make_network_page(self):
         self.clear_screen()
         # TODO: Create.
+
+    def show_error(self, error_message: str):
+        print(f"[Error] {error_message}")
+        error_window = ErrorWindow(error_message)
+        error_window.mainloop()
 
 
 class LoadDHTFrame(ctk.CTkFrame):
@@ -231,7 +257,6 @@ class LoadDHTFrame(ctk.CTkFrame):
         self.parent.make_network_page()
 
 
-
 class JoinFrame(ctk.CTkFrame):
     """
       └── Join
@@ -253,41 +278,95 @@ class JoinFrame(ctk.CTkFrame):
         self.load_button.pack(padx=50, pady=10)
 
         self.bootstrap_button = ctk.CTkButton(master=self, text="Join a new network", font=Fonts.text_font,
-                                              command=self.handle_bootstrap_click)
+                                              command=self.parent.make_bootstrap_frame)
         self.bootstrap_button.pack(padx=50, pady=10)
 
     def clear_screen(self):
         for child in self.winfo_children():
             child.destroy()
 
-    def handle_bootstrap_click(self):
-        # TODO: Create
-        pass
-
 
 class BootstrapFrame(ctk.CTkFrame):
-    def __init__(self, root, **kwargs):
+    def __init__(self, parent: MainGUI, **kwargs):
         
-        ctk.CTkFrame.__init__(self, root, **kwargs)
-        
+        ctk.CTkFrame.__init__(self, parent, **kwargs)
+        self.configure(fg_color="transparent")
+        self.parent = parent
+
+        self.title = ctk.CTkLabel(self, text="Bootstrap from known peer", font=Fonts.title_font)
+        self.title.grid(row=0, column=0, columnspan=2, padx=10, pady=20)
+
         ip_text = ctk.CTkLabel(master=self, text="IP Address: ")
-        ip_text.grid(row=0, column=0, padx=5, pady=10, sticky="nsew")
+        ip_text.grid(row=1, column=0, padx=5, pady=10, sticky="nsew")
         
-        self.IP_entry = ctk.CTkEntry(master=self, width=150)
-        self.IP_entry.grid(row=0, column=1, padx=5, pady=10, sticky="ew")
+        self.ip_entry = ctk.CTkEntry(master=self, width=150)
+        self.ip_entry.grid(row=1, column=1, padx=5, pady=10, sticky="ew")
 
         port_text = ctk.CTkLabel(master=self, text="Port: ")
-        port_text.grid(row=1, column=0, padx=5, pady=10, sticky="nsew")
+        port_text.grid(row=2, column=0, padx=5, pady=10, sticky="nsew")
 
         self.port_entry = ctk.CTkEntry(master=self, width=150)
-        self.port_entry.grid(row=1, column=1, padx=5, pady=10, sticky="ew")
+        self.port_entry.grid(row=2, column=1, padx=5, pady=10, sticky="ew")
 
-        self.connect_button = ctk.CTkButton(master=self, text="Connect",
-                                            command=self.bootstrap)
-        self.connect_button.grid(row=2, column=1, padx=5, pady=10)
+        id_text = ctk.CTkLabel(master=self, text="ID: ")
+        id_text.grid(row=3, column=0, padx=5, pady=10, sticky="nsew")
 
-    def bootstrap(self):
-        """Attempts to bootstrap Kademlia connection from a given IP and port number"""
+        self.id_entry = ctk.CTkEntry(master=self, width=150)
+        self.id_entry.grid(row=3, column=1, padx=5, pady=10, sticky="ew")
+
+        self.return_to_menu_button = ctk.CTkButton(self, text="Back", font=Fonts.text_font,
+                                                   command=self.parent.make_join_dht_frame)
+        self.return_to_menu_button.grid(row=4, column=0, columnspan=1, padx=5, pady=10)
+
+        self.connect_button = ctk.CTkButton(master=self, text="Connect", font=Fonts.text_font,
+                                            command=self.handle_bootstrap)
+        self.connect_button.grid(row=4, column=1, columnspan=1, padx=5, pady=10)
+
+    def handle_bootstrap(self):
+        valid = False
+
+        known_ip: str = self.ip_entry.get().strip("\n")
+        if not known_ip:
+            self.parent.show_error("IP address must not be empty.")
+        else:
+            valid = True
+
+        known_port_str: str = self.port_entry.get().strip("\n")
+        if not known_port_str:
+            self.parent.show_error("Port must not be empty.")
+        elif not known_port_str.isnumeric():
+            self.parent.show_error("Port was not a number.")
+        else:
+            known_port: int = int(known_port_str)
+            valid = True
+
+        known_id_value: str = self.id_entry.get().strip("\n")
+        if not known_id_value:
+            self.parent.show_error("ID must not be empty.")
+        elif not known_id_value.isnumeric():
+            self.parent.show_error("ID was not a number.")
+
+        else:
+            known_id: id.ID = id.ID(int(known_id_value))
+            valid = True
+
+        if valid:
+            self.bootstrap(known_id, known_ip, known_port)
+
+
+    def bootstrap(self, known_id: id.ID, known_url: str, known_port: int):
+        """Attempts to bootstrap Kademlia connection from a known contact"""
+        known_protocol = protocols.TCPSubnetProtocol(
+            url=known_url, port=known_port, subnet=2  # TODO: Replace with TCPProtocol
+        )
+
+        known_contact: contact.Contact = contact.Contact(
+            id=known_id,
+            protocol=known_protocol
+        )
+        print("[GUI] Bootstrapping from known contact")
+        self.parent.dht.bootstrap(known_contact)
+
         print("[GUI] Connecting to bootstrap server...")
 
 

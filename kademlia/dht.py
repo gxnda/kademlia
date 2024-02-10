@@ -234,6 +234,7 @@ class DHT:
         :param known_peer: Peer we know / are bootstrapping from.
         :return: RPC Error, not sure when it should be raised?
         """
+        print("[Client] Bootstrapping from known peer.")
         # print(f"Adding known peer with ID {known_peer.id}")
         self.node.bucket_list.add_contact(known_peer)
 
@@ -256,8 +257,6 @@ class DHT:
             known_peers_bucket: KBucket = self.node.bucket_list.get_kbucket(
                 known_peer.id)
 
-            if ID.max() in [c.id for c in known_peers_bucket.contacts]:
-                print("somethings gone wrong")
             # Resolve the list now, so we don't include additional contacts
             # as we add to our bucket additional contacts.
             other_buckets: list[KBucket] = [
