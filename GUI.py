@@ -146,7 +146,7 @@ class Settings(ctk.CTk):
         our_contact: contact.Contact = self.dht.our_contact
         our_id: int = our_contact.id.value
         # noinspection PyTypeChecker
-        protocol: protocols.TCPSubnetProtocol = our_contact.protocol
+        protocol: protocols.TCPProtocol = our_contact.protocol
         protocol_type: type = type(protocol)
         our_ip_address: str = protocol.url
         our_port: int = protocol.port
@@ -189,9 +189,6 @@ class MainGUI(ctk.CTk):
         Initialises Kademlia protocol.
         :return:
         """
-        # TODO: This still uses kademlia.networking.TCPSubnetProtocol,
-        #     kademlia.networking.TCPProtocol will be ideal in the future.
-        #     (Should still work for external references, just a bit iffy)
         print("[Initialisation] Initialising Kademlia.")
 
         our_id = id.ID.random_id()
@@ -209,8 +206,8 @@ class MainGUI(ctk.CTk):
 
         print(f"[Initialisation] Port free at {valid_port}, creating our node here.")
 
-        protocol = protocols.TCPSubnetProtocol(
-            url=our_ip, port=valid_port, subnet=1
+        protocol = protocols.TCPProtocol(
+            url=our_ip, port=valid_port
         )
 
         our_node = node.Node(
@@ -231,7 +228,7 @@ class MainGUI(ctk.CTk):
             router=routers.ParallelRouter(our_node)
         )
 
-        self.server = networking.TCPSubnetServer(("127.0.0.1", valid_port))
+        self.server = networking.TCPServer(our_node)
         self.server_thread = self.server.thread_start()
 
     def open_settings(self):
@@ -327,7 +324,7 @@ class LoadDHTFrame(ctk.CTkFrame):
         self.parent.dht = loaded_dht
 
         try:
-            self.parent.server = networking.TCPSubnetServer(("127.0.0.1", self.parent.dht.protocol().port))
+            self.parent.server = networking.TCPServer(self.parent.dht.node)
             self.parent.server_thread = self.parent.server.thread_start()
         except Exception as e:
             self.parent.show_error(str(e))
@@ -500,8 +497,8 @@ class BootstrapFrame(ctk.CTkFrame):
     @classmethod
     def bootstrap(cls, parent: MainGUI, known_id: id.ID, known_url: str, known_port: int):
         """Attempts to bootstrap Kademlia connection from a known contact"""
-        known_protocol = protocols.TCPSubnetProtocol(
-            url=known_url, port=known_port, subnet=1  # TODO: Replace with TCPProtocol
+        known_protocol = protocols.TCPProtocol(
+            url=known_url, port=known_port
         )
 
         known_contact: contact.Contact = contact.Contact(

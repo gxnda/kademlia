@@ -363,7 +363,6 @@ class TCPProtocol(IProtocol):
 
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
         id: ID = ID.random_id()
-
         encoded_data = encode_data(
             dict(FindNodeRequest(
                 protocol=sender.protocol,
@@ -397,15 +396,20 @@ class TCPProtocol(IProtocol):
             # request timed out.
             timeout_error = False
             error = e
-
+        print(1)
         if ret:
+            print(2)
             encoded_data = ret.content
             ret_decoded = pickler.decode_data(encoded_data)
         else:
+            print(3)
             ret_decoded = None
         try:
+            print(4)
             if ret_decoded:
+                print(5)
                 if ret_decoded["contacts"]:
+                    print(6)
                     contacts = []
                     for val in ret_decoded["contacts"]:
                         new_c = Contact(ID(val["contact"]), val["protocol"])
@@ -417,14 +421,17 @@ class TCPProtocol(IProtocol):
                                               ErrorResponse(error_message=str(error), random_id=ID.random_id()))
                     if contacts:
                         ret_contacts = [c for c in contacts if c.protocol is not None]
+                        print("returning contacts, rpc_error")
                         return ret_contacts, rpc_error
-            else:
-                rpc_error = get_rpc_error(id,
-                                          ret_decoded,
-                                          timeout_error,
-                                          ErrorResponse(error_message=str(error), random_id=ID.random_id()))
-                return [], rpc_error
+
+            rpc_error = get_rpc_error(id,
+                                      ret_decoded,
+                                      timeout_error,
+                                      ErrorResponse(error_message=str(error), random_id=ID.random_id()))
+            print("returning no contacts, rpcerror")
+            return [], rpc_error
         except Exception as e:
+            print(7)
             error = RPCError()
             error.protocol_error = True
             print("[Client] Exception thrown: ", e)

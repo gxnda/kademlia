@@ -9,6 +9,8 @@ import kademlia.pickler as pickler
 from kademlia.dictionaries import PingRequest, StoreRequest, FindNodeRequest, FindValueRequest, ErrorResponse, \
     CommonRequest, PingSubnetRequest, StoreSubnetRequest, FindNodeSubnetRequest, FindValueSubnetRequest
 from kademlia.id import ID
+from kademlia.node import Node
+from kademlia.protocols import TCPProtocol
 
 
 class BaseServer(ThreadingHTTPServer):
@@ -318,15 +320,16 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
 
 class TCPServer(BaseServer):
-    def __init__(self, node):
-        server_address: tuple[str, int] = (node.our_contact.protocol.ip, node.our_contact.protocol.port)
+    def __init__(self, node: Node):
+        self.node = node
+        server_address: tuple[str, int] = (self.node.our_contact.protocol.url, self.node.our_contact.protocol.port)
 
         super().__init__(
             server_address=server_address,
             RequestHandlerClass=HTTPRequestHandler
         )
 
-        self.node = node
+
 
 
 def port_is_free(port: int) -> bool:
