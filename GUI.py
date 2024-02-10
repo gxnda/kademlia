@@ -353,11 +353,10 @@ class BootstrapFrame(ctk.CTkFrame):
         if valid:
             self.bootstrap(known_id, known_ip, known_port)
 
-
     def bootstrap(self, known_id: id.ID, known_url: str, known_port: int):
         """Attempts to bootstrap Kademlia connection from a known contact"""
         known_protocol = protocols.TCPSubnetProtocol(
-            url=known_url, port=known_port, subnet=2  # TODO: Replace with TCPProtocol
+            url=known_url, port=known_port, subnet=1  # TODO: Replace with TCPProtocol
         )
 
         known_contact: contact.Contact = contact.Contact(
