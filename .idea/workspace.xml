@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="misc: updated GUI">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="misc: updated workspace.xml" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -30,6 +28,7 @@
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="RESET_MODE" value="HARD" />
+    <option name="UPDATE_TYPE" value="REBASE" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
   &quot;lastFilter&quot;: {
@@ -639,14 +638,6 @@
       <option name="project" value="LOCAL" />
       <updated>1707062998360</updated>
     </task>
-    <task id="LOCAL-00135" summary="feat: added DHT initialisation">
-      <option name="closed" value="true" />
-      <created>1707516034442</created>
-      <option name="number" value="00135" />
-      <option name="presentableId" value="LOCAL-00135" />
-      <option name="project" value="LOCAL" />
-      <updated>1707516034442</updated>
-    </task>
     <task id="LOCAL-00136" summary="misc: updated GUI">
       <option name="closed" value="true" />
       <created>1707517903131</created>
@@ -655,7 +646,15 @@
       <option name="project" value="LOCAL" />
       <updated>1707517903131</updated>
     </task>
-    <option name="localTasksCounter" value="137" />
+    <task id="LOCAL-00137" summary="misc: updated workspace.xml">
+      <option name="closed" value="true" />
+      <created>1707579746788</created>
+      <option name="number" value="00137" />
+      <option name="presentableId" value="LOCAL-00137" />
+      <option name="project" value="LOCAL" />
+      <updated>1707579746791</updated>
+    </task>
+    <option name="localTasksCounter" value="138" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -700,7 +699,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: removed all redundant functions in Router - they already existed in BaseRouter" />
     <MESSAGE value="feat: created threading.Timer(), and renamed queue to my_queues to prevent import errors." />
     <MESSAGE value="fix: TCPSubnetServer debugging" />
     <MESSAGE value="misc: server iter 2" />
@@ -725,7 +723,8 @@
     <MESSAGE value="feat: Added TCPServer, HTTPRequestHandler, and expanded on GUI" />
     <MESSAGE value="feat: added DHT initialisation" />
     <MESSAGE value="misc: updated GUI" />
-    <option name="LAST_COMMIT_MESSAGE" value="misc: updated GUI" />
+    <MESSAGE value="misc: updated workspace.xml" />
+    <option name="LAST_COMMIT_MESSAGE" value="misc: updated workspace.xml" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
