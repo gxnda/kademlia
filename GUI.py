@@ -345,14 +345,14 @@ class JoinFrame(ctk.CTkFrame):
         self.configure(fg_color=fg_color)
         self.parent = parent
 
-        join_title = ctk.CTkLabel(master=self, text="Join a Network", font=Fonts.title_font)
+        join_title = ctk.CTkLabel(master=self, text="Join network", font=Fonts.title_font)
         join_title.pack(padx=50, pady=20)
 
-        self.load_button = ctk.CTkButton(master=self, text="Load an existing network", font=Fonts.text_font,
+        self.load_button = ctk.CTkButton(master=self, text="Join stored network", font=Fonts.text_font,
                                          command=self.parent.make_load_dht_frame)
         self.load_button.pack(padx=50, pady=10)
 
-        self.bootstrap_button = ctk.CTkButton(master=self, text="Join a new network", font=Fonts.text_font,
+        self.bootstrap_button = ctk.CTkButton(master=self, text="Bootstrap into existing network", font=Fonts.text_font,
                                               command=self.parent.make_bootstrap_frame)
         self.bootstrap_button.pack(padx=50, pady=10)
 
