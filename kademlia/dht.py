@@ -113,7 +113,8 @@ class DHT:
         self.pending_contacts: list[Contact] = []
         self.our_id = id
         self.our_contact = Contact(id=id, protocol=protocol)
-        self.node = Node(self.our_contact, storage=VirtualStorage())
+        # TODO: Should these be virtualStorage?
+        self.node = Node(self.our_contact, storage=VirtualStorage(), cache_storage=VirtualStorage())
         self.node.DHT = self
         self.node.bucket_list.DHT = self
         self._protocol = protocol
