@@ -1,10 +1,8 @@
 import threading
-import tkinter.font
-from socket import gethostname
-import pyglet
 
 import customtkinter as ctk
 from PIL import Image
+from requests import get
 
 from kademlia import dht, id, networking, protocols, node, contact, storage, routers
 
@@ -30,29 +28,28 @@ and if the user is not in a network, the user is prompted to join a network.
 
 
 class Fonts:
-    title_font = ("Calibri", 20, "bold")
-    text_font = ("Calbri", 16)
+    title_font = ("Segoe UI", 20, "bold")
+    text_font = ("Segoe UI", 16)
 
 
 class ContactViewer(ctk.CTk):
     def __init__(self, id: int, protocol_type: type, url: str, port: int, appearance_mode="dark"):
         super().__init__()
-        self.geometry("300x200")
         ctk.set_appearance_mode(appearance_mode)
 
         self.settings_title = ctk.CTkLabel(self, text="Our Contact:", font=Fonts.title_font)
         self.settings_title.pack(padx=20, pady=30)
 
-        self.id = ctk.CTkLabel(self, text=str(id), font=Fonts.text_font)
+        self.id = ctk.CTkLabel(self, text=f"ID: {id}", font=Fonts.text_font)
         self.id.pack(padx=20, pady=10)
 
-        self.protocol_type = ctk.CTkLabel(self, text=str(protocol_type), font=Fonts.text_font)
+        self.protocol_type = ctk.CTkLabel(self, text=f"Protocol type: {protocol_type}", font=Fonts.text_font)
         self.protocol_type.pack(padx=20, pady=10)
 
-        self.url = ctk.CTkLabel(self, text=str(url), font=Fonts.text_font)
+        self.url = ctk.CTkLabel(self, text=f"URL: {url}", font=Fonts.text_font)
         self.url.pack(padx=20, pady=10)
 
-        self.port = ctk.CTkLabel(self, text=str(port), font=Fonts.text_font)
+        self.port = ctk.CTkLabel(self, text=f"Port: {port}", font=Fonts.text_font)
         self.port.pack(padx=20, pady=10)
 
 
@@ -61,22 +58,28 @@ class Settings(ctk.CTk):
         super().__init__()
         ctk.set_appearance_mode(appearance_mode)
 
+        self.appearance_mode = appearance_mode
+
         self.dht: dht.DHT = hash_table
 
-        self.geometry("200x300")
         self.title("Kademlia Settings")
 
         self.settings_title = ctk.CTkLabel(self, text="Settings", font=Fonts.title_font)
-        self.settings_title.pack(padx=20, pady=30)
+        self.settings_title.grid(column=0, row=0, columnspan=2, padx=20, pady=20)
+
+        self.dht_export_label = ctk.CTkLabel(self, text="File to export to:", width=150, font=Fonts.text_font)
+        self.dht_export_label.grid(column=0, row=1, padx=10, pady=10)
 
         self.dht_export_file = ctk.CTkTextbox(self, width=200, height=20, font=Fonts.text_font)
-        self.dht_export_file.pack(padx=20, pady=10)
+        self.dht_export_file.grid(column=1, row=1, padx=10, pady=10)
+        self.dht_export_file.insert("1.0", f"dht.pickle")
 
-        self.export_dht_button = ctk.CTkButton(self, text="Export", font=Fonts.text_font, command=self.export_dht)
-        self.export_dht_button.pack(padx=20, pady=10)
+        self.export_dht_button = ctk.CTkButton(self, text="Export DHT", font=Fonts.text_font, command=self.export_dht)
+        self.export_dht_button.grid(column=1, row=2, padx=10, pady=10)
 
-        self.view_contact_button = ctk.CTkButton(self, text="View our contact", font=Fonts.text_font, command=self.view_contact)
-        self.view_contact_button.pack(padx=20, pady=10)
+        self.view_contact_button = ctk.CTkButton(self, text="View our contact", font=Fonts.text_font,
+                                                 command=self.view_contact)
+        self.view_contact_button.grid(column=0, row=2, padx=10, pady=10)
 
     def export_dht(self):
         file = self.dht_export_file.get("0.0", "end").strip("\n")
@@ -95,7 +98,8 @@ class Settings(ctk.CTk):
             id=our_id,
             protocol_type=protocol_type,
             url=our_ip_address,
-            port=our_port
+            port=our_port,
+            appearance_mode=self.appearance_mode
         )
         contact_viewer.mainloop()
 
@@ -103,14 +107,12 @@ class Settings(ctk.CTk):
 class MainGUI(ctk.CTk):
     def __init__(self, appearance_mode="dark"):
         ctk.CTk.__init__(self)
-        print(tkinter.font.families())
         self.appearance_mode = appearance_mode
         # self.geometry("600x500")
         self.title("Kademlia")
 
         self.initialise_kademlia()
 
-        print(self.dht.__dict__)
         ctk.set_appearance_mode(appearance_mode)
         self.make_join_dht_frame()
 
@@ -125,7 +127,7 @@ class MainGUI(ctk.CTk):
         print("[Initialisation] Initialising Kademlia.")
 
         our_id = id.ID.random_id()
-        our_ip = gethostname()
+        our_ip = get('https://api.ipify.org').content.decode('utf8')
         print(f"[Initialisation] Our hostname is {our_ip}.")
 
         valid_port = None
@@ -222,7 +224,7 @@ class LoadDHTFrame(ctk.CTkFrame):
         self.load_button.grid(column=1, row=2, padx=20, pady=0)
 
     def load_dht(self):
-        filename = self.file_name_textbox.get("0.0", "end")
+        filename = self.file_name_textbox.get("0.0", "end").strip("\n")
         loaded_dht = dht.DHT.load(filename=filename)
         self.parent.dht = loaded_dht
 
@@ -290,10 +292,6 @@ class BootstrapFrame(ctk.CTkFrame):
 
 
 if __name__ == "__main__":
-    # app = GUI()
-    # app.load_bootstrap_window()
-    # app.mainloop()
-
     app = MainGUI("light")
     app.mainloop()
     print("Done!")
