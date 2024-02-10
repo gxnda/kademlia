@@ -381,10 +381,10 @@ class BootstrapFromJSON(ctk.CTkFrame):
         self.back_button.grid(row=2, column=0, columnspan=1, padx=10, pady=10)
 
         self.load_button = ctk.CTkButton(master=self, text="Load", font=Fonts.text_font,
-                                         command=self.load_json)
+                                         command=self.load_known_peer_json_for_bootstrap)
         self.load_button.grid(row=2, column=1, columnspan=1, padx=10, pady=10)
 
-    def load_json(self):
+    def load_known_peer_json_for_bootstrap(self):
         filename = self.filename_entry.get().strip("\n")
         if not exists(filename):
             self.parent.show_error("Couldn't find file to bootstrap from.")
@@ -452,16 +452,12 @@ class BootstrapFrame(ctk.CTkFrame):
         self.return_to_menu_button.grid(row=4, column=0, columnspan=1, padx=5, pady=10)
 
         self.load_from_json_button = ctk.CTkButton(self, text="Load from file", font=Fonts.text_font,
-                                                   command=self.load_known_peer_from_file)
+                                                   command=self.parent.make_bootstrap_from_json_frame)
         self.load_from_json_button.grid(row=4, column=1, columnspan=1, padx=5, pady=10)
 
         self.connect_button = ctk.CTkButton(master=self, text="Connect", font=Fonts.text_font,
                                             command=self.handle_bootstrap)
         self.connect_button.grid(row=5, column=0, columnspan=2, padx=5, pady=10)
-
-    def load_known_peer_from_file(self):
-        self.parent.make_bootstrap_from_json_frame()
-
 
     def handle_bootstrap(self):
         valid = False
