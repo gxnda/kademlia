@@ -9,7 +9,6 @@ from kademlia.main import DEBUG
 class Contact:
 
     def __init__(self, id: ID, protocol=None):
-        # Protocol should only be None if DEBUG? TODO: Is this true?
         if protocol is None and not DEBUG:
             raise ValueError("No protocol given to Contact.")
         self.protocol: Optional[IProtocol] = protocol

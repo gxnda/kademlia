@@ -13,12 +13,12 @@ from kademlia.pickler import encode_data
 
 
 def get_rpc_error(id: ID,
-                  resp: BaseResponse | None,
+                  ret: BaseResponse | None,
                   timeout_error: bool,
                   peer_error: ErrorResponse) -> RPCError:
     error = RPCError()
-    if resp:
-        error.id_mismatch_error = id != resp["random_id"]
+    if ret:
+        error.id_mismatch_error = id != ret["random_id"]
     else:
         error.id_mismatch_error = False
     error.timeout_error = timeout_error
@@ -98,7 +98,6 @@ class TCPSubnetProtocol(IProtocol):
         self.type = "TCPSubnetProtocol"
 
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
-
         id: ID = ID.random_id()
 
         encoded_data = encode_data(
@@ -124,15 +123,13 @@ class TCPSubnetProtocol(IProtocol):
                 timeout=Constants.REQUEST_TIMEOUT
             )
 
-
         except requests.Timeout as t:
-            print("Timeout error", t)
+            print("[ERROR] [Client] Timeout error when contacting node.\n", t)
             timeout_error = True
             error = t
 
-
         except Exception as e:
-            print("Exception!", e)
+            print("[ERROR] [Client]", e)
             # request timed out.
             timeout_error = False
             error = e
@@ -157,6 +154,12 @@ class TCPSubnetProtocol(IProtocol):
                     if contacts:
                         ret_contacts = [c for c in contacts if c.protocol is not None]
                         return ret_contacts, rpc_error
+            else:
+                rpc_error = get_rpc_error(id,
+                                          ret_decoded,
+                                          timeout_error,
+                                          ErrorResponse(error_message=str(error), random_id=ID.random_id()))
+                return [], rpc_error
         except Exception as e:
             error = RPCError()
             error.protocol_error = True

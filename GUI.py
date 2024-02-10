@@ -198,13 +198,10 @@ class MainGUI(ctk.CTk):
         print(f"[Initialisation] Our hostname is {our_ip}.")
 
         valid_port = None
-        while not valid_port:
+        while not valid_port:  # TODO: This will be stuck in an infinite loop if all ports are full.
             port = randint(5000, 35000)
             if networking.port_is_free(port):
                 valid_port = port
-                break
-        if not valid_port:
-            raise OSError("No ports free!")
 
         print(f"[Initialisation] Port free at {valid_port}, creating our node here.")
 
@@ -231,7 +228,7 @@ class MainGUI(ctk.CTk):
         )
 
         self.server = networking.TCPSubnetServer(("127.0.0.1", valid_port))
-        self.server.thread_start()
+        self.server_thread = self.server.thread_start()
 
     def open_settings(self):
         settings_window = Settings(hash_table=self.dht, appearance_mode=self.appearance_mode)
@@ -322,7 +319,14 @@ class LoadDHTFrame(ctk.CTkFrame):
     def load_dht(self):
         filename = self.file_name_textbox.get("0.0", "end").strip("\n")
         loaded_dht = dht.DHT.load(filename=filename)
+        self.parent.server.thread_stop(self.parent.server_thread)
         self.parent.dht = loaded_dht
+
+        try:
+            self.parent.server = networking.TCPSubnetServer(("127.0.0.1", self.parent.dht.protocol().port))
+            self.parent.server_thread = self.parent.server.thread_start()
+        except Exception as e:
+            self.parent.show_error(str(e))
 
         self.parent.make_network_page()
 
