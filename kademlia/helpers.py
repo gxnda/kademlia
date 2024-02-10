@@ -1,3 +1,4 @@
+from hashlib import sha1
 import random
 
 from kademlia.contact import Contact
@@ -39,6 +40,18 @@ def get_closest_number_index(numbers, target):
             closest_index = i
 
     return closest_index
+
+
+def convert_file_to_key(filename: str) -> ID:
+    sha1_hash = sha1()
+    with open(filename, 'rb') as file:
+        while True:
+            data = file.read(4096)  # Read data from the file in chunks
+            if not data:
+                break
+            sha1_hash.update(data)  # Update the hash object with the read data
+    digest = int(sha1_hash.hexdigest(), 16)
+    return ID(digest)
 
 
 # class ContactListAndError(TypedDict):
