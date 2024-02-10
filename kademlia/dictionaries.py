@@ -65,28 +65,24 @@ class StoreRequest(BaseRequest, TypedDict):
 
 class ITCPSubnet(TypedDict):
     """
-    Interface used for TCP.
+    Interface used for TCP Subnetting.
     """
     subnet: int
 
 
 class FindNodeSubnetRequest(FindNodeRequest, ITCPSubnet, TypedDict):
-    # subnet: int
     pass
 
 
 class FindValueSubnetRequest(FindValueRequest, ITCPSubnet, TypedDict):
-    # subnet: int
     pass
 
 
 class PingSubnetRequest(PingRequest, ITCPSubnet, TypedDict):
-    # subnet: int
     pass
 
 
 class StoreSubnetRequest(StoreRequest, ITCPSubnet, TypedDict):
-    # subnet: int
     pass
 
 

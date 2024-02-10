@@ -4,7 +4,8 @@ from kademlia import pickler
 from kademlia.constants import Constants
 from kademlia.contact import Contact
 from kademlia.dictionaries import (BaseResponse, ErrorResponse, FindNodeSubnetRequest,
-                                   FindValueSubnetRequest, PingSubnetRequest, StoreSubnetRequest)
+                                   FindValueSubnetRequest, PingSubnetRequest, StoreSubnetRequest, FindNodeRequest,
+                                   FindValueRequest, PingRequest, StoreRequest)
 from kademlia.errors import RPCError
 from kademlia.id import ID
 from kademlia.interfaces import IProtocol
@@ -122,6 +123,7 @@ class TCPSubnetProtocol(IProtocol):
                 data=encoded_data,
                 timeout=Constants.REQUEST_TIMEOUT
             )
+            print(ret)
 
         except requests.Timeout as t:
             print("[ERROR] [Client] Timeout error when contacting node.\n", t)
@@ -308,6 +310,265 @@ class TCPSubnetProtocol(IProtocol):
                 protocol=sender.protocol,
                 protocol_name=type(sender.protocol),
                 subnet=self.subnet,
+                sender=sender.id.value,
+                key=key.value,
+                value=val,
+                is_cached=is_cached,
+                expiration_time_sec=expiration_time_sec,
+                random_id=random_id.value)))
+
+        timeout_error = False
+        error = None
+        ret = None
+
+        try:
+            print(f"[Client] Running Store POST to http://{self.url}:{self.port}/store")
+            ret = requests.post(
+                url=f"http://{self.url}:{self.port}/store",
+                data=encoded_data,
+                timeout=Constants.REQUEST_TIMEOUT
+            )
+            print("[Client] Store POST done!")
+
+        except requests.Timeout as t:
+            print("[Client] Timeout error when contacting node.")
+            timeout_error = True
+            error = t
+
+        except Exception as e:
+            print("Exception!", e)
+            # request timed out.
+            timeout_error = False
+            error = e
+
+        # if ret.status_code == 200:
+        # TODO: Add error handling
+
+        formatted_response = None
+        if ret:
+            encoded_data = ret.content
+            formatted_response = pickler.decode_data(encoded_data)
+
+        return get_rpc_error(random_id, formatted_response, timeout_error, ErrorResponse(
+            error_message=str(error), random_id=ID.random_id()))
+
+
+class TCPProtocol(IProtocol):
+
+    def __init__(self, url: str, port: int, subnet: int):
+        self.url = url
+        self.port = port
+        self.responds = True
+        self.type = "TCPSubnetProtocol"
+
+    def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
+        id: ID = ID.random_id()
+
+        encoded_data = encode_data(
+            dict(FindNodeRequest(
+                protocol=sender.protocol,
+                protocol_name=type(sender.protocol),
+                sender=sender.id.value,
+                key=key.value,
+                random_id=id.value
+            ))
+        )
+        print(f"http://{self.url}:{self.port}/find_node")
+
+        ret = None
+        timeout_error = False
+        error = ""
+        try:
+            print("[Client] Sending find_node RPC...")
+            ret = requests.post(
+                f"http://{self.url}:{self.port}/find_node",
+                data=encoded_data,
+                timeout=Constants.REQUEST_TIMEOUT
+            )
+            print(ret)
+
+        except requests.Timeout as t:
+            print("[ERROR] [Client] Timeout error when contacting node.\n", t)
+            timeout_error = True
+            error = t
+
+        except Exception as e:
+            print("[ERROR] [Client]", e)
+            # request timed out.
+            timeout_error = False
+            error = e
+
+        if ret:
+            encoded_data = ret.content
+            ret_decoded = pickler.decode_data(encoded_data)
+        else:
+            ret_decoded = None
+        try:
+            if ret_decoded:
+                if ret_decoded["contacts"]:
+                    contacts = []
+                    for val in ret_decoded["contacts"]:
+                        new_c = Contact(ID(val["contact"]), val["protocol"])
+                        contacts.append(new_c)
+                    # Return only contacts with supported protocols.
+                    rpc_error = get_rpc_error(id,
+                                              ret_decoded,
+                                              timeout_error,
+                                              ErrorResponse(error_message=str(error), random_id=ID.random_id()))
+                    if contacts:
+                        ret_contacts = [c for c in contacts if c.protocol is not None]
+                        return ret_contacts, rpc_error
+            else:
+                rpc_error = get_rpc_error(id,
+                                          ret_decoded,
+                                          timeout_error,
+                                          ErrorResponse(error_message=str(error), random_id=ID.random_id()))
+                return [], rpc_error
+        except Exception as e:
+            error = RPCError()
+            error.protocol_error = True
+            print("[Client] Exception thrown: ", e)
+            return None, error
+
+    def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, str | None, RPCError | None]:
+        """
+        Attempt to find the value in the peer network.
+
+        A null contact list is acceptable as it is a valid return
+        if the value is found.
+        The caller is responsible for checking the timeoutError flag
+        to make sure null contacts is not the result of a timeout
+        error.
+
+        :param sender: Sender to find value from
+        :param key: Key to check for value from key-value pair
+        :return: contacts, value, RPCError
+        """
+        random_id = ID.random_id()
+        encoded_data = encode_data(
+            dict(FindValueRequest(
+                protocol=sender.protocol,
+                protocol_name=type(sender.protocol),
+                sender=sender.id.value,
+                key=key.value,
+                random_id=random_id.value
+            ))
+        )
+
+        ret = None
+        try:
+            print("[Client] Sending POST")
+            ret = requests.post(
+                url=f"http://{self.url}:{self.port}/find_value",
+                data=encoded_data,
+                timeout=Constants.REQUEST_TIMEOUT
+            )
+            print("[Client] Completed POST")
+            timeout_error = False
+            error = None
+
+        except requests.Timeout as t:
+            print("Timeout error", t)
+            timeout_error = True
+            error = t
+
+        except Exception as e:
+            print("Exception!", e)
+            # request timed out.
+            timeout_error = False
+            error = e
+
+        ret_decoded = None
+        if ret:
+            encoded_data = ret.content
+            ret_decoded = pickler.decode_data(encoded_data)
+
+        try:
+            contacts = []
+            if ret_decoded:
+                if ret_decoded["contacts"]:
+                    for c in ret_decoded["contacts"]:
+                        new_contact = Contact(
+                            c["protocol"],  # instantiate_protocol
+                            ID(c["contact"])
+                        )
+                        contacts.append(new_contact)
+                        print("about to return")
+
+                return [c for c in contacts if c.protocol is not None], \
+                    ret_decoded["value"], \
+                    get_rpc_error(
+                        random_id, ret_decoded, timeout_error, ErrorResponse(
+                            random_id=random_id.value,
+                            error_message=str(error))
+                    )
+            else:
+                return [c for c in contacts if c.protocol is not None], "", get_rpc_error(
+                        random_id, ret_decoded, timeout_error, ErrorResponse(
+                            random_id=random_id.value,
+                            error_message=str(error))
+                    )
+        except Exception as e:
+            rpc_error = RPCError(str(e))
+            rpc_error.protocol_error = True
+            print(f"[Client] Error performing find_value: {rpc_error}")
+            return None, None, rpc_error
+
+    def ping(self, sender: Contact) -> RPCError:
+        random_id = ID.random_id()
+        encoded_data = encode_data(
+            dict(PingRequest(
+                protocol=sender.protocol,
+                protocol_name=type(sender.protocol),
+                sender=sender.id.value,
+                random_id=random_id.value)))
+
+        timeout_error = False
+        error = None
+        ret = None
+        try:
+            print("[Client] Sending Ping RPC...")
+            ret: requests.Response = requests.post(
+                url=f"http://{self.url}:{self.port}/ping",
+                data=encoded_data,
+                timeout=Constants.REQUEST_TIMEOUT
+            )
+            print(f"[Client] Received HTTP Response from {ret.url} with code {ret.status_code}")
+
+        except requests.Timeout as t:
+            print("[Client] Ping timeout error: ", t)
+            timeout_error = True
+            error = t
+
+        except Exception as e:
+            print("[ERROR] [Client] Other exception thrown (Ping): ", e)
+            # request timed out.
+            timeout_error = False
+            error = e
+
+        ret_base_response = None
+
+        formatted_response = None
+        if ret:
+            encoded_data = ret.content
+            formatted_response = pickler.decode_data(encoded_data)
+
+        return get_rpc_error(random_id, formatted_response, timeout_error, ErrorResponse(
+            error_message=str(error), random_id=ID.random_id()))
+
+    def store(self,
+              sender: Contact,
+              key: ID,
+              val: str,
+              is_cached=False,
+              expiration_time_sec=0
+              ) -> RPCError:
+        random_id = ID.random_id()
+
+        encoded_data = encode_data(
+            dict(StoreRequest(
+                protocol=sender.protocol,
+                protocol_name=type(sender.protocol),
                 sender=sender.id.value,
                 key=key.value,
                 value=val,

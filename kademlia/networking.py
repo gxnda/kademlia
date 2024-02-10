@@ -7,7 +7,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import kademlia.main as main
 import kademlia.pickler as pickler
 from kademlia.dictionaries import PingRequest, StoreRequest, FindNodeRequest, FindValueRequest, ErrorResponse, \
-    CommonRequest
+    CommonRequest, PingSubnetRequest, StoreSubnetRequest, FindNodeSubnetRequest, FindValueSubnetRequest
 from kademlia.id import ID
 
 
@@ -191,13 +191,18 @@ class TCPSubnetServer(BaseServer):
             RequestHandlerClass=HTTPSubnetRequestHandler
         )
         self.subnets: dict = {}
+        self.routing_methods: dict[str, type] = {
+            "/ping": PingSubnetRequest,  # "ping" should refer to type PingSubnetRequest
+            "/store": StoreSubnetRequest,  # "store" should refer to type StoreSubnetRequest
+            "/find_node": FindNodeSubnetRequest,  # "find_node" should refer to type FindNodeSubnetRequest
+            "/find_value": FindValueSubnetRequest  # "find_value" should refer to type FindValueSubnetRequest
+        }
 
     def register_protocol(self, subnet: int, node):
         self.subnets[subnet] = node
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
-
     def common_request_handler(self,
                                method_name: str, common_request: CommonRequest, node):  # TODO: Make protected.
         old_self_instance = self  # To prevent other threads overwriting it,
@@ -310,7 +315,6 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 self.wfile.write(encoded_response)
 
             # context.close_connection = True
-
 
 
 class TCPServer(BaseServer):
