@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="feat: added DHT initialisation">
+    <list default="true" id="186512a1-3bdf-4e2a-af4f-5d94a1dbcd05" name="Changes" comment="misc: updated GUI">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GUI.py" beforeDir="false" afterPath="$PROJECT_DIR$/GUI.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -117,7 +116,7 @@
     "WebServerToolWindowFactoryState": "false",
     "git-widget-placeholder": "master",
     "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "C:/Users/gabri/PycharmProjects/P2P/assets",
+    "last_opened_file_path": "C:/Users/gabri/PycharmProjects/benedicts-nea-2",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -309,7 +308,7 @@
       <workItem from="1707417530581" duration="74000" />
       <workItem from="1707417616721" duration="31000" />
       <workItem from="1707417657318" duration="8073000" />
-      <workItem from="1707502586799" duration="13098000" />
+      <workItem from="1707502586799" duration="14316000" />
     </task>
     <task id="LOCAL-00017" summary="done smth">
       <created>1703342554993</created>
@@ -640,14 +639,6 @@
       <option name="project" value="LOCAL" />
       <updated>1707062998360</updated>
     </task>
-    <task id="LOCAL-00134" summary="feat: Added TCPServer, HTTPRequestHandler, and expanded on GUI">
-      <option name="closed" value="true" />
-      <created>1707514142412</created>
-      <option name="number" value="00134" />
-      <option name="presentableId" value="LOCAL-00134" />
-      <option name="project" value="LOCAL" />
-      <updated>1707514142412</updated>
-    </task>
     <task id="LOCAL-00135" summary="feat: added DHT initialisation">
       <option name="closed" value="true" />
       <created>1707516034442</created>
@@ -656,7 +647,15 @@
       <option name="project" value="LOCAL" />
       <updated>1707516034442</updated>
     </task>
-    <option name="localTasksCounter" value="136" />
+    <task id="LOCAL-00136" summary="misc: updated GUI">
+      <option name="closed" value="true" />
+      <created>1707517903131</created>
+      <option name="number" value="00136" />
+      <option name="presentableId" value="LOCAL-00136" />
+      <option name="project" value="LOCAL" />
+      <updated>1707517903131</updated>
+    </task>
+    <option name="localTasksCounter" value="137" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -701,7 +700,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: added lots of missing functions, such as KBucket.evict_contact() and DHT.evict_contact()" />
     <MESSAGE value="feat: removed all redundant functions in Router - they already existed in BaseRouter" />
     <MESSAGE value="feat: created threading.Timer(), and renamed queue to my_queues to prevent import errors." />
     <MESSAGE value="fix: TCPSubnetServer debugging" />
@@ -726,7 +724,8 @@
     <MESSAGE value="feat: settings icon works" />
     <MESSAGE value="feat: Added TCPServer, HTTPRequestHandler, and expanded on GUI" />
     <MESSAGE value="feat: added DHT initialisation" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: added DHT initialisation" />
+    <MESSAGE value="misc: updated GUI" />
+    <option name="LAST_COMMIT_MESSAGE" value="misc: updated GUI" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

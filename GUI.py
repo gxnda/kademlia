@@ -31,6 +31,28 @@ class KademliaFonts:
     pass
 
 
+class ContactViewer(ctk.CTk):
+    def __init__(self, id: int, protocol_type: type, url: str, port: int, appearance_mode="dark"):
+        super().__init__()
+        self.geometry("300x200")
+        ctk.set_appearance_mode(appearance_mode)
+
+        self.settings_title = ctk.CTkLabel(self, text="Our Contact:", font=("Aharoni", 20, "bold"))
+        self.settings_title.pack(padx=20, pady=30)
+
+        self.id = ctk.CTkLabel(self, text=str(id), font=("Aharoni", 20, "bold"))
+        self.id.pack(padx=20, pady=10)
+
+        self.protocol_type = ctk.CTkLabel(self, text=str(protocol_type), font=("Aharoni", 20, "bold"))
+        self.protocol_type.pack(padx=20, pady=10)
+
+        self.url = ctk.CTkLabel(self, text=str(url), font=("Aharoni", 20, "bold"))
+        self.url.pack(padx=20, pady=10)
+
+        self.port = ctk.CTkLabel(self, text=str(port), font=("Aharoni", 20, "bold"))
+        self.port.pack(padx=20, pady=10)
+
+
 class Settings(ctk.CTk):
     def __init__(self, hash_table: dht.DHT, appearance_mode="dark"):
         super().__init__()
@@ -38,11 +60,14 @@ class Settings(ctk.CTk):
 
         self.dht: dht.DHT = hash_table
 
-        self.geometry("200x200")
+        self.geometry("200x300")
         self.title("Kademlia Settings")
 
         self.settings_title = ctk.CTkLabel(self, text="Settings", font=("Aharoni", 20, "bold"))
         self.settings_title.pack(padx=20, pady=30)
+
+        self.dht_export_file = ctk.CTkTextbox(self, width=200, height=20)
+        self.dht_export_file.pack(padx=20, pady=10)
 
         self.export_dht_button = ctk.CTkButton(self, text="Export", command=self.export_dht)
         self.export_dht_button.pack(padx=20, pady=10)
@@ -51,13 +76,24 @@ class Settings(ctk.CTk):
         self.view_contact_button.pack(padx=20, pady=10)
 
     def export_dht(self):
-        self.dht.save
-        pass
+        file = self.dht_export_file.get("0.0", "end").strip("\n")
+        self.dht.save(file)
 
     def view_contact(self):
-        # TODO: Create
-        pass
+        our_contact: contact.Contact = self.dht.our_contact
+        our_id: int = our_contact.id.value
+        protocol: protocols.TCPSubnetProtocol = our_contact.protocol
+        protocol_type: type = type(protocol)
+        our_ip_address: str = protocol.url
+        our_port: int = protocol.port
 
+        contact_viewer = ContactViewer(
+            id=our_id,
+            protocol_type=protocol_type,
+            url=our_ip_address,
+            port=our_port
+        )
+        contact_viewer.mainloop()
 
 class MainGUI(ctk.CTk):
     def __init__(self, appearance_mode="dark"):
@@ -70,14 +106,7 @@ class MainGUI(ctk.CTk):
 
         print(self.dht.__dict__)
         ctk.set_appearance_mode(appearance_mode)
-        dark_icon = Image.open(r"assets/settings_icon_light.png")
-        light_icon = Image.open(r"assets/settings_icon_dark.png")
-        settings_icon = ctk.CTkImage(light_image=light_icon, dark_image=dark_icon, size=(30, 30))
-        self.settings_button = ctk.CTkButton(self, image=settings_icon, text="",
-                                             bg_color="transparent", fg_color="transparent",
-                                             width=28, command=self.open_settings)
-        self.load_join_window()
-        self.add_settings_icon()
+        self.make_join_dht_frame()
 
     def initialise_kademlia(self):
         """
@@ -135,6 +164,12 @@ class MainGUI(ctk.CTk):
         settings_thread.start()
 
     def add_settings_icon(self):
+        dark_icon = Image.open(r"assets/settings_icon_light.png")
+        light_icon = Image.open(r"assets/settings_icon_dark.png")
+        settings_icon = ctk.CTkImage(light_image=light_icon, dark_image=dark_icon, size=(30, 30))
+        self.settings_button = ctk.CTkButton(self, image=settings_icon, text="",
+                                             bg_color="transparent", fg_color="transparent",
+                                             width=28, command=self.open_settings)
         self.settings_button.pack(side=ctk.RIGHT, anchor=ctk.SE, padx=10, pady=10)
 
     def clear_screen(self):
@@ -142,12 +177,52 @@ class MainGUI(ctk.CTk):
             child.destroy()
         self.add_settings_icon()
 
-    def load_join_window(self):
-        join = JoinWindow(parent=self)
+    def make_join_dht_frame(self):
+        self.clear_screen()
+        join = JoinFrame(parent=self)
         join.pack(padx=20, pady=20)
 
+    def make_load_dht_frame(self):
+        self.clear_screen()
+        load_dht = LoadDHTFrame(parent=self)
+        load_dht.pack(padx=20, pady=20)
 
-class JoinWindow(ctk.CTkFrame):
+    def make_network_page(self):
+
+
+class LoadDHTFrame(ctk.CTkFrame):
+    def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
+        ctk.CTkFrame.__init__(self, parent, **kwargs)
+        self.configure(fg_color=fg_color)
+        self.parent = parent
+
+        self.load_title = ctk.CTkLabel(master=self, text="Load DHT from file", font=("Aharoni", 20, "bold"))
+        self.load_title.grid(column=0, row=0, columnspan=2, padx=20, pady=20)
+
+        self.enter_file_name_text = ctk.CTkLabel(master=self, text="Load from file: ")
+        self.enter_file_name_text.grid(column=0, row=1, padx=20, pady=20)
+
+        self.file_name_textbox = ctk.CTkTextbox(master=self)
+        self.file_name_textbox.grid(column=1, row=1, padx=20, pady=20)
+
+        self.back_button = ctk.CTkButton(master=self, text="Back",
+                                         command=self.parent.make_join_dht_frame)
+        self.back_button.grid(column=0, row=2, padx=20, pady=20)
+
+        self.load_button = ctk.CTkButton(master=self, text="Load DHT",
+                                         command=self.load_dht)
+        self.load_button.grid(column=1, row=2, padx=20, pady=20)
+
+    def load_dht(self):
+        filename = self.file_name_textbox.get("0.0", "end")
+        loaded_dht = dht.DHT.load(filename=filename)
+        self.parent.dht = loaded_dht
+
+        self.parent.make_network_page()
+
+
+
+class JoinFrame(ctk.CTkFrame):
     """
       └── Join
           ├── Settings
@@ -158,23 +233,22 @@ class JoinWindow(ctk.CTkFrame):
         ctk.CTkFrame.__init__(self, parent, **kwargs)
 
         self.configure(fg_color=fg_color)
+        self.parent = parent
 
         join_title = ctk.CTkLabel(master=self, text="Join a Network", font=("Aharoni", 20, "bold"))
         join_title.pack(padx=50, pady=20)
 
         self.load_button = ctk.CTkButton(master=self, text="Load an existing network",
-                                         command=self.handle_load_click)
-        # self.load_button.grid(row=3, column=1, padx=5, pady=10)
+                                         command=self.parent.make_load_dht_frame)
         self.load_button.pack(padx=50, pady=10)
 
         self.bootstrap_button = ctk.CTkButton(master=self, text="Join a new network",
                                               command=self.handle_bootstrap_click)
-        # self.bootstrap_button.grid(row=4, column=1, padx=5, pady=10)
         self.bootstrap_button.pack(padx=50, pady=10)
 
-    def handle_load_click(self):
-        # TODO: Create
-        pass
+    def clear_screen(self):
+        for child in self.winfo_children():
+            child.destroy()
 
     def handle_bootstrap_click(self):
         # TODO: Create

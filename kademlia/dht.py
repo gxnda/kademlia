@@ -1,7 +1,8 @@
-import pickle
 import threading
 from datetime import datetime, timedelta
 from typing import Callable, Optional
+
+import dill
 
 from kademlia import helpers
 from kademlia.buckets import KBucket
@@ -156,7 +157,7 @@ class DHT:
         val: str | None = None
 
         found, our_val = self._originator_storage.try_get_value(key)
-        # TODO: There has to be a better way to do this.
+        # There has to be a better way to do this.
         if our_val:
             found = True
             val = our_val
@@ -344,7 +345,6 @@ class DHT:
 
         for k in rep_keys:
             key: ID = ID(k)
-            # TODO: fix
             self.store_on_closer_contacts(key,
                                           self._republish_storage.get(key))
             self._republish_storage.touch(k)
@@ -391,8 +391,8 @@ class DHT:
         ]
 
         for k in keys_pending_republish:
-            key: ID = k
-            # Just use close contacts, don't do a lookup TODO: why?
+            key: ID = ID(k)
+            # Just use close contacts, don't do a lookup
             contacts = self.node.bucket_list.get_close_contacts(
                 key, self.node.our_contact.id)
 
@@ -431,9 +431,9 @@ class DHT:
         """
         if error:
             if error.has_error():
-                count = self.add_contact_to_evict(contact.id.value)
+                count = self._add_contact_to_evict(contact.id.value)
                 if count == Constants.EVICTION_LIMIT:
-                    self.replace_contact(contact)
+                    self._replace_contact(contact)
 
     def delay_eviction(self,
                        to_evict: Contact,
@@ -455,12 +455,12 @@ class DHT:
             self.pending_contacts.append(to_replace)
 
         key: int = to_evict.id.value
-        count = self.add_contact_to_evict(key)
+        count = self._add_contact_to_evict(key)
         # if the eviction attempts on key reach the eviction limit
         if count == Constants.EVICTION_LIMIT:
-            self.replace_contact(to_evict)
+            self._replace_contact(to_evict)
 
-    def add_contact_to_evict(self, key: int) -> int:  # TODO: make protected.
+    def _add_contact_to_evict(self, key: int) -> int:
         # self.eviction_count is a dictionary of ID keys ->
         # how many times they have been considered for eviction.
         if key not in self.eviction_count:
@@ -470,14 +470,16 @@ class DHT:
 
         return count
 
-    def replace_contact(self, to_evict: Contact) -> None:  # TODO: make protected.
+    def _replace_contact(self, to_evict: Contact) -> None:
         bucket = self.node.bucket_list.get_kbucket(to_evict.id)
         # Prevent other threads from manipulating the bucket list or buckets
         # lock(self.node.bucket_list)
-        self.evict_contact(bucket, to_evict)
+        self._evict_contact(bucket, to_evict)
         self.replace_with_pending_contact(bucket)
 
-    def evict_contact(self, bucket: KBucket, to_evict: Contact) -> None:  # TODO: Make protected.
+    def _evict_contact(self, bucket: KBucket, to_evict: Contact) -> None:
+
+        print("[Client] Evicting contact from bucket.")
 
         if to_evict.id.value in self.eviction_count:
             self.eviction_count.pop(to_evict.id.value)
@@ -493,16 +495,21 @@ class DHT:
         """
         Saves DHT to file.
         """
+        print(f"[Client] Saving DHT to {filename}...")
         with open(filename, "wb") as output_file:
-            pickle.dump(self, file=output_file)
+            dill.dump(self, file=output_file)
+        print(f"[Client] Saved DHT to {filename}.")
 
     @classmethod
-    def load(cls, filename):
+    def load(cls, filename: str):
         """
         Loads DHT from file.
         """
+        print(f"[Client] Loading DHT from file {filename}...")
         with open(filename, "rb") as input_file:
-            return pickle.load(file=input_file)
+            data = dill.load(file=input_file)
+        print(f"[Client] Loaded DHT from file {filename}.")
+        return data
 
     def replace_with_pending_contact(self, bucket: KBucket):
         """
@@ -510,12 +517,10 @@ class DHT:
         :param bucket:
         :return:
         """
-        contact: Optional[Contact] = None
         # lock(self.pending_contacts)
-        contact = sorted([c for c in self.pending_contacts if
-                         self.node.bucket_list.get_kbucket(c.id) == bucket],
-                         key=lambda c: c.last_seen)[-1]
-
+        contact: Optional[Contact] = sorted([c for c in self.pending_contacts if
+                                             self.node.bucket_list.get_kbucket(c.id) == bucket],
+                                            key=lambda c: c.last_seen)[-1]
         if contact is not None:
             self.pending_contacts.remove(contact)
             bucket.add_contact(contact)

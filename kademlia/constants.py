@@ -19,7 +19,7 @@ class Constants:
     BUCKET_REFRESH_INTERVAL = 60 * 60 * 1000  # hourly
     KEY_VALUE_REPUBLISH_INTERVAL = 60 * 60 * 1000  # hourly
     KEY_VALUE_EXPIRE_INTERVAL = 60 * 60 * 1000  # hourly
-    ORIGINATOR_PUBLISH_INTERVAL = 24 * 60 * 60 * 1000  # every 24 hours in ms
+    ORIGINATOR_REPUBLISH_INTERVAL = 24 * 60 * 60 * 1000  # every 24 hours in ms
     EXPIRATION_TIME_SEC = 24 * 60 * 60  # every 24 hours in seconds
     EVICTION_LIMIT = 5
 
