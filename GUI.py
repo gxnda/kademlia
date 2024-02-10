@@ -230,7 +230,7 @@ class MainGUI(ctk.CTk):
             router=routers.ParallelRouter(our_node)
         )
 
-        self.server = networking.TCPSubnetServer((our_ip, valid_port))
+        self.server = networking.TCPSubnetServer(("127.0.0.1", valid_port))
         self.server.thread_start()
 
     def open_settings(self):
