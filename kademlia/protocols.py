@@ -17,14 +17,15 @@ def get_rpc_error(id: ID,
                   ret: BaseResponse | None,
                   timeout_error: bool,
                   peer_error: ErrorResponse) -> RPCError:
+    print("Peer error:", peer_error)
     error = RPCError()
     if ret:
         error.id_mismatch_error = id != ret["random_id"]
     else:
         error.id_mismatch_error = False
     error.timeout_error = timeout_error
-    error.peer_error = peer_error is not None
-    if peer_error:
+    error.peer_error = peer_error["error_message"] not in ["", None]
+    if peer_error["error_message"]:
         error.peer_error_message = peer_error["error_message"]
 
     return error
@@ -423,12 +424,11 @@ class TCPProtocol(IProtocol):
                         ret_contacts = [c for c in contacts if c.protocol is not None]
                         print("returning contacts, rpc_error")
                         return ret_contacts, rpc_error
-
             rpc_error = get_rpc_error(id,
                                       ret_decoded,
                                       timeout_error,
                                       ErrorResponse(error_message=str(error), random_id=ID.random_id()))
-            print("returning no contacts, rpcerror")
+            print(f"returning no contacts, {rpc_error}")
             return [], rpc_error
         except Exception as e:
             print(7)

@@ -248,7 +248,7 @@ class DHT:
         contacts, error = known_peer.protocol.find_node(
             sender=self.our_contact, key=self.our_id)
         self.handle_error(error, known_peer)
-        if not error:
+        if not error.has_error():
             # print("NO ERROR")
 
             # add all contacts the known peer DIRECTLY knows

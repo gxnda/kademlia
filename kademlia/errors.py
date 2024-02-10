@@ -64,6 +64,7 @@ class RPCError(Exception):
             raise ValueError("Parameter peer error message requires a peer error.")
 
     def has_error(self) -> bool:
+        print(self.timeout_error, self.protocol_error, self.id_mismatch_error, self.peer_error)
         return self.timeout_error or \
             self.protocol_error or \
             self.id_mismatch_error or \
@@ -72,9 +73,15 @@ class RPCError(Exception):
     def __str__(self):
         if self.has_error():
             if self.protocol_error:
-                return self.protocol_error_message
+                return f"Protocol error: {self.protocol_error_message}"
             elif self.peer_error:
-                return self.peer_error_message
+                return f"Peer error: {self.peer_error_message}"
+            elif self.timeout_error:
+                return "Timeout error."
+            elif self.id_mismatch_error:
+                return "ID mismatch error."
+            else:
+                return "Unknown error."
         else:
             return "No error."
 
