@@ -1,6 +1,7 @@
 import threading
 import json
 from os.path import exists
+from random import randint
 
 import customtkinter as ctk
 from PIL import Image
@@ -47,33 +48,51 @@ class ContactViewer(ctk.CTk):
         self.settings_title = ctk.CTkLabel(self, text="Our Contact:", font=Fonts.title_font)
         self.settings_title.pack(padx=20, pady=30)
 
-        self.id = ctk.CTkLabel(self, text=f"ID: {self.id}", font=Fonts.text_font)
-        self.id.pack(padx=20, pady=10)
+        self.id_label = ctk.CTkLabel(self, text=f"ID: {self.id}", font=Fonts.text_font)
+        self.id_label.pack(padx=20, pady=10)
 
-        self.protocol_type = ctk.CTkLabel(self, text=f"Protocol type: {self.protocol_type}", font=Fonts.text_font)
-        self.protocol_type.pack(padx=20, pady=10)
+        self.protocol_type_label = ctk.CTkLabel(self, text=f"Protocol type: {self.protocol_type}", font=Fonts.text_font)
+        self.protocol_type_label.pack(padx=20, pady=10)
 
-        self.url = ctk.CTkLabel(self, text=f"URL: {self.url}", font=Fonts.text_font)
-        self.url.pack(padx=20, pady=10)
+        self.url_label = ctk.CTkLabel(self, text=f"URL: {self.url}", font=Fonts.text_font)
+        self.url_label.pack(padx=20, pady=10)
 
-        self.port = ctk.CTkLabel(self, text=f"Port: {self.port}", font=Fonts.text_font)
-        self.port.pack(padx=20, pady=10)
+        self.port_label = ctk.CTkLabel(self, text=f"Port: {self.port}", font=Fonts.text_font)
+        self.port_label.pack(padx=20, pady=10)
 
         self.export_button = ctk.CTkButton(self, text="Export our contact", font=Fonts.text_font,
                                            command=self.export_contact)
         self.export_button.pack(padx=20, pady=10)
 
+    def show_error(self, error_message: str):
+        print(f"[Error] {error_message}")
+        error_window = ErrorWindow(error_message)
+        error_window.mainloop()
+
     def export_contact(self, filename="our_contact.json"):
         contact_dict = {
             "url": self.url,
             "port": self.port,
-            "protocol_type": self.protocol_type,
+            "protocol_type": str(self.protocol_type),
             "id": self.id
         }
-        print("[INFO] Exporting our contact...")
+        print("[Status] Exporting our contact...")
         with open(filename, "w") as f:
             json.dump(contact_dict, f)
-        print(f"[INFO] Exported our contact to {filename}")
+        self.show_status(f"Exported our contact to {filename}.")
+
+    def show_status(self, message: str):
+        print(f"[Status] {message}")
+        status_window = StatusWindow(message)
+        status_window.mainloop()
+
+
+
+class StatusWindow(ctk.CTk):
+    def __init__(self, message: str):
+        ctk.CTk.__init__(self)
+        self.message = ctk.CTkLabel(self, text=message, font=Fonts.text_font)
+        self.message.pack(padx=10, pady=10)
 
 
 class Settings(ctk.CTk):
@@ -104,9 +123,23 @@ class Settings(ctk.CTk):
                                                  command=self.view_contact)
         self.view_contact_button.grid(column=0, row=2, padx=10, pady=10)
 
+    def show_error(self, error_message: str):
+        print(f"[Error] {error_message}")
+        error_window = ErrorWindow(error_message)
+        error_window.mainloop()
+
+    def show_status(self, message: str):
+        print(f"[Status] {message}")
+        status_window = StatusWindow(message)
+        status_window.mainloop()
+
     def export_dht(self):
         file = self.dht_export_file.get("0.0", "end").strip("\n")
-        self.dht.save(file)
+        try:
+            self.dht.save(file)
+            self.show_status(f"File saved successfully to {file}.")
+        except Exception as e:
+            self.show_error(str(e))
 
     def view_contact(self):
         our_contact: contact.Contact = self.dht.our_contact
@@ -165,7 +198,8 @@ class MainGUI(ctk.CTk):
         print(f"[Initialisation] Our hostname is {our_ip}.")
 
         valid_port = None
-        for port in range(10000, 30000):
+        while not valid_port:
+            port = randint(5000, 35000)
             if networking.port_is_free(port):
                 valid_port = port
                 break
@@ -252,6 +286,11 @@ class MainGUI(ctk.CTk):
         print(f"[Error] {error_message}")
         error_window = ErrorWindow(error_message)
         error_window.mainloop()
+
+    def show_status(self, message: str):
+        print(f"[Status] {message}")
+        status_window = StatusWindow(message)
+        status_window.mainloop()
 
 
 class LoadDHTFrame(ctk.CTkFrame):
