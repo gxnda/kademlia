@@ -28,6 +28,7 @@ open UserInterface(), then check if the user is in a network already or not
 - the k-buckets are stored in a JSON file, which is used to check this, 
 and if the user is not in a network, the user is prompted to join a network.
 """
+USE_GLOBAL_IP = False
 
 
 class Fonts:
@@ -194,7 +195,10 @@ class MainGUI(ctk.CTk):
         print("[Initialisation] Initialising Kademlia.")
 
         our_id = id.ID.random_id()
-        our_ip = get('https://api.ipify.org').content.decode('utf8')
+        if USE_GLOBAL_IP:  # Port forwarding is required.
+            our_ip = get('https://api.ipify.org').content.decode('utf8')
+        else:
+            our_ip = "127.0.0.1"
         print(f"[Initialisation] Our hostname is {our_ip}.")
 
         valid_port = None

@@ -10,3 +10,4 @@ pyproject.toml
 /kademlia/dht.pickle
 .idea/misc.xml
 .idea/workspace.xml
+/dht.pickle
