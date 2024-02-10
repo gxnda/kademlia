@@ -8,3 +8,5 @@ poetry.lock
 pyproject.toml
 .idea
 /kademlia/dht.pickle
+.idea/misc.xml
+.idea/workspace.xml
