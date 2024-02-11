@@ -68,7 +68,7 @@ class VirtualStorage(IStorage):
         return ret, val
 
 
-class SecondaryStorage(IStorage):
+class SecondaryJSONStorage(IStorage):
     def __init__(self, filename: str):
         """
         Storage object which reads/writes to a JSON file instead of to memory like how VirtualStorage does.

@@ -133,8 +133,7 @@ class ID:
         :param bucket: bucket to be searched
         :return: random ID in bucket.
         """
-        return ID(bucket.low() + random.randint(0,
-                                                bucket.high() - bucket.low()))
+        return ID(bucket.low() + random.randint(0, bucket.high() - bucket.low()))
 
     @classmethod
     def random_id(cls, low=0, high=2**160, seed=None):

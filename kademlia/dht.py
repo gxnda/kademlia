@@ -14,7 +14,7 @@ from kademlia.id import ID
 from kademlia.interfaces import IProtocol, IStorage
 from kademlia.node import Node
 from kademlia.routers import BaseRouter
-from kademlia.storage import VirtualStorage, SecondaryStorage
+from kademlia.storage import VirtualStorage, SecondaryJSONStorage
 
 
 class DHT:
@@ -74,7 +74,7 @@ class DHT:
         if originator_storage:
             self._originator_storage = originator_storage
         elif storage_factory:
-            # if storage_factory == SecondaryStorage:
+            # if storage_factory == SecondaryJSONStorage:
             #     self._originator_storage = storage_factory(
             #         filename=f"{id.value}/originator_storage.json")
             # else:
@@ -87,7 +87,7 @@ class DHT:
         if republish_storage:
             self._republish_storage = republish_storage
         elif storage_factory:
-            # if storage_factory == SecondaryStorage:
+            # if storage_factory == SecondaryJSONStorage:
             #     self._republish_storage = storage_factory(
             #         filename=f"{id.value}/republish_storage.json")
             # else:
@@ -100,7 +100,7 @@ class DHT:
         if cache_storage:
             self._cache_storage = cache_storage
         elif storage_factory:
-            # if storage_factory == SecondaryStorage:
+            # if storage_factory == SecondaryJSONStorage:
             #     self._cache_storage = storage_factory(
             #         filename=f"{id.value}/cache_storage.json")
             # else:

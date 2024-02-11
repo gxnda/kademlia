@@ -1,5 +1,6 @@
 import os
 import pickle
+import re
 import threading
 import json
 from os.path import exists, isfile
@@ -227,7 +228,7 @@ class MainGUI(ctk.CTk):
                 id=our_id,
                 protocol=protocol
             ),
-            storage=storage.SecondaryStorage(f"{our_id.value}/node.json"),
+            storage=storage.SecondaryJSONStorage(f"{our_id.value}/node.json"),
             cache_storage=storage.VirtualStorage()
         )
 
@@ -238,8 +239,8 @@ class MainGUI(ctk.CTk):
         self.dht: dht.DHT = dht.DHT(
             id=our_id,
             protocol=protocol,
-            originator_storage=storage.SecondaryStorage(f"{our_id.value}/originator_storage.json"),
-            republish_storage=storage.SecondaryStorage(f"{our_id.value}/republish_storage.json"),
+            originator_storage=storage.SecondaryJSONStorage(f"{our_id.value}/originator_storage.json"),
+            republish_storage=storage.SecondaryJSONStorage(f"{our_id.value}/republish_storage.json"),
             cache_storage=storage.VirtualStorage(),
             router=routers.ParallelRouter(our_node)
         )
@@ -608,10 +609,16 @@ class BootstrapFrame(ctk.CTkFrame):
         self.connect_button.grid(row=5, column=0, columnspan=2, padx=5, pady=10)
 
     def handle_bootstrap(self):
+        valid = False
 
         known_ip: str = self.ip_entry.get().strip("\n")
+        ip_regex = r"(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])"
         if not known_ip:
             self.parent.show_error("IP address must not be empty.")
+        elif re.match(known_ip, ip_regex):
+            self.parent.show_error("IP address is invalid.")
+        else:
+            valid = True
 
         known_port_str: str = self.port_entry.get().strip("\n")
         known_port = None
@@ -619,8 +626,11 @@ class BootstrapFrame(ctk.CTkFrame):
             self.parent.show_error("Port must not be empty.")
         elif not known_port_str.isnumeric():
             self.parent.show_error("Port was not a number.")
+        elif int(known_port_str) < 0 or int(known_port_str) > 65535:
+            self.parent.show_error("Port was out of range. Must be between 0 and 65535.")
         else:
             known_port = int(known_port_str)
+            valid = True
 
         known_id_value: str = self.id_entry.get().strip("\n")
         known_id = None
@@ -628,11 +638,14 @@ class BootstrapFrame(ctk.CTkFrame):
             self.parent.show_error("ID must not be empty.")
         elif not known_id_value.isnumeric():
             self.parent.show_error("ID was not a number.")
-
+        elif int(known_id_value) < 0 or int(known_id_value) > 2 ** 160:  # Slightly too hardcoded for me,
+            # what if they want to change ID range?
+            self.parent.show_error("ID out of range")
         else:
             known_id = id.ID(int(known_id_value))
+            valid = True
 
-        if known_id and known_ip and known_port:
+        if known_id and known_ip and known_port and valid:
             self.bootstrap(self.parent, known_id, known_ip, known_port)
 
     @classmethod
