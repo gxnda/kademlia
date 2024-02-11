@@ -87,7 +87,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             method: Callable = getattr(node, method_name)
             # Calls method, eg: server_store.
             response = method(common_request)
-            encoded_response = pickler.encode_data(response)
+            encoded_response = pickler.encrypt_data(response)
             print("[Server] Sending encoded 200: ", response)
             old_self_instance.send_response(code=200)
 
@@ -107,7 +107,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
                 random_id=ID.random_id()
             )
             print("[Server] Sending encoded 400:", error_response)
-            encoded_response = pickler.encode_data(error_response)
+            encoded_response = pickler.encrypt_data(error_response)
 
             old_self_instance.send_header("Content-Type", "application/octet-stream")
             old_self_instance.end_headers()
@@ -134,7 +134,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers['Content-Length'])
         encoded_request: bytes = self.rfile.read(content_length)
         # encoded_request: bytes = self.rfile.read()
-        decoded_request: dict = pickler.decode_data(encoded_request)
+        decoded_request: dict = pickler.decrypt_data(encoded_request)
         # print("[Server] Request received:", decoded_request)
         request_dict = decoded_request
         path: str = self.path
@@ -177,7 +177,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
 
             else:
                 print("[Server] Subnet node not found.")
-                encoded_response = pickler.encode_data({"error_message": "Subnet node not found."})
+                encoded_response = pickler.encrypt_data({"error_message": "Subnet node not found."})
                 self.send_header("Content-Type", "application/octet-stream")
                 self.end_headers()
                 self.send_response(400)
@@ -222,7 +222,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             method: Callable = getattr(node, method_name)
             # Calls method, eg: server_store.
             response = method(common_request)
-            encoded_response = pickler.encode_data(response)
+            encoded_response = pickler.encrypt_data(response)
             print("[Server] Sending encoded 200: ", response)
             old_self_instance.send_response(code=200)
 
@@ -242,7 +242,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 random_id=ID.random_id()
             )
             print("[Server] Sending encoded 400:", error_response)
-            encoded_response = pickler.encode_data(error_response)
+            encoded_response = pickler.encrypt_data(error_response)
 
             old_self_instance.send_header("Content-Type", "application/octet-stream")
             old_self_instance.end_headers()
@@ -270,7 +270,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers['Content-Length'])
         encoded_request: bytes = self.rfile.read(content_length)
         # encoded_request: bytes = self.rfile.read()
-        decoded_request: dict = pickler.decode_data(encoded_request)
+        decoded_request: dict = pickler.decrypt_data(encoded_request)
         # print("[Server] Request received:", decoded_request)
         request_dict = decoded_request
         path: str = self.path
@@ -310,7 +310,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
             else:
                 print("[Server] Node not found.")
-                encoded_response = pickler.encode_data({"error_message": "Node not found."})
+                encoded_response = pickler.encrypt_data({"error_message": "Node not found."})
                 self.send_header("Content-Type", "application/octet-stream")
                 self.end_headers()
                 self.send_response(400)
@@ -328,6 +328,8 @@ class TCPServer(BaseServer):
             server_address=server_address,
             RequestHandlerClass=HTTPRequestHandler
         )
+
+        self.shared_keys: dict[tuple[str, int], int] = {}
 
 
 

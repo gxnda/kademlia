@@ -1,15 +1,16 @@
 import pickle
+from cryptography.fernet import Fernet
 
-from kademlia.errors import DataDecodingError
+from kademlia.errors import DataDecryptingError
 
 
-def encode_data(data: dict) -> bytes:
+def encrypt_data(data: dict, key: bytes) -> bytes:
     """
     Takes in a dictionary, encodes all values using pickle, in order to retain objects
-    over HTTP.
-    The dictionary is then converted to a string using json.dumps()
+    over HTTP, Then it is encrypted using Fernet.
     """
-    return pickle.dumps(data)
+    f = Fernet(key)
+    return f.encrypt(pickle.dumps(data))
 
 
 def plain_encode_data(data: dict) -> bytes:
@@ -21,19 +22,21 @@ def plain_encode_data(data: dict) -> bytes:
     return pickle.dumps(data)
 
 
-def decode_data(encoded_data: bytes) -> dict:
+def decrypt_data(encrypted_data: bytes, key: bytes) -> dict:
     """
     Takes in a string, decodes all pickled byte strings of the string dictionary 
     into python objects, and returns the decoded dictionary.
     """
+    f = Fernet(key)
     try:
-        if isinstance(encoded_data, bytes):
-            decoded_data = pickle.loads(encoded_data)
+        if isinstance(encrypted_data, bytes):
+            decoded_data = pickle.loads(f.decrypt(encrypted_data))
         else:
-            raise TypeError(f"Encoded data should be type bytes, found type {type(encoded_data)}")
+            raise TypeError(f"Encoded data should be type bytes, found type {type(encrypted_data)}")
 
     except Exception as error:
-        raise DataDecodingError("Error decoding data.") from error
+        raise DataDecryptingError("Error decrypting data.") from error
+
     return decoded_data
 
 
@@ -49,7 +52,7 @@ def plain_decode_data(encoded_data: bytes) -> dict:
             raise TypeError(f"Encoded data should be type bytes, found type {type(encoded_data)}")
 
     except Exception as error:
-        raise DataDecodingError("Error decoding data.") from error
+        raise DataDecryptingError("Error decoding data.") from error
     return decoded_data
 
 
@@ -67,8 +70,9 @@ if __name__ == "__main__":
 
     my_dict = {"a": 1, "b": 27, "c": [1, 2, 3, MyClass("defined in dict")]}
     print(my_dict)
-    enc = encode_data(my_dict)
-    dec = decode_data(enc)
+    key = Fernet.generate_key()
+    enc = encrypt_data(my_dict, key)
+    dec = decrypt_data(enc, key)
     print(dec)
     print(dec["c"][3].method())
     

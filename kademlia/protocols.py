@@ -1,4 +1,7 @@
 import requests
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 from kademlia import pickler
 from kademlia.constants import Constants
@@ -10,7 +13,7 @@ from kademlia.errors import RPCError
 from kademlia.id import ID
 from kademlia.interfaces import IProtocol
 from kademlia.node import Node
-from kademlia.pickler import encode_data
+from kademlia.pickler import encrypt_data
 
 
 def get_rpc_error(id: ID,
@@ -98,11 +101,14 @@ class TCPSubnetProtocol(IProtocol):
         self.responds = True
         self.subnet = subnet
         self.type = "TCPSubnetProtocol"
+        # Generate a private key for use in the exchange
+        self.__private_key = X25519PrivateKey.generate()
+        self.peer_public_key = X25519PrivateKey.generate().public_key()
 
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
         id: ID = ID.random_id()
 
-        encoded_data = encode_data(
+        encoded_data = encrypt_data(
             dict(FindNodeSubnetRequest(
                 protocol=sender.protocol,
                 protocol_name=type(sender.protocol),
@@ -139,7 +145,7 @@ class TCPSubnetProtocol(IProtocol):
 
         if ret:
             encoded_data = ret.content
-            ret_decoded = pickler.decode_data(encoded_data)
+            ret_decoded = pickler.decrypt_data(encoded_data)
         else:
             ret_decoded = None
         try:
@@ -184,7 +190,7 @@ class TCPSubnetProtocol(IProtocol):
         :return: contacts, value, RPCError
         """
         random_id = ID.random_id()
-        encoded_data = encode_data(
+        encoded_data = encrypt_data(
             dict(FindValueSubnetRequest(
                 protocol=sender.protocol,
                 protocol_name=type(sender.protocol),
@@ -221,7 +227,7 @@ class TCPSubnetProtocol(IProtocol):
         ret_decoded = None
         if ret:
             encoded_data = ret.content
-            ret_decoded = pickler.decode_data(encoded_data)
+            ret_decoded = pickler.decrypt_data(encoded_data)
 
         try:
             contacts = []
@@ -256,7 +262,7 @@ class TCPSubnetProtocol(IProtocol):
 
     def ping(self, sender: Contact) -> RPCError:
         random_id = ID.random_id()
-        encoded_data = encode_data(
+        encoded_data = encrypt_data(
             dict(PingSubnetRequest(
                 protocol=sender.protocol,
                 protocol_name=type(sender.protocol),
@@ -292,7 +298,7 @@ class TCPSubnetProtocol(IProtocol):
         formatted_response = None
         if ret:
             encoded_data = ret.content
-            formatted_response = pickler.decode_data(encoded_data)
+            formatted_response = pickler.decrypt_data(encoded_data)
 
         return get_rpc_error(random_id, formatted_response, timeout_error, ErrorResponse(
             error_message=str(error), random_id=ID.random_id()))
@@ -306,7 +312,7 @@ class TCPSubnetProtocol(IProtocol):
               ) -> RPCError:
         random_id = ID.random_id()
 
-        encoded_data = encode_data(
+        encoded_data = encrypt_data(
             dict(StoreSubnetRequest(
                 protocol=sender.protocol,
                 protocol_name=type(sender.protocol),
@@ -348,7 +354,7 @@ class TCPSubnetProtocol(IProtocol):
         formatted_response = None
         if ret:
             encoded_data = ret.content
-            formatted_response = pickler.decode_data(encoded_data)
+            formatted_response = pickler.decrypt_data(encoded_data)
 
         return get_rpc_error(random_id, formatted_response, timeout_error, ErrorResponse(
             error_message=str(error), random_id=ID.random_id()))
@@ -364,7 +370,7 @@ class TCPProtocol(IProtocol):
 
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
         id: ID = ID.random_id()
-        encoded_data = encode_data(
+        encoded_data = encrypt_data(
             dict(FindNodeRequest(
                 protocol=sender.protocol,
                 protocol_name=type(sender.protocol),
@@ -399,7 +405,7 @@ class TCPProtocol(IProtocol):
             error = e
         if ret:
             encoded_data = ret.content
-            ret_decoded = pickler.decode_data(encoded_data)
+            ret_decoded = pickler.decrypt_data(encoded_data)
         else:
             ret_decoded = None
         try:
@@ -443,7 +449,7 @@ class TCPProtocol(IProtocol):
         :return: contacts, value, RPCError
         """
         random_id = ID.random_id()
-        encoded_data = encode_data(
+        encoded_data = encrypt_data(
             dict(FindValueRequest(
                 protocol=sender.protocol,
                 protocol_name=type(sender.protocol),
@@ -479,7 +485,7 @@ class TCPProtocol(IProtocol):
         ret_decoded = None
         if ret:
             encoded_data = ret.content
-            ret_decoded = pickler.decode_data(encoded_data)
+            ret_decoded = pickler.decrypt_data(encoded_data)
 
         try:
             contacts = []
@@ -514,7 +520,7 @@ class TCPProtocol(IProtocol):
 
     def ping(self, sender: Contact) -> RPCError:
         random_id = ID.random_id()
-        encoded_data = encode_data(
+        encoded_data = encrypt_data(
             dict(PingRequest(
                 protocol=sender.protocol,
                 protocol_name=type(sender.protocol),
@@ -549,7 +555,7 @@ class TCPProtocol(IProtocol):
         formatted_response = None
         if ret:
             encoded_data = ret.content
-            formatted_response = pickler.decode_data(encoded_data)
+            formatted_response = pickler.decrypt_data(encoded_data)
 
         return get_rpc_error(random_id, formatted_response, timeout_error, ErrorResponse(
             error_message=str(error), random_id=ID.random_id()))
@@ -563,7 +569,7 @@ class TCPProtocol(IProtocol):
               ) -> RPCError:
         random_id = ID.random_id()
 
-        encoded_data = encode_data(
+        encoded_data = encrypt_data(
             dict(StoreRequest(
                 protocol=sender.protocol,
                 protocol_name=type(sender.protocol),
@@ -604,7 +610,7 @@ class TCPProtocol(IProtocol):
         formatted_response = None
         if ret:
             encoded_data = ret.content
-            formatted_response = pickler.decode_data(encoded_data)
+            formatted_response = pickler.decrypt_data(encoded_data)
 
         return get_rpc_error(random_id, formatted_response, timeout_error, ErrorResponse(
             error_message=str(error), random_id=ID.random_id()))

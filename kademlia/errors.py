@@ -1,6 +1,6 @@
 
 
-class DataDecodingError(Exception):
+class DataDecryptingError(Exception):
     pass
 
 class TooManyContactsError(Exception):
