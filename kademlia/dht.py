@@ -113,15 +113,14 @@ class DHT:
         self.pending_contacts: list[Contact] = []
         self.our_id = id
         self.our_contact = Contact(id=id, protocol=protocol)
-        # TODO: Should these be virtualStorage?
-        self.node = Node(self.our_contact, storage=VirtualStorage(), cache_storage=VirtualStorage())
-        self.node.DHT = self
-        self.node.bucket_list.DHT = self
+        self.node = router.node
+        self.node.dht = self
+        self.node.bucket_list.dht = self
         self._protocol = protocol
         self._router: BaseRouter = router
         self._router.node = self.node
         self._router.dht = self
-        self.eviction_count: dict[int, int] = {}  # May be incorrect
+        self.eviction_count: dict[int, int] = {}
 
     def router(self) -> BaseRouter:
         return self._router
@@ -171,6 +170,7 @@ class DHT:
             else:
                 found, our_val = self._cache_storage.try_get_value(key)
                 if our_val:
+                    found = True
                     val = our_val
                 else:
                     lookup: QueryReturn = self._router.lookup(
@@ -192,10 +192,9 @@ class DHT:
                         if store_to:
                             separating_nodes: int = self._get_separating_nodes_count(self.our_contact, store_to)
                             print("Separating nodes:", separating_nodes)
-                            exp_time_sec: int = int(
-                                Constants.EXPIRATION_TIME_SEC / (2 ** separating_nodes)
-                            )
-                            error: RPCError = store_to.protocol.store(self.node.our_contact, key, lookup["val"])
+                            exp_time_sec: int = Constants.EXPIRATION_TIME_SEC // (2 ** separating_nodes)
+                            error: RPCError = store_to.protocol.store(self.node.our_contact, key, lookup["val"],
+                                                                      exp_time_sec=exp_time_sec)
                             self.handle_error(error, store_to)
 
         return found, contacts, val
@@ -310,7 +309,10 @@ class DHT:
         Sets up the refresh timer to re-ping KBuckets.
 
         From the spec:
-        “Buckets are generally kept fresh by the traffic of requests traveling through nodes. To handle pathological cases in which there are no lookups for a particular ID range, each node refreshes any bucket to which it has not performed a node lookup in the past hour. Refreshing means picking a random ID in the bucket’s range and performing a node search for that ID.”
+        “Buckets are generally kept fresh by the traffic of requests traveling through nodes. To handle pathological
+        cases in which there are no lookups for a particular ID range, each node refreshes any bucket to which it has
+        not performed a node lookup in the past hour. Refreshing means picking a random ID in the bucket’s range and
+        performing a node search for that ID.”
         """
         bucket_refresh_timer = threading.Timer(Constants.BUCKET_REFRESH_INTERVAL / 1000, self._refresh_bucket)
         bucket_refresh_timer.auto_reset = True
@@ -386,12 +388,12 @@ class DHT:
         keys_pending_republish = [
             key for key in self._originator_storage.get_keys()
             if (now -
-                self._originator_storage.get_timestamp(key)) >= timedelta(
+                self._originator_storage.get_timestamp(key.value)) >= timedelta(
                 milliseconds=Constants.ORIGINATOR_REPUBLISH_INTERVAL)
         ]
 
         for k in keys_pending_republish:
-            key: ID = ID(k)
+            key: ID = k
             # Just use close contacts, don't do a lookup
             contacts = self.node.bucket_list.get_close_contacts(
                 key, self.node.our_contact.id)
@@ -404,7 +406,7 @@ class DHT:
                 )
                 self.handle_error(error, c)
 
-            self._originator_storage.touch(k)
+            self._originator_storage.touch(k.value)
 
     def _get_separating_nodes_count(self, contact_a: Contact, contact_b: Contact):
         """
@@ -432,7 +434,7 @@ class DHT:
         if error:
             if error.has_error():
                 count = self._add_contact_to_evict(contact.id.value)
-                if count == Constants.EVICTION_LIMIT:
+                if count >= Constants.EVICTION_LIMIT:
                     self._replace_contact(contact)
 
     def delay_eviction(self,
@@ -536,4 +538,3 @@ class DHT:
 #         """
 #         self.remove_expired_data(self.cache_storage)
 #         # self.remove_expired_data(self.republish_storage)
-

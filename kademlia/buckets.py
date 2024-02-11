@@ -61,15 +61,15 @@ class KBucket:
         return self._low <= other_id.value <= self._high
 
     def add_contact(self, contact: Contact):
-        # TODO: Check if this is meant to check if it exists in the bucket.
         if self.is_full():
             raise TooManyContactsError(
                 f"KBucket is full - (length is {len(self.contacts)}).")
         elif not self.is_in_range(contact.id):
             raise OutOfRangeError("Contact ID is out of range.")
-        else:
-            # !!! should this check if the contact is already in the bucket?
+        elif contact not in self.contacts:
             self.contacts.append(contact)
+        else:
+            print("[Client] Contact already in KBucket.")
 
     def depth(self) -> int:
         """
@@ -119,8 +119,8 @@ class KBucket:
         """replaces contact, then touches it"""
         contact_ids = [c.id for c in self.contacts]
         index = contact_ids.index(contact.id)
-        self.contacts[index] = contact
         contact.touch()
+        self.contacts[index] = contact
 
     def evict_contact(self, contact: Contact) -> None:
         if self.contains(contact.id):
@@ -137,7 +137,7 @@ class BucketList:
         """
         :param our_contact: Our contact
         """
-        self.DHT = None
+        self.dht = None
         self.buckets: list[KBucket] = [KBucket()]
         # first k-bucket has max range
         self.our_id: ID = our_contact.id
@@ -242,15 +242,15 @@ class BucketList:
                 if error:
                     # Unresponsive
                     print("[Client] Node is unresponsive")
-                    if self.DHT:  # tests may not initialise a DHT
+                    if self.dht:  # tests may not initialise a DHT
                         print("[Client] Delaying eviction")
-                        self.DHT.delay_eviction(last_seen_contact, contact)
+                        self.dht.delay_eviction(last_seen_contact, contact)
                 else:
                     # still can't add the contact ,so put it into the pending list
                     print("[Client] Node is responsive.")
-                    if self.DHT:
+                    if self.dht:
                         print("[Client] Adding node to DHT pending...")
-                        self.DHT.add_to_pending(contact)
+                        self.dht.add_to_pending(contact)
 
         else:
             # Bucket is not full, nothing special happens.

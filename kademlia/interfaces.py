@@ -70,5 +70,5 @@ class IProtocol:
         pass
 
     @abstractmethod
-    def store(self, sender, key: ID, val: str, is_cached: bool = False) -> RPCError:
+    def store(self, sender, key: ID, val: str, is_cached: bool = False, exp_time_sec: int = 0) -> RPCError:
         pass

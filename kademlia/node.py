@@ -1,5 +1,3 @@
-from typing import Optional
-
 from kademlia.buckets import BucketList
 from kademlia.constants import Constants
 from kademlia.contact import Contact
@@ -28,7 +26,7 @@ class Node:
 
         # VirtualStorage will only be created by
         self.cache_storage: IStorage = cache_storage if cache_storage else VirtualStorage()
-        self.DHT = None  # This should never be None
+        self.dht = None  # This should never be None
         self.bucket_list = BucketList(contact)
 
     def ping(self, sender: Contact) -> Contact:
@@ -51,8 +49,17 @@ class Node:
               val: str,
               is_cached: bool = False,
               expiration_time_sec: int = 0) -> None:
+        """
+        Store a key-value pair in the republish or cache storage.
+        :param key:
+        :param sender:
+        :param val:
+        :param is_cached:
+        :param expiration_time_sec:
+        :return:
+        """
 
-        if sender.id == self.our_contact.id:
+        if sender.id.value == self.our_contact.id.value:
             raise SenderIsSelfError("Sender should not be ourself.")
 
         # add sender to bucket_list (updating bucket list like how it is in spec.)
@@ -144,17 +151,17 @@ class Node:
                             key=ID(k),
                             val=self.storage.get(k)
                         )
-                        if self.DHT:
-                            self.DHT.handle_error(error, sender)
+                        if self.dht:
+                            self.dht.handle_error(error, sender)
 
     def _is_new_contact(self, sender: Contact) -> bool:
         ret: bool
         # with self.bucket_list.lock:
         ret: bool = self.bucket_list.contact_exists(sender)
         # end lock
-        if self.DHT:  # might be None in unit testing
+        if self.dht:  # might be None in unit testing
             # with self.DHT.pending_contacts.lock:
-            ret |= (sender.id in [c.id for c in self.DHT.pending_contacts])
+            ret |= (sender.id in [c.id for c in self.dht.pending_contacts])
             # end lock
 
         return not ret
@@ -168,7 +175,7 @@ class Node:
         """
         self.storage.set(key, val)
 
-    # REQUEST HANDLERS: TODO: I think they go here?
+    # Server entry points
 
     def server_ping(self, request: CommonRequest) -> dict:
         protocol: IProtocol = request["protocol"]
@@ -242,4 +249,3 @@ class Node:
         return {"contacts": contact_dict,
                 "random_id": request["random_id"],
                 "value": val}
-

@@ -1,6 +1,8 @@
 import random
 from math import ceil, log
 
+from kademlia.constants import Constants
+
 
 class ID:
 
@@ -12,7 +14,7 @@ class ID:
             value: (int) ID denary value
         """
 
-        self.MAX_ID = 2 ** 160
+        self.MAX_ID = 2 ** Constants.ID_LENGTH_BITS
         self.MIN_ID = 0
         if not (self.MAX_ID > value >= self.MIN_ID):  # ID can be 0, this is used in unit tests.
             raise ValueError(
@@ -37,13 +39,13 @@ class ID:
         padded_binary = number_of_zeroes_to_add * "0" + binary
         return padded_binary
 
-    def set_bit(self, bit: int) -> None:
-        """
-        Sets a given bit to 1, Little endian. (set_bit(0) sets smallest bit to 0)
-        :param bit: bit to be set.
-        :return: Nothing
-        """
-        self.little_endian_bytes()[bit] = "1"
+    # def set_bit(self, bit: int) -> None:
+    #     """
+    #     Sets a given bit to 1, Little endian. (set_bit(0) sets smallest bit to 0)
+    #     :param bit: bit to be set.
+    #     :return: Nothing
+    #     """
+    #     self.little_endian_bytes()[bit] = "1"
 
     def big_endian_bytes(self) -> list[str]:
         """
@@ -97,7 +99,7 @@ class ID:
         return str(self.value)
 
     def __repr__(self) -> str:
-        return str(self.value)[:-3]
+        return str(self.value)
 
     @classmethod
     def max(cls):

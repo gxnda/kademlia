@@ -18,10 +18,10 @@ from kademlia.node import Node
 
 class BaseRouter:
     def __init__(self, node: Node):
-        self.closer_contacts: list[Contact]
-        self.further_contacts: list[Contact]
+        self.closer_contacts: list[Contact] = []
+        self.further_contacts: list[Contact] = []
         self.node: Node = node
-        self.dht = None  # TODO: Is it optional?
+        self.dht = None
         # self.locker
 
     def find_closest_nonempty_kbucket(self, key: ID) -> KBucket:
@@ -86,7 +86,7 @@ class BaseRouter:
         val: str = ""
 
         for n in nodes_to_query:
-            found, val, found_by = self.get_closer_nodes(
+            found, val, found_by, closer_contacts, further_contacts = self.get_closer_nodes(
                 key=key,
                 node_to_query=n,
                 rpc_call=rpc_call,
@@ -123,7 +123,7 @@ class BaseRouter:
                          rpc_call: Callable[[ID, Contact], tuple[list[Contact], Contact, str]],
                          further_contacts: list[Contact],
                          closer_contacts: list[Contact]
-                         ) -> tuple[bool, str, Contact]:
+                         ) -> tuple[bool, str, Contact, list[Contact], list[Contact]]:
         """
         TODO: Create docstring
         Tells closer nodes to look for key
@@ -155,7 +155,7 @@ class BaseRouter:
             if p.id not in [c.id for c in further_contacts]:
                 further_contacts.append(p)
 
-        return val is not None, val, found_by
+        return val is not None, val, found_by, closer_contacts, further_contacts
 
 
 class Router(BaseRouter):
@@ -165,10 +165,6 @@ class Router(BaseRouter):
 
     def __init__(self, node: Node = None) -> None:
         super().__init__(node)
-        self.node: Node = node
-        self.closer_contacts: list[Contact] = []
-        self.further_contacts: list[Contact] = []
-        self.dht = None
         # self.lock = WithLock(Lock())
 
     def lookup(self,
@@ -225,7 +221,7 @@ class Router(BaseRouter):
                 contacted_nodes.append(n)
 
         # Spec: The initiator then sends parallel, async FIND_NODE RPCs to the "a" nodes it has chosen,
-        # "a" is a system wide parameter, such as 3.
+        # "a" is a system-wide parameter, such as 3.
         query_result: QueryReturn = self.query(key, nodes_to_query, rpc_call, self.closer_contacts,
                                                self.further_contacts)
         if query_result["found"]:
@@ -310,20 +306,19 @@ class Router(BaseRouter):
 
 class ParallelRouter(BaseRouter):
     def __init__(self, node: Node = None):
-        # TODO: Should these be empty?
         super().__init__(node)
-        self.contact_queue = my_queues.InfiniteLinearQueue()  # TODO: Make protected - should it be infinite?
-        self.node: Node = node
-        self.semaphore = threading.Semaphore()  # TODO: Make protected
-        self.now: datetime = datetime.now()  # Should this be now?
+        self._contact_queue = my_queues.InfiniteLinearQueue()
+        self._semaphore = threading.Semaphore()
+        self.now: datetime = datetime.now()
         self.stop_work = False
-        self.initialise_thread_pool()
+        self.threads: list[threading.Thread] = []
+        self._initialise_thread_pool()
 
-    def initialise_thread_pool(self):  # TODO: Make protected.
-        threads: list[threading.Thread] = []
+    def _initialise_thread_pool(self):
         for _ in range(Constants.MAX_THREADS):
             thread = threading.Thread(target=self.rpc_caller)
             # thread.is_background = True
+            self.threads.append(thread)
             thread.start()
 
     def queue_work(self,
@@ -334,7 +329,7 @@ class ParallelRouter(BaseRouter):
                    further_contacts: list[Contact],
                    find_result: FindResult) -> None:
 
-        self.contact_queue.enqueue(
+        self._contact_queue.enqueue(
             ContactQueueItem(
                 key=key,
                 contact=contact,
@@ -344,7 +339,7 @@ class ParallelRouter(BaseRouter):
                 find_result=find_result)
         )
 
-        self.semaphore.release()
+        self._semaphore.release()
 
     def rpc_caller(self) -> None:
         """
@@ -354,15 +349,16 @@ class ParallelRouter(BaseRouter):
         """
         flag = True
         while flag:  # I hate this.
-            self.semaphore.acquire()
-            item: ContactQueueItem = self.contact_queue.dequeue()
+            self._semaphore.acquire()
+            item: ContactQueueItem = self._contact_queue.dequeue()
             if item:
-                found, val, found_by = self.get_closer_nodes(item["key"],
-                                            item["contact"],
-                                            item["rpc_call"],
-                                            item["closer_contacts"],
-                                            item["further_contacts"]
-                                            )
+                found, val, found_by, item["closer_contacts"], item["further_contacts"] = self.get_closer_nodes(
+                        item["key"],
+                        item["contact"],
+                        item["rpc_call"],
+                        item["closer_contacts"],
+                        item["further_contacts"]
+                    )
                 if val or found_by:
                     if not self.stop_work:
                         # Possible multiple "found"
@@ -385,7 +381,7 @@ class ParallelRouter(BaseRouter):
     def dequeue_remaining_work(self):
         dequeue_result = True
         while dequeue_result:
-            dequeue_result = self.contact_queue.dequeue()
+            dequeue_result = self._contact_queue.dequeue()
 
     def stop_remaining_work(self):
         self.dequeue_remaining_work()
@@ -415,7 +411,6 @@ class ParallelRouter(BaseRouter):
         if not isinstance(self.node, Node):
             raise TypeError("ParallelRouter must have instance node.")
 
-        stop_work: bool = False
         have_work: bool = True
         find_result: FindResult = FindResult(found=False, found_by=None, found_value="", found_contacts=[])
         ret: list[Contact] = []
@@ -485,7 +480,7 @@ class ParallelRouter(BaseRouter):
         # The lookup terminates when the initiator has queried and
         # received responses from the k closest nodes it has seen.
         while len(ret) < Constants.K and have_work:
-            sleep(Constants.RESPONSE_WAIT_TIME / 1000)  # Should this be time.sleep or asyncio.sleep, or threading ?
+            sleep(Constants.RESPONSE_WAIT_TIME / 1000)
 
             found, found_return = self.parallel_found(find_result, found_return)
             if found:

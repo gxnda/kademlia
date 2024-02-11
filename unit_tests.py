@@ -471,8 +471,8 @@ class NodeLookupTests(unittest.TestCase):
 
             for close_contact_of_contacted_node in close_contacts_of_contacted_node:
                 # Which of these contacts are closer?
-                if close_contact_of_contacted_node.id.value ^ key.value < distance and close_contact_of_contacted_node.id.value not in [
-                    c.id.value for c in closer]:
+                if (close_contact_of_contacted_node.id.value ^ key.value < distance and close_contact_of_contacted_node.id.value not in
+                        [c.id.value for c in closer]):
                     closer.append(close_contact_of_contacted_node)
 
                 # Which of these contacts are farther?
