@@ -2,15 +2,14 @@ import os
 import pickle
 import threading
 import json
-from os.path import exists
+from os.path import exists, isfile
 from random import randint
-from tkinter import Tk
 
 import customtkinter as ctk
 from PIL import Image
 from requests import get
 
-from kademlia import dht, id, networking, protocols, node, contact, storage, routers, pickler
+from kademlia import dht, id, networking, protocols, node, contact, storage, routers
 
 """
 ├── User Interface
@@ -101,7 +100,6 @@ class StatusWindow(ctk.CTk):
             self.copy_button = ctk.CTkButton = ctk.CTkButton(self, text="Copy to clipboard", font=Fonts.text_font,
                                                              command=self.copy)
             self.copy_button.pack(padx=30, pady=20)
-
 
     def copy(self):
         print(f"[GUI] Copying data to clipboard: {self.copy_data}")
@@ -358,7 +356,7 @@ class UploadFrame(ctk.CTkFrame):
 
     def handle_upload(self):
         file_to_upload = self.enter_file_textbox.get("0.0", "end").strip("\n")
-        if os.path.exists(file_to_upload):
+        if isfile(file_to_upload):
             filename = os.path.basename(file_to_upload)
             if not filename:  # os.path.basename returns "" on file paths ending in "/"
                 self.parent.show_error("Must not be a directory.")
@@ -463,6 +461,11 @@ class LoadDHTFromFileFrame(ctk.CTkFrame):
 
     def load_dht(self):
         filename = self.file_name_textbox.get("0.0", "end").strip("\n")
+
+        if not isfile(filename):
+            self.parent.show_error(f"File not found:\n'{filename}'")
+            return None
+
         loaded_dht = dht.DHT.load(filename=filename)
         self.parent.server.thread_stop(self.parent.server_thread)
         self.parent.dht = loaded_dht
@@ -605,35 +608,32 @@ class BootstrapFrame(ctk.CTkFrame):
         self.connect_button.grid(row=5, column=0, columnspan=2, padx=5, pady=10)
 
     def handle_bootstrap(self):
-        valid = False
 
         known_ip: str = self.ip_entry.get().strip("\n")
         if not known_ip:
             self.parent.show_error("IP address must not be empty.")
-        else:
-            valid = True
 
         known_port_str: str = self.port_entry.get().strip("\n")
+        known_port = None
         if not known_port_str:
             self.parent.show_error("Port must not be empty.")
         elif not known_port_str.isnumeric():
             self.parent.show_error("Port was not a number.")
         else:
-            known_port: int = int(known_port_str)
-            valid = True
+            known_port = int(known_port_str)
 
         known_id_value: str = self.id_entry.get().strip("\n")
+        known_id = None
         if not known_id_value:
             self.parent.show_error("ID must not be empty.")
         elif not known_id_value.isnumeric():
             self.parent.show_error("ID was not a number.")
 
         else:
-            known_id: id.ID = id.ID(int(known_id_value))
-            valid = True
+            known_id = id.ID(int(known_id_value))
 
-        if valid:
-            self.bootstrap(known_id, known_ip, known_port)
+        if known_id and known_ip and known_port:
+            self.bootstrap(self.parent, known_id, known_ip, known_port)
 
     @classmethod
     def bootstrap(cls, parent: MainGUI, known_id: id.ID, known_url: str, known_port: int):
