@@ -10,7 +10,6 @@ from kademlia.dictionaries import PingRequest, StoreRequest, FindNodeRequest, Fi
     CommonRequest, PingSubnetRequest, StoreSubnetRequest, FindNodeSubnetRequest, FindValueSubnetRequest
 from kademlia.id import ID
 from kademlia.node import Node
-from kademlia.protocols import TCPProtocol
 
 
 class BaseServer(ThreadingHTTPServer):
