@@ -69,8 +69,8 @@ class BaseServer(ThreadingHTTPServer):
 
 class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
 
-    def common_request_handler(self,
-                               method_name: str, common_request: CommonRequest, node):  # TODO: Make protected.
+    def _common_request_handler(self,
+                                method_name: str, common_request: CommonRequest, node):
         old_self_instance = self  # To prevent other threads overwriting it,
         # lock isn't used because I don't want to make the program wait.
 
@@ -166,7 +166,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             node = self.server.subnets.get(subnet)  # should be valid if inheriting from SubnetServer?
             if node:
                 print("[Server] Request called:", node.bucket_list.buckets)
-                self.common_request_handler(method_name, common_request, node)
+                self._common_request_handler(method_name, common_request, node)
                 # print("Starting thread...")
                 # new_thread = threading.Thread(
                 #     target=self.common_request_handler,
@@ -204,8 +204,8 @@ class TCPSubnetServer(BaseServer):
 
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
-    def common_request_handler(self,
-                               method_name: str, common_request: CommonRequest, node):  # TODO: Make protected.
+    def _common_request_handler(self,
+                                method_name: str, common_request: CommonRequest, node):
         old_self_instance = self  # To prevent other threads overwriting it,
         # lock isn't used because I don't want to make the program wait.
 
@@ -299,7 +299,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             node = self.server.node
             if node:
                 print("[Server] Request called:", node.bucket_list.buckets)
-                self.common_request_handler(method_name, common_request, node)
+                self._common_request_handler(method_name, common_request, node)
                 # print("Starting thread...")
                 # new_thread = threading.Thread(
                 #     target=self.common_request_handler,
