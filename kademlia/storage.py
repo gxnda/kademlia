@@ -36,12 +36,13 @@ class VirtualStorage(IStorage):
             raise TypeError("'get()' parameter 'key' must be type ID or int.")
 
     def get_timestamp(self, key: int) -> datetime:
-        return self._store[key]["republish_timestamp"]
+        return datetime.fromisoformat(self._store[key]["republish_timestamp"])
 
     def set(self, key: ID, value: str, expiration_time_sec: int = 0) -> None:
         self._store[key.value] = StoreValue(value=value,
                                             expiration_time=expiration_time_sec,
-                                            republish_timestamp=datetime.now())
+                                            republish_timestamp=datetime.now().isoformat()
+                                            )
         self.touch(key.value)
 
     def get_expiration_time_sec(self, key: int) -> int:
@@ -55,7 +56,7 @@ class VirtualStorage(IStorage):
         return list(self._store.keys())
 
     def touch(self, key: int) -> None:
-        self._store[key]["republish_timestamp"] = datetime.now()
+        self._store[key]["republish_timestamp"] = datetime.now().isoformat()
 
     def try_get_value(self, key: ID) -> tuple[bool, int | str | None]:
         val: Optional[str] = None
@@ -89,12 +90,16 @@ class SecondaryStorage(IStorage):
                 json_data: dict[int, StoreValue] = json.load(f)
             except json.JSONDecodeError:
                 json_data = {}
-            to_store: StoreValue = StoreValue(
-                value=value,
-                expiration_time=expiration_time_sec,
-                republish_timestamp=datetime.now()
-            )
-            json_data[key.value] = to_store
+
+        to_store: StoreValue = StoreValue(
+            value=value,
+            expiration_time=expiration_time_sec,
+            republish_timestamp=datetime.now().isoformat()
+        )
+        json_data[key.value] = to_store
+
+        with open(self.filename, "w") as f:
+            json.dump(json_data, f)
 
     def contains(self, key: ID) -> bool:
         with open(self.filename, "w+") as f:
@@ -102,7 +107,7 @@ class SecondaryStorage(IStorage):
                 json_data: dict[int, StoreValue] = json.load(f)
             except json.JSONDecodeError:
                 json_data = {}
-            return key.value in json_data
+        return key.value in json_data
 
     def get_timestamp(self, key: int) -> datetime:
         with open(self.filename, "w+") as f:
@@ -110,7 +115,7 @@ class SecondaryStorage(IStorage):
                 json_data: dict[int, StoreValue] = json.load(f)
             except json.JSONDecodeError:
                 json_data = {}
-            return json_data[key]["republish_timestamp"]
+        return datetime.fromisoformat(json_data[key]["republish_timestamp"])
 
     def get(self, key: ID | int) -> StoreValue:
         with open(self.filename, "w+") as f:
@@ -118,12 +123,12 @@ class SecondaryStorage(IStorage):
                 json_data: dict[int, StoreValue] = json.load(f)
             except json.JSONDecodeError:
                 json_data = {}
-            if isinstance(key, ID):
-                return json_data[key.value]
-            elif isinstance(key, int):
-                return json_data[key]
-            else:
-                raise TypeError("'get()' parameter 'key' must be type ID or int.")
+        if isinstance(key, ID):
+            return json_data[key.value]
+        elif isinstance(key, int):
+            return json_data[key]
+        else:
+            raise TypeError("'get()' parameter 'key' must be type ID or int.")
 
     def get_expiration_time_sec(self, key: int) -> int:
         with open(self.filename, "w+") as f:
@@ -131,7 +136,7 @@ class SecondaryStorage(IStorage):
                 json_data: dict[int, StoreValue] = json.load(f)
             except json.JSONDecodeError:
                 json_data = {}
-            return json_data[key]["expiration_time"]
+        return json_data[key]["expiration_time"]
 
     def remove(self, key: int) -> None:
         with open(self.filename, "w+") as f:
@@ -139,8 +144,12 @@ class SecondaryStorage(IStorage):
                 json_data: dict[int, StoreValue] = json.load(f)
             except json.JSONDecodeError:
                 json_data = {}
-            if key in json_data:
-                json_data.pop(key, None)
+
+        if key in json_data:
+            json_data.pop(key, None)
+
+        with open(self.filename, "w") as f:
+            json.dump(json_data, f)
 
     def get_keys(self) -> list[int]:
         with open(self.filename, "w+") as f:
@@ -156,7 +165,9 @@ class SecondaryStorage(IStorage):
                 json_data: dict[int, StoreValue] = json.load(f)
             except json.JSONDecodeError:
                 json_data = {}
-            json_data[key]["republish_timestamp"] = datetime.now()
+            json_data[key]["republish_timestamp"] = datetime.now().isoformat()
+        with open(self.filename, "w") as f:
+            json.dump(json_data, f)
 
     def try_get_value(self, key: ID) -> tuple[bool, int | str]:
         with open(self.filename, "w+") as f:
@@ -169,6 +180,8 @@ class SecondaryStorage(IStorage):
         if key.value in json_data:
             val = json_data[key.value]["value"]
             ret = True
+        with open(self.filename, "w") as f:
+            json.dump(json_data, f)
 
         return ret, val
 

@@ -145,5 +145,5 @@ class StoreValue(TypedDict):
     expiration_time: int
     """
     value: str | bytes
-    republish_timestamp: datetime
+    republish_timestamp: str
     expiration_time: int
