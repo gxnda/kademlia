@@ -330,8 +330,6 @@ class TCPServer(BaseServer):
         )
 
 
-
-
 def port_is_free(port: int) -> bool:
     """
     Returns if a port is free on localhost.
