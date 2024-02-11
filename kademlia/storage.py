@@ -84,8 +84,11 @@ class SecondaryStorage(IStorage):
         self.filename = filename
 
     def set(self, key: ID, value: str | bytes, expiration_time_sec: int = 0) -> None:
-        with open(self.filename) as f:
-            json_data: dict[int, StoreValue] = json.load(f)
+        with open(self.filename, "w+") as f:
+            try:
+                json_data: dict[int, StoreValue] = json.load(f)
+            except json.JSONDecodeError:
+                json_data = {}
             to_store: StoreValue = StoreValue(
                 value=value,
                 expiration_time=expiration_time_sec,
@@ -94,18 +97,27 @@ class SecondaryStorage(IStorage):
             json_data[key.value] = to_store
 
     def contains(self, key: ID) -> bool:
-        with open(self.filename) as f:
-            json_data: dict[int, StoreValue] = json.load(f)
+        with open(self.filename, "w+") as f:
+            try:
+                json_data: dict[int, StoreValue] = json.load(f)
+            except json.JSONDecodeError:
+                json_data = {}
             return key.value in json_data
 
     def get_timestamp(self, key: int) -> datetime:
-        with open(self.filename) as f:
-            json_data: dict[int, StoreValue] = json.load(f)
+        with open(self.filename, "w+") as f:
+            try:
+                json_data: dict[int, StoreValue] = json.load(f)
+            except json.JSONDecodeError:
+                json_data = {}
             return json_data[key]["republish_timestamp"]
 
     def get(self, key: ID | int) -> StoreValue:
-        with open(self.filename) as f:
-            json_data: dict[int, StoreValue] = json.load(f)
+        with open(self.filename, "w+") as f:
+            try:
+                json_data: dict[int, StoreValue] = json.load(f)
+            except json.JSONDecodeError:
+                json_data = {}
             if isinstance(key, ID):
                 return json_data[key.value]
             elif isinstance(key, int):
@@ -114,29 +126,44 @@ class SecondaryStorage(IStorage):
                 raise TypeError("'get()' parameter 'key' must be type ID or int.")
 
     def get_expiration_time_sec(self, key: int) -> int:
-        with open(self.filename) as f:
-            json_data: dict[int, StoreValue] = json.load(f)
+        with open(self.filename, "w+") as f:
+            try:
+                json_data: dict[int, StoreValue] = json.load(f)
+            except json.JSONDecodeError:
+                json_data = {}
             return json_data[key]["expiration_time"]
 
     def remove(self, key: int) -> None:
-        with open(self.filename) as f:
-            json_data: dict[int, StoreValue] = json.load(f)
+        with open(self.filename, "w+") as f:
+            try:
+                json_data: dict[int, StoreValue] = json.load(f)
+            except json.JSONDecodeError:
+                json_data = {}
             if key in json_data:
                 json_data.pop(key, None)
 
     def get_keys(self) -> list[int]:
-        with open(self.filename) as f:
-            json_data: dict[int, StoreValue] = json.load(f)
+        with open(self.filename, "w+") as f:
+            try:
+                json_data: dict[int, StoreValue] = json.load(f)
+            except json.JSONDecodeError:
+                json_data = {}
             return list(json_data.keys())
 
     def touch(self, key: int) -> None:
-        with open(self.filename) as f:
-            json_data: dict[int, StoreValue] = json.load(f)
+        with open(self.filename, "w+") as f:
+            try:
+                json_data: dict[int, StoreValue] = json.load(f)
+            except json.JSONDecodeError:
+                json_data = {}
             json_data[key]["republish_timestamp"] = datetime.now()
 
     def try_get_value(self, key: ID) -> tuple[bool, int | str]:
-        with open(self.filename) as f:
-            json_data: dict[int, StoreValue] = json.load(f)
+        with open(self.filename, "w+") as f:
+            try:
+                json_data: dict[int, StoreValue] = json.load(f)
+            except json.JSONDecodeError:
+                json_data = {}
         val = None
         ret = False
         if key.value in json_data:
@@ -158,7 +185,7 @@ class SecondaryStorage(IStorage):
             file_data = f.read()
         data_dict = {"filename": filename, "file_data": file_data}
         encoded_data: bytes = pickler.plain_encode_data(data=data_dict)
-        encoded_data_str = encoded_data.decode("utf-8")
+        encoded_data_str = encoded_data.decode("latin1")
         self.set(
             key=key,
             value=encoded_data_str,

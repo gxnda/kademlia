@@ -133,6 +133,7 @@ class DHT:
         return self._originator_storage
 
     def store(self, key: ID, val: str) -> None:
+        print(f"[Client] Storing value at {key}.")
         self.touch_bucket_with_key(key)
         # We're storing to K closer contacts
         self._originator_storage.set(key, val)

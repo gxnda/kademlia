@@ -1,13 +1,16 @@
+import os
+import pickle
 import threading
 import json
 from os.path import exists
 from random import randint
+from tkinter import Tk
 
 import customtkinter as ctk
 from PIL import Image
 from requests import get
 
-from kademlia import dht, id, networking, protocols, node, contact, storage, routers
+from kademlia import dht, id, networking, protocols, node, contact, storage, routers, pickler
 
 """
 ├── User Interface
@@ -88,12 +91,23 @@ class ContactViewer(ctk.CTk):
         status_window.mainloop()
 
 
-
 class StatusWindow(ctk.CTk):
-    def __init__(self, message: str):
+    def __init__(self, message: str, copy_data=None):
         ctk.CTk.__init__(self)
+        self.copy_data = copy_data
         self.message = ctk.CTkLabel(self, text=message, font=Fonts.text_font)
-        self.message.pack(padx=10, pady=10)
+        self.message.pack(padx=30, pady=20)
+        if copy_data:
+            self.copy_button = ctk.CTkButton = ctk.CTkButton(self, text="Copy to clipboard", font=Fonts.text_font,
+                                                             command=self.copy)
+            self.copy_button.pack(padx=30, pady=20)
+
+
+    def copy(self):
+        print(f"[GUI] Copying data to clipboard: {self.copy_data}")
+        self.clipboard_clear()
+        self.clipboard_append(self.copy_data)
+        self.update()
 
 
 class Settings(ctk.CTk):
@@ -180,7 +194,7 @@ class MainGUI(ctk.CTk):
         self.title("Kademlia")
 
         # Create our contact - this should be overwritten if bootstrapping.
-        self.initialise_kademlia()
+        # self.initialise_kademlia()
 
         self.make_join_dht_frame()
 
@@ -219,6 +233,10 @@ class MainGUI(ctk.CTk):
             cache_storage=storage.VirtualStorage()
         )
 
+        # Make directory of our_id at current working directory.
+        create_dir_at = os.path.join(os.getcwd(), str(our_id.value))
+        print(create_dir_at)
+        os.mkdir(create_dir_at)
         self.dht: dht.DHT = dht.DHT(
             id=our_id,
             protocol=protocol,
@@ -230,6 +248,8 @@ class MainGUI(ctk.CTk):
 
         self.server = networking.TCPServer(our_node)
         self.server_thread = self.server.thread_start()
+
+        self.make_network_frame()
 
     def open_settings(self):
         settings_window = Settings(hash_table=self.dht, appearance_mode=self.appearance_mode)
@@ -257,44 +277,168 @@ class MainGUI(ctk.CTk):
     def clear_screen(self):
         for child in self.winfo_children():
             child.destroy()
+
+    def clear_screen_and_keep_settings(self):
+        self.clear_screen()
         self.add_settings_icon()
 
     def make_join_dht_frame(self):
         self.clear_screen()
-        join = JoinFrame(parent=self)
+        join = JoinNetworkMenuFrame(parent=self)
         join.pack(padx=20, pady=20)
 
     def make_load_dht_frame(self):
-        self.clear_screen()
-        load_dht = LoadDHTFrame(parent=self)
+        self.clear_screen_and_keep_settings()
+        load_dht = LoadDHTFromFileFrame(parent=self)
         load_dht.pack(padx=20, pady=20)
 
     def make_bootstrap_frame(self):
-        self.clear_screen()
+        self.clear_screen_and_keep_settings()
         bootstrap = BootstrapFrame(parent=self)
         bootstrap.pack(padx=20, pady=20)
 
     def make_bootstrap_from_json_frame(self):
-        self.clear_screen()
+        self.clear_screen_and_keep_settings()
         bootstrap_from_json = BootstrapFromJSON(parent=self)
         bootstrap_from_json.pack(padx=20, pady=20)
 
-    def make_network_page(self):
-        self.clear_screen()
-        # TODO: Create.
+    def make_network_frame(self):
+        """
+        Main network page
+        I want this to have the following buttons:
+        - Download file
+        - Add new file
+        :return:
+        """
+        self.clear_screen_and_keep_settings()
+        network_frame = MainNetworkFrame(self)
+        network_frame.pack(padx=20, pady=20)
 
-    def show_error(self, error_message: str):
+    @classmethod
+    def show_error(cls, error_message: str):
         print(f"[Error] {error_message}")
         error_window = ErrorWindow(error_message)
         error_window.mainloop()
 
-    def show_status(self, message: str):
+    @classmethod
+    def show_status(cls, message: str, copy_data=None):
         print(f"[Status] {message}")
-        status_window = StatusWindow(message)
+        status_window = StatusWindow(message, copy_data)
         status_window.mainloop()
 
+    def make_download_frame(self):
+        self.clear_screen()
+        download_frame = DownloadFrame(self)
+        download_frame.pack(padx=20, pady=20)
 
-class LoadDHTFrame(ctk.CTkFrame):
+    def make_upload_frame(self):
+        self.clear_screen()
+        upload_frame = UploadFrame(self)
+        upload_frame.pack(padx=20, pady=20)
+
+
+class UploadFrame(ctk.CTkFrame):
+    def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
+        ctk.CTkFrame.__init__(self, parent, **kwargs)
+        self.configure(fg_color=fg_color)
+        self.parent = parent
+
+        self.title = ctk.CTkLabel(self, text="Upload File", font=Fonts.title_font)
+        self.title.grid(column=0, row=0, columnspan=2, padx=20, pady=10)
+
+        self.enter_file_label = ctk.CTkLabel(self, text="File to upload:", font=Fonts.text_font)
+        self.enter_file_label.grid(column=0, row=1, padx=20, pady=10)
+
+        self.enter_file_textbox = ctk.CTkTextbox(self, width=150, height=20, font=Fonts.text_font)
+        self.enter_file_textbox.grid(column=1, row=1, padx=20, pady=10)
+
+        self.upload_button = ctk.CTkButton(self, text="Upload", font=Fonts.text_font,
+                                           command=self.handle_upload)
+        self.upload_button.grid(column=0, row=2, columnspan=2, padx=20, pady=10)
+
+    def handle_upload(self):
+        file_to_upload = self.enter_file_textbox.get("0.0", "end").strip("\n")
+        if os.path.exists(file_to_upload):
+            filename = os.path.basename(file_to_upload)
+            if not filename:  # os.path.basename returns "" on file paths ending in "/"
+                self.parent.show_error("Must not be a directory.")
+            else:
+                with open(file_to_upload, "rb") as f:
+                    file_contents: bytes = f.read()
+                # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
+                val: str = pickle.dumps({"filename": filename, "file": file_contents}).decode("latin1")
+                id_to_store_to = id.ID.random_id()
+                self.parent.dht.store(id_to_store_to, val)
+                self.parent.show_status(f"Stored file at {id_to_store_to}.", copy_data=str(id_to_store_to))
+        else:
+            self.parent.show_error(f"Path not found: {file_to_upload}")
+
+
+class DownloadFrame(ctk.CTkFrame):
+    def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
+        ctk.CTkFrame.__init__(self, parent, **kwargs)
+        self.configure(fg_color=fg_color)
+        self.parent = parent
+
+        self.title = ctk.CTkLabel(self, text="Download File", font=Fonts.title_font)
+        self.title.grid(column=0, row=0, columnspan=2, padx=20, pady=10)
+
+        self.enter_file_label = ctk.CTkLabel(self, text="ID to download:", font=Fonts.text_font)
+        self.enter_file_label.grid(column=0, row=1, padx=20, pady=10)
+
+        self.enter_id_textbox = ctk.CTkTextbox(self, width=150, height=20, font=Fonts.text_font)
+        self.enter_id_textbox.grid(column=1, row=1, padx=20, pady=10)
+
+        self.download_button = ctk.CTkButton(self, text="Download", font=Fonts.text_font,
+                                             command=self.handle_download)
+        self.download_button.grid(column=0, row=2, columnspan=2, padx=20, pady=10)
+
+    def handle_download(self):
+        id_from_textbox: str = self.enter_id_textbox.get("0.0", "end").strip("\n")
+
+        if not id_from_textbox:
+            self.parent.show_error("ID must not be empty.")
+        elif not id_from_textbox.isnumeric():
+            self.parent.show_error("ID was not a number.")
+        else:
+            id_to_download: id.ID = id.ID(int(id_from_textbox))
+            found, contacts, val = self.parent.dht.find_value(key=id_to_download)
+            # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
+            if not found:
+                self.parent.show_error("File not found.")
+            else:
+                val_bytes: bytes = val.encode("latin1")  # TODO: Add option for changing this in settings.
+                file_dict: dict = pickle.loads(val_bytes)
+                filename: str = file_dict["filename"]
+                file_bytes: bytes = file_dict["file"]
+                del file_dict  # Free up memory.
+
+                cwd = os.getcwd()  # TODO: Add option to change where it is installed to.
+                with open(os.path.join(cwd, filename), "wb") as f:
+                    f.write(file_bytes)
+
+                self.parent.show_status(f"File downloaded to {os.path.join(cwd, filename)}.")
+
+
+class MainNetworkFrame(ctk.CTkFrame):
+    def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
+        ctk.CTkFrame.__init__(self, parent, **kwargs)
+        self.configure(fg_color=fg_color)
+        self.parent = parent
+
+        self.title = ctk.CTkLabel(self, text="Kademlia", font=Fonts.title_font)
+        self.title.grid(column=0, row=0, columnspan=2, padx=20, pady=10)
+
+        self.download_button = ctk.CTkButton(self, text="Download", font=Fonts.text_font,
+                                             command=self.parent.make_download_frame)
+        self.download_button.grid(column=0, row=1, padx=10, pady=10)
+
+        self.upload_button = ctk.CTkButton(self, text="Upload", font=Fonts.text_font,
+                                           command=self.parent.make_upload_frame)
+        self.upload_button.grid(column=1, row=1, padx=10, pady=10)
+
+
+class LoadDHTFromFileFrame(ctk.CTkFrame):
     def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
         ctk.CTkFrame.__init__(self, parent, **kwargs)
         self.configure(fg_color=fg_color)
@@ -329,14 +473,15 @@ class LoadDHTFrame(ctk.CTkFrame):
         except Exception as e:
             self.parent.show_error(str(e))
 
-        self.parent.make_network_page()
+        self.parent.make_network_frame()
 
 
-class JoinFrame(ctk.CTkFrame):
+class JoinNetworkMenuFrame(ctk.CTkFrame):
     """
       └── Join
           ├── Settings
           ├── Load an existing network
+          ├── Create new network
           └── Bootstrap into a new network
     """
     def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
@@ -345,7 +490,7 @@ class JoinFrame(ctk.CTkFrame):
         self.configure(fg_color=fg_color)
         self.parent = parent
 
-        join_title = ctk.CTkLabel(master=self, text="Join network", font=Fonts.title_font)
+        join_title = ctk.CTkLabel(master=self, text="Join Network", font=Fonts.title_font)
         join_title.pack(padx=50, pady=20)
 
         self.load_button = ctk.CTkButton(master=self, text="Join stored network", font=Fonts.text_font,
@@ -356,9 +501,9 @@ class JoinFrame(ctk.CTkFrame):
                                               command=self.parent.make_bootstrap_frame)
         self.bootstrap_button.pack(padx=50, pady=10)
 
-    def clear_screen(self):
-        for child in self.winfo_children():
-            child.destroy()
+        self.create_new_network_button = ctk.CTkButton(master=self, text="Create new network", font=Fonts.text_font,
+                                                       command=self.parent.initialise_kademlia)
+        self.create_new_network_button.pack(padx=50, pady=10)
 
 
 class BootstrapFromJSON(ctk.CTkFrame):
