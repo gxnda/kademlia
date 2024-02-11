@@ -10,7 +10,7 @@ from kademlia.storage import VirtualStorage
 TRY_CLOSEST_BUCKET = False  # TODO: Find somewhere good to put this / remove it entirely.
 
 if DEBUG:
-    random.seed(1)  # For consistent testing
+    random.seed(2)  # For consistent testing
 
 
 def empty_node():

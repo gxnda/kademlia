@@ -380,7 +380,7 @@ class ParallelRouter(BaseRouter):
         Returns true if the query time has expired.
         :return:
         """
-        return (datetime.now() - self.now).total_seconds() > Constants.QUERY_TIME
+        return (datetime.now() - self.now).total_seconds() > Constants.REQUEST_TIMEOUT
 
     def dequeue_remaining_work(self):
         dequeue_result = True
@@ -485,7 +485,7 @@ class ParallelRouter(BaseRouter):
         # The lookup terminates when the initiator has queried and
         # received responses from the k closest nodes it has seen.
         while len(ret) < Constants.K and have_work:
-            sleep(Constants.RESPONSE_WAIT_TIME)  # Should this be time.sleep or asyncio.sleep, or threading ?
+            sleep(Constants.RESPONSE_WAIT_TIME / 1000)  # Should this be time.sleep or asyncio.sleep, or threading ?
 
             found, found_return = self.parallel_found(find_result, found_return)
             if found:

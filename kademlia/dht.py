@@ -212,7 +212,7 @@ class DHT:
         kbucket: KBucket = self.node.bucket_list.get_kbucket(key)
         contacts: list[Contact]
         if (now - kbucket.time_stamp) < timedelta(
-                seconds=Constants.BUCKET_REFRESH_INTERVAL):
+                milliseconds=Constants.BUCKET_REFRESH_INTERVAL):
             # Bucket has been refreshed recently, so don't do a lookup as we
             # have the k closest contacts.
             contacts: list[Contact] = self.node.bucket_list.get_close_contacts(
@@ -312,7 +312,7 @@ class DHT:
         From the spec:
         “Buckets are generally kept fresh by the traffic of requests traveling through nodes. To handle pathological cases in which there are no lookups for a particular ID range, each node refreshes any bucket to which it has not performed a node lookup in the past hour. Refreshing means picking a random ID in the bucket’s range and performing a node search for that ID.”
         """
-        bucket_refresh_timer = threading.Timer(Constants.BUCKET_REFRESH_INTERVAL, self._refresh_bucket)
+        bucket_refresh_timer = threading.Timer(Constants.BUCKET_REFRESH_INTERVAL / 1000, self._refresh_bucket)
         bucket_refresh_timer.auto_reset = True
         bucket_refresh_timer.elapsed += self.bucket_refresh_timer_elapsed
         bucket_refresh_timer.start()
@@ -322,8 +322,7 @@ class DHT:
         # Put into a separate list as bucket collections may be modified.
         current_buckets: list[KBucket] = [
             b for b in self.node.bucket_list.buckets
-            if (now -
-                b.time_stamp).seconds >= Constants.BUCKET_REFRESH_INTERVAL
+            if (now - b.time_stamp) >= timedelta(milliseconds=Constants.BUCKET_REFRESH_INTERVAL)
         ]
 
         for b in current_buckets:
@@ -388,7 +387,7 @@ class DHT:
             key for key in self._originator_storage.get_keys()
             if (now -
                 self._originator_storage.get_timestamp(key)) >= timedelta(
-                seconds=Constants.ORIGINATOR_REPUBLISH_INTERVAL)
+                milliseconds=Constants.ORIGINATOR_REPUBLISH_INTERVAL)
         ]
 
         for k in keys_pending_republish:
