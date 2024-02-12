@@ -517,18 +517,26 @@ class ParallelRouter(BaseRouter):
                 else:
                     alpha_nodes = further_uncontacted_nodes
 
-            if alpha_nodes:
-                for a in alpha_nodes:
-                    if a.id not in [c.id for c in contacted_nodes]:
-                        contacted_nodes.append(a)
-                    self.queue_work(
-                        key=key,
-                        contact=a,
-                        rpc_call=rpc_call,
-                        closer_contacts=closer_contacts,
-                        further_contacts=further_contacts,
-                        find_result=find_result
-                    )
+                if alpha_nodes:
+                    for a in alpha_nodes:
+                        if a.id not in [c.id for c in contacted_nodes]:
+                            contacted_nodes.append(a)
+                        self.queue_work(
+                            key=key,
+                            contact=a,
+                            rpc_call=rpc_call,
+                            closer_contacts=closer_contacts,
+                            further_contacts=further_contacts,
+                            find_result=find_result
+                        )
 
-                    self.set_query_time()
+                self.set_query_time()
+
+        self.stop_remaining_work()
+        return QueryReturn(
+            found=False,
+            contacts=ret if give_me_all else sorted(ret[0:Constants.K], key=lambda c: c.id ^ key),
+            found_by=None,
+            val=None
+        )
 
