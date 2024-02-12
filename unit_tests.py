@@ -1604,7 +1604,7 @@ class TCPSubnetTests(unittest.TestCase):
         test_value = "Test"
 
         error: RPCError = p2.store(c1, test_id, test_value)
-        print("Error:", error)
+        print("[Unit tests] [Error]", error)
         self.assertTrue(
             error.timeout_error,
             "Expected timeout when contacting unresponsive node."

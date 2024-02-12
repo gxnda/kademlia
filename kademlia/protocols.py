@@ -17,7 +17,7 @@ def get_rpc_error(id: ID,
                   ret: BaseResponse | None,
                   timeout_error: bool,
                   peer_error: ErrorResponse) -> RPCError:
-    print("Peer error:", peer_error)
+    # print("Peer error:", peer_error)
     error = RPCError()
     if ret:
         error.id_mismatch_error = id != ret["random_id"]
