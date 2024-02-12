@@ -54,7 +54,7 @@ class VirtualProtocol(IProtocol):
             return error
 
     def find_node(self, sender: Contact,
-                  key: ID) -> tuple[list[Contact], RPCError | None]:
+                  key: ID) -> tuple[list[Contact], RPCError]:
         """
         Finds K close contacts to a given ID, while excluding the sender.
         It also adds the sender if it hasn't seen it before.
@@ -62,22 +62,22 @@ class VirtualProtocol(IProtocol):
         :param sender: Contact to be excluded and added if new.
         :return: list of K (or less) contacts near the key, and an error that may need to be handled.
         """
-        return self.node.find_node(sender=sender, key=key)[0], None
+        return self.node.find_node(sender=sender, key=key)[0], RPCError.no_error()
 
     def find_value(self, sender: Contact,
-                   key: ID) -> tuple[list[Contact] | None, str | None, RPCError | None]:
+                   key: ID) -> tuple[list[Contact] | None, str | None, RPCError]:
         """
         Returns either contacts or None if the value is found.
         """
         contacts, val = self.node.find_value(sender=sender, key=key)
-        return contacts, val, None
+        return contacts, val, RPCError.no_error()
 
     def store(self,
               sender: Contact,
               key: ID,
               val: str,
               is_cached=False,
-              exp_time: int = 0) -> RPCError | None:
+              exp_time_sec: int = 0) -> RPCError:
         """
         Stores the key-value on the remote peer.
         """
@@ -85,9 +85,9 @@ class VirtualProtocol(IProtocol):
                         key=key,
                         val=val,
                         is_cached=is_cached,
-                        expiration_time_sec=exp_time)
+                        expiration_time_sec=exp_time_sec)
 
-        return None
+        return RPCError.no_error()
 
 
 class TCPSubnetProtocol(IProtocol):

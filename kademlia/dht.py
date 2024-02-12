@@ -4,7 +4,7 @@ from typing import Callable, Optional
 
 import dill
 
-from kademlia import helpers
+from kademlia import helpers, main
 from kademlia.buckets import KBucket
 from kademlia.constants import Constants
 from kademlia.contact import Contact
@@ -113,7 +113,11 @@ class DHT:
         self.pending_contacts: list[Contact] = []
         self.our_id = id
         self.our_contact = Contact(id=id, protocol=protocol)
-        self.node = router.node
+        # if router.node:
+        #     self.node: Node = router.node
+        self.node: Node = Node(self.our_contact,
+                               storage=self._republish_storage,
+                               cache_storage=self._cache_storage)
         self.node.dht = self
         self.node.bucket_list.dht = self
         self._protocol = protocol

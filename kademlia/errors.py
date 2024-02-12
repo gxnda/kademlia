@@ -86,9 +86,9 @@ class RPCError(Exception):
         else:
             return "No error."
 
-    @staticmethod
-    def no_error():
-        pass
+    @classmethod
+    def no_error(cls):
+        return cls()
 
 
 class ValueCannotBeNoneError(Exception):

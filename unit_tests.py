@@ -599,7 +599,7 @@ class NodeLookupTests(unittest.TestCase):
                 if n != n_other:
                     n.bucket_list.add_contact(n_other.our_contact)
 
-        # select the key such that n ^ 0 == n (TODO: Why?)
+        # select the key such that n ^ 0 == n
         # this ensures the distance metric uses only the node ID,
         # which makes for an integer difference for distance, not an XOR distance.
         key = ID(0)
@@ -613,7 +613,7 @@ class NodeLookupTests(unittest.TestCase):
                                  give_me_all=True)
 
         # Make sure lookup returns K contacts.
-        self.assertTrue(len(contacts) == Constants.K, "Expected K closer contacts.")
+        self.assertTrue(len(contacts) == Constants.K, f"Expected K closer contacts, got {len(contacts)}.")
 
         # Make sure it realises all contacts should be further than the ID 0.
         self.assertTrue(len(router.further_contacts) == Constants.K,

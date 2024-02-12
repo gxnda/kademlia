@@ -96,8 +96,13 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             # print("Finished headers - Is wfile closed:", self.wfile.closed)
 
             # print("Writing 200...", self.wfile.closed)
-            old_self_instance.wfile.write(encoded_response)
-            print("[Server] Writing response success!")
+            try:
+                old_self_instance.wfile.write(encoded_response)
+                print("[Server] Writing response success!")
+            except ConnectionRefusedError:
+                print("[ERROR] [Server] Connection refused by client - we may have timed out.")
+            except Exception as e:
+                print("[Server] Exception sending response:", e)
 
         except Exception as e:
             print("[Server] Exception sending response.")
@@ -112,7 +117,12 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             old_self_instance.end_headers()
             old_self_instance.send_response(code=400)  # , message=encoded_response.decode("latin1"))
 
-            old_self_instance.wfile.write(encoded_response)
+            try:
+                old_self_instance.wfile.write(encoded_response)
+            except ConnectionRefusedError:
+                print("[ERROR] [Server] Connection refused by client - we may have timed out.")
+            except Exception as e:
+                print("[Server] Exception sending response:", e)
 
         # old_self_instance.wfile.close()
         # finally:
@@ -180,7 +190,12 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/octet-stream")
                 self.end_headers()
                 self.send_response(400)
-                self.wfile.write(encoded_response)
+                try:
+                    self.wfile.write(encoded_response)
+                except ConnectionRefusedError:
+                    print("[ERROR] [Server] Connection refused by client - we may have timed out.")
+                except Exception as e:
+                    print("[Server] Exception sending response:", e)
 
             # context.close_connection = True
 
@@ -230,9 +245,15 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             old_self_instance.end_headers()
             # print("Finished headers - Is wfile closed:", self.wfile.closed)
 
-            # print("Writing 200...", self.wfile.closed)
-            old_self_instance.wfile.write(encoded_response)
-            print("[Server] Writing response success!")
+            # print("Writing 200...", self.wfile.closed)]
+            try:
+                old_self_instance.wfile.write(encoded_response)
+                print("[Server] Writing response success!")
+            except ConnectionRefusedError:
+                print("[ERROR] [Server] Connection refused by client - we may have timed out.")
+            except Exception as e:
+                print("[Server] Exception sending response:", e)
+
 
         except Exception as e:
             print("[Server] Exception sending response.")
@@ -246,8 +267,12 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             old_self_instance.send_header("Content-Type", "application/octet-stream")
             old_self_instance.end_headers()
             old_self_instance.send_response(code=400)  # , message=encoded_response.decode("latin1"))
-
-            old_self_instance.wfile.write(encoded_response)
+            try:
+                old_self_instance.wfile.write(encoded_response)
+            except ConnectionRefusedError:
+                print("[ERROR] [Server] Connection refused by client - we may have timed out.")
+            except Exception as e:
+                print("[Server] Exception sending response:", e)
 
         # old_self_instance.wfile.close()
         # finally:
@@ -313,7 +338,12 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/octet-stream")
                 self.end_headers()
                 self.send_response(400)
-                self.wfile.write(encoded_response)
+                try:
+                    self.wfile.write(encoded_response)
+                except ConnectionRefusedError:
+                    print("[ERROR] [Server] Connection refused by client - we may have timed out.")
+                except Exception as e:
+                    print("[Server] Exception sending response:", e)
 
             # context.close_connection = True
 
