@@ -8,7 +8,7 @@ import kademlia.my_queues as my_queues
 from kademlia.buckets import KBucket
 from kademlia.constants import Constants
 from kademlia.contact import Contact
-from kademlia.dictionaries import ContactQueueItem, FindResult, QueryReturn
+from kademlia.dictionaries import ContactQueueItem, FindResult, FindResult
 from kademlia.errors import AllKBucketsAreEmptyError, ValueCannotBeNoneError
 from kademlia.id import ID
 from kademlia.helpers import TRY_CLOSEST_BUCKET
@@ -80,7 +80,7 @@ class BaseRouter:
               nodes_to_query: list[Contact],
               rpc_call: Callable,
               closer_contacts: list[Contact],
-              further_contacts: list[Contact]) -> QueryReturn:
+              further_contacts: list[Contact]) -> FindResult:
         found: bool = False
         found_by: Optional[Contact] = None
         val: str = ""
@@ -96,7 +96,7 @@ class BaseRouter:
             if found:
                 break
 
-        return QueryReturn(
+        return FindResult(
             found=found,
             contacts=closer_contacts,
             found_by=found_by,
@@ -104,7 +104,7 @@ class BaseRouter:
         )
 
     @abstractmethod
-    def lookup(self, key: ID, rpc_call: Callable, give_me_all=False) -> QueryReturn | None:
+    def lookup(self, key: ID, rpc_call: Callable, give_me_all=False) -> FindResult | None:
         pass
 
     @staticmethod
@@ -170,7 +170,7 @@ class Router(BaseRouter):
     def lookup(self,
                key: ID,
                rpc_call: Callable,
-               give_me_all: bool = False) -> QueryReturn:
+               give_me_all: bool = False) -> FindResult:
         """
         Performs main Kademlia Lookup.
         :param key: Key to be looked up
@@ -222,8 +222,8 @@ class Router(BaseRouter):
 
         # Spec: The initiator then sends parallel, async FIND_NODE RPCs to the "a" nodes it has chosen,
         # "a" is a system-wide parameter, such as 3.
-        query_result: QueryReturn = self.query(key, nodes_to_query, rpc_call, self.closer_contacts,
-                                               self.further_contacts)
+        query_result: FindResult = self.query(key, nodes_to_query, rpc_call, self.closer_contacts,
+                                              self.further_contacts)
         if query_result["found"]:
             # For unit testing
             closer_contacts_unittest = self.closer_contacts
@@ -296,7 +296,7 @@ class Router(BaseRouter):
         # For unit testing give_me_all can be true so that we can match against our alternate way of
         # getting closer contacts.
         # contacts, val, found, found_by
-        return QueryReturn(
+        return FindResult(
             found=False,
             contacts=(ret if give_me_all else sorted(ret, key=lambda c: c.id ^ key)[:Constants.K]),
             found_by=None,
@@ -365,8 +365,8 @@ class ParallelRouter(BaseRouter):
                         # lock(locker)
                         item["find_result"]["found"] = True
                         item["find_result"]["found_by"] = found_by
-                        item["find_result"]["found_value"] = val
-                        item["find_result"]["found_contacts"] = item["closer_contacts"]
+                        item["find_result"]["val"] = val
+                        item["find_result"]["contacts"] = item["closer_contacts"]
 
     def set_query_time(self) -> None:
         self.now = datetime.now()
@@ -387,7 +387,7 @@ class ParallelRouter(BaseRouter):
         self.dequeue_remaining_work()
         self.stop_work = True
 
-    def parallel_found(self, find_result: FindResult, found_ret: QueryReturn) -> tuple[bool, QueryReturn]:
+    def parallel_found(self, find_result: FindResult, found_ret: FindResult) -> tuple[bool, FindResult]:
         """
         # TODO: Fix?
         :param find_result:
@@ -397,27 +397,27 @@ class ParallelRouter(BaseRouter):
         # lock(locker)
 
         if find_result["found"]:
-            # lock(find_result["found_contacts"]
+            # lock(find_result["contacts"]
             # lock found ret
             found_ret["found"] = True
-            found_ret["contacts"] = find_result["found_contacts"]
+            found_ret["contacts"] = find_result["contacts"]
             found_ret["found_by"] = find_result["found_by"]
-            found_ret["val"] = find_result["found_value"]
+            found_ret["val"] = find_result["val"]
 
         return find_result["found"], found_ret
 
-    def lookup(self, key: ID, rpc_call: Callable, give_me_all: bool = False) -> QueryReturn:
+    def lookup(self, key: ID, rpc_call: Callable, give_me_all: bool = False) -> FindResult:
 
         if not isinstance(self.node, Node):
             raise TypeError("ParallelRouter must have instance node.")
 
         have_work: bool = True
-        find_result: FindResult = FindResult(found=False, found_by=None, found_value="", found_contacts=[])
+        find_result: FindResult = FindResult(found=False, found_by=None, val="", contacts=[])
         ret: list[Contact] = []
         contacted_nodes: list[Contact] = []
         closer_contacts: list[Contact] = []
         further_contacts: list[Contact] = []
-        found_return = QueryReturn(found=False, found_by=None, val="", contacts=[])
+        found_return = FindResult(found=False, found_by=None, val="", contacts=[])
 
         # TODO: Why do I do this?
         if TRY_CLOSEST_BUCKET:
@@ -533,7 +533,7 @@ class ParallelRouter(BaseRouter):
                 self.set_query_time()
 
         self.stop_remaining_work()
-        return QueryReturn(
+        return FindResult(
             found=False,
             contacts=ret if give_me_all else sorted(ret[0:Constants.K], key=lambda c: c.id ^ key),
             found_by=None,

@@ -1,11 +1,10 @@
-from datetime import datetime
 from typing import Callable, TypedDict
 
 from kademlia.contact import Contact
 from kademlia.id import ID
 
 
-class QueryReturn(TypedDict):
+class FindResult(TypedDict):
     """
     Has elements: contacts, val, found, found_by
     """
@@ -13,13 +12,6 @@ class QueryReturn(TypedDict):
     val: str | None
     found: bool
     found_by: Contact | None
-
-
-class FindResult(TypedDict):
-    found: bool
-    found_by: Contact | None
-    found_value: str
-    found_contacts: list[Contact]
 
 
 class ContactQueueItem(TypedDict):

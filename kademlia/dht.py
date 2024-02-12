@@ -8,7 +8,7 @@ from kademlia import helpers, main
 from kademlia.buckets import KBucket
 from kademlia.constants import Constants
 from kademlia.contact import Contact
-from kademlia.dictionaries import QueryReturn, StoreValue
+from kademlia.dictionaries import FindResult, StoreValue
 from kademlia.errors import BucketDoesNotContainContactToEvictError, RPCError
 from kademlia.id import ID
 from kademlia.interfaces import IProtocol, IStorage
@@ -177,7 +177,7 @@ class DHT:
                     found = True
                     val = our_val
                 else:
-                    lookup: QueryReturn = self._router.lookup(
+                    lookup: FindResult = self._router.lookup(
                         key, self._router.rpc_find_value)
                     if lookup["found"]:
                         found = True
