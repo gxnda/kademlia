@@ -147,7 +147,7 @@ class DHT:
         If there is a value found from router.lookup(), the value will be stored on the closest contact to us, if
         one exists.
         :param key: Key to search for value pair.
-        :return: Found: bool (If it is found or not), contacts: list[Contact], val: str | None (value returned
+        :return: Found: bool (If it is found or not), contacts: list[Contact], val: str | None (value returned)
         """
         self.touch_bucket_with_key(key)
         contacts_queried: list[Contact] = []
@@ -233,7 +233,7 @@ class DHT:
         to our list, then getting the contacts for other peers not in the
         bucket range of our known peer we're joining.
         :param known_peer: Peer we know / are bootstrapping from.
-        :return: RPC Error, not sure when it should be raised?
+        :return: None
         """
         print("[Client] Bootstrapping from known peer.")
         # print(f"Adding known peer with ID {known_peer.id}")

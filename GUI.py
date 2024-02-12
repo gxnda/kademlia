@@ -11,6 +11,7 @@ from PIL import Image
 from requests import get
 
 from kademlia import dht, id, networking, protocols, node, contact, storage, routers
+from kademlia.constants import Constants
 
 """
 ├── User Interface
@@ -399,6 +400,8 @@ class DownloadFrame(ctk.CTkFrame):
             self.parent.show_error("ID must not be empty.")
         elif not id_from_textbox.isnumeric():
             self.parent.show_error("ID was not a number.")
+        elif not 0 < int(id_from_textbox) < 2 ** Constants.ID_LENGTH_BITS:
+            self.parent.show_error("ID out of range.")
         else:
             id_to_download: id.ID = id.ID(int(id_from_textbox))
             found, contacts, val = self.parent.dht.find_value(key=id_to_download)
@@ -615,7 +618,7 @@ class BootstrapFrame(ctk.CTkFrame):
         ip_regex = r"(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])"
         if not known_ip:
             self.parent.show_error("IP address must not be empty.")
-        elif re.match(known_ip, ip_regex):
+        elif not re.match(known_ip, ip_regex):
             self.parent.show_error("IP address is invalid.")
         else:
             valid = True
@@ -638,7 +641,7 @@ class BootstrapFrame(ctk.CTkFrame):
             self.parent.show_error("ID must not be empty.")
         elif not known_id_value.isnumeric():
             self.parent.show_error("ID was not a number.")
-        elif int(known_id_value) < 0 or int(known_id_value) > 2 ** 160:  # Slightly too hardcoded for me,
+        elif int(known_id_value) < 0 or int(known_id_value) > 2 ** Constants.ID_LENGTH_BITS:  # Slightly too hardcoded for me,
             # what if they want to change ID range?
             self.parent.show_error("ID out of range")
         else:

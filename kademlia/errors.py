@@ -3,6 +3,7 @@
 class DataDecodingError(Exception):
     pass
 
+
 class TooManyContactsError(Exception):
     """Raised when a contact is added to a full k-bucket."""
     pass

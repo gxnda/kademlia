@@ -23,15 +23,15 @@ class KBucket:
             initial_contacts = []
 
         self.contacts: list[Contact] = initial_contacts
-        self._low = low
-        self._high = high
+        self._low: int = low
+        self._high: int = high
         self.time_stamp: datetime = datetime.now()
         # self.lock = WithLock(Lock())
 
-    def low(self):
+    def low(self) -> int:
         return self._low
 
-    def high(self):
+    def high(self) -> int:
         return self._high
 
     def is_full(self) -> bool:
@@ -60,7 +60,7 @@ class KBucket:
         """
         return self._low <= other_id.value <= self._high
 
-    def add_contact(self, contact: Contact):
+    def add_contact(self, contact: Contact) -> None:
         if self.is_full():
             raise TooManyContactsError(
                 f"KBucket is full - (length is {len(self.contacts)}).")
