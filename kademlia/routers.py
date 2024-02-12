@@ -8,7 +8,7 @@ import kademlia.my_queues as my_queues
 from kademlia.buckets import KBucket
 from kademlia.constants import Constants
 from kademlia.contact import Contact
-from kademlia.dictionaries import ContactQueueItem, FindResult, FindResult
+from kademlia.dictionaries import ContactQueueItem, FindResult
 from kademlia.errors import AllKBucketsAreEmptyError, ValueCannotBeNoneError
 from kademlia.id import ID
 from kademlia.helpers import TRY_CLOSEST_BUCKET
@@ -26,8 +26,9 @@ class BaseRouter:
 
     def find_closest_nonempty_kbucket(self, key: ID) -> KBucket:
         """
-        Helper method.
-        Code listing 34.
+        Finds the closest non empty Kbucket in our nodes bucket list to a given key.
+        :param key:
+        :return:
         """
         # gets all non-empty buckets from bucket list
         non_empty_buckets: list[KBucket] = [
@@ -41,7 +42,12 @@ class BaseRouter:
                       key=(lambda b: b.id.value ^ key.value))[0]
 
     def rpc_find_nodes(self, key: ID, contact: Contact):
-        # what is node??
+        """
+        Performs find nodes() on “contact”, where we are the sender, searching for “key”.
+        :param key:
+        :param contact:
+        :return:
+        """
         new_contacts, timeout_error = contact.protocol.find_node(
             self.node.our_contact, key)
 
@@ -51,6 +57,14 @@ class BaseRouter:
         return new_contacts, None, None
 
     def rpc_find_value(self, key: ID, contact: Contact) -> tuple[list[Contact], Contact, str]:
+        """
+        Performs find value() on “contact”, where we are the sender searching for a value
+        corresponding to “key”, or K contacts close to “key”, if we find the value, we
+        will also receive the contact that contains it.
+        :param key:
+        :param contact:
+        :return:
+        """
         nodes: list[Contact] = []
         ret_val: Optional[str] = None
         found_by: Optional[Contact] = None
@@ -75,12 +89,29 @@ class BaseRouter:
 
         return nodes, found_by, ret_val
 
-    def query(self,
-              key: ID,
-              nodes_to_query: list[Contact],
-              rpc_call: Callable,
-              closer_contacts: list[Contact],
-              further_contacts: list[Contact]) -> FindResult:
+    def _query(self,
+               key: ID,
+               nodes_to_query: list[Contact],
+               rpc_call: Callable,
+               closer_contacts: list[Contact],
+               further_contacts: list[Contact]) -> FindResult:
+        """
+        Gets nodes that are closer to “key” than a node we are querying – we query all of nodes_to_query.
+        This ends as soon as we find a value. A FindResult object is then returned containing closer_contacts,
+        found, found_by, and the value we found.
+
+        Gets nodes by performing rpc-call on the node to query, looking for “key”, if we don’t know it,
+        it is added to a list “peers_nodes”. Checking each contact in peers_nodes, we check if it is closer
+        to the key than the node_to_query, if it is, we add it to closer_contacts. We do a similar check to
+        check if it is further, and then we add it to further_contacts.
+
+        :param key:
+        :param nodes_to_query:
+        :param rpc_call:
+        :param closer_contacts:
+        :param further_contacts:
+        :return:
+        """
         found: bool = False
         found_by: Optional[Contact] = None
         val: str = ""
@@ -125,8 +156,13 @@ class BaseRouter:
                          closer_contacts: list[Contact]
                          ) -> tuple[bool, str, Contact, list[Contact], list[Contact]]:
         """
-        TODO: Create docstring
-        Tells closer nodes to look for key
+        Gets nodes that are closer to “key” than “node_to_query”.
+
+        Gets nodes by performing rpc-call on the node to query, looking for “key”, if we don’t know it,
+        it is added to a list “peers_nodes”. Checking each contact in peers_nodes, we check if it is closer
+        to the key than the node_to_query, if it is, we add it to closer_contacts. We do a similar check to
+        check if it is further, and then we add it to further_contacts.
+
         :param key:
         :param node_to_query:
         :param rpc_call:
@@ -137,8 +173,8 @@ class BaseRouter:
         contacts, found_by, val = rpc_call(key, node_to_query)
         peers_nodes: list[Contact] = []
         for contact in contacts:
-            if contact.id.value != self.node.our_contact.id.value and node_to_query.id.value != contact.id.value:
-                if contact not in closer_contacts and contact not in further_contacts:
+            if contact.id.value not in [self.node.our_contact.id.value, node_to_query.id.value]:
+                if contact not in [closer_contacts, further_contacts]:
                     peers_nodes.append(contact)
 
         nearest_node_distance = node_to_query.id ^ key
@@ -222,8 +258,8 @@ class Router(BaseRouter):
 
         # Spec: The initiator then sends parallel, async FIND_NODE RPCs to the "a" nodes it has chosen,
         # "a" is a system-wide parameter, such as 3.
-        query_result: FindResult = self.query(key, nodes_to_query, rpc_call, self.closer_contacts,
-                                              self.further_contacts)
+        query_result: FindResult = self._query(key, nodes_to_query, rpc_call, self.closer_contacts,
+                                               self.further_contacts)
         if query_result["found"]:
             # For unit testing
             closer_contacts_unittest = self.closer_contacts
@@ -260,9 +296,9 @@ class Router(BaseRouter):
                     if c.id not in [i.id for i in contacted_nodes]:
                         contacted_nodes.append(c)
 
-                query_result = (self.query(key, new_nodes_to_query, rpc_call,
-                                           self.closer_contacts,
-                                           self.further_contacts))
+                query_result = (self._query(key, new_nodes_to_query, rpc_call,
+                                            self.closer_contacts,
+                                            self.further_contacts))
 
                 if query_result["found"]:
                     # # For unit testing.
@@ -276,9 +312,9 @@ class Router(BaseRouter):
                     if c not in [i.id for i in contacted_nodes]:
                         contacted_nodes.append(c)
 
-                query_result = (self.query(key, new_nodes_to_query, rpc_call,
-                                           self.closer_contacts,
-                                           self.further_contacts))
+                query_result = (self._query(key, new_nodes_to_query, rpc_call,
+                                            self.closer_contacts,
+                                            self.further_contacts))
 
                 if query_result["found"]:
                     # # For unit testing.

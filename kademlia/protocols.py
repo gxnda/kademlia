@@ -43,9 +43,16 @@ class VirtualProtocol(IProtocol):
         self.node = node
         self.type = "VirtualProtocol"
 
-    def ping(self, sender: Contact) -> RPCError | None:
+    def ping(self, sender: Contact) -> RPCError:
+        """
+        Pings sender if we respond.
+
+        :param sender:
+        :return:
+        """
         if self.responds:
             self.node.ping(sender)
+            return RPCError.no_error()
         else:
             error = RPCError(
                 "Time out while pinging contact - VirtualProtocol does not respond.",
@@ -67,7 +74,9 @@ class VirtualProtocol(IProtocol):
     def find_value(self, sender: Contact,
                    key: ID) -> tuple[list[Contact] | None, str | None, RPCError]:
         """
-        Returns either contacts or None if the value is found.
+        Sends key values if new contact, then attempts to find the value of a key-value pair in
+        our storage (then cache storage), given the key. If it cannot do that, it will return
+        K contacts that are closer to the key than it is.
         """
         contacts, val = self.node.find_value(sender=sender, key=key)
         return contacts, val, RPCError.no_error()
@@ -100,6 +109,18 @@ class TCPSubnetProtocol(IProtocol):
         self.type = "TCPSubnetProtocol"
 
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
+        """
+        Encodes all of the data that is needed into a FindNodeSubnetRequest,
+        Which is then pickled and posted using the ‘requests’ library to self.url and
+        self.port using a “/find_node” endpoint. This makes sense because our node doesn’t
+        call this – other nodes will call this method to contact us. This handles a timeout error
+        by creating a timeout error RPCError, any other errors are also turned into and RPCError by
+        get_rpc_error().
+
+        :param sender:
+        :param key:
+        :return:
+        """
         id: ID = ID.random_id()
 
         encoded_data = encode_data(
@@ -179,6 +200,14 @@ class TCPSubnetProtocol(IProtocol):
         to make sure null contacts is not the result of a timeout
         error.
 
+        Encodes all the data that is needed into a FindValueSubnetRequest,
+        Which is then pickled and posted using the ‘requests’ library to self.url
+        and self.port using a “/find_value” endpoint. This makes sense because our
+        node doesn’t call this – other nodes will call this method to contact us.
+        This handles a timeout error by creating a timeout error RPCError, any other
+        errors are also turned into and RPCError by get_rpc_error().
+
+
         :param sender: Sender to find value from
         :param key: Key to check for value from key-value pair
         :return: contacts, value, RPCError
@@ -255,6 +284,19 @@ class TCPSubnetProtocol(IProtocol):
             return None, None, rpc_error
 
     def ping(self, sender: Contact) -> RPCError:
+        """
+        Encodes all of the data that is needed into a PingSubnetRequest,
+        Which is then pickled and posted using the ‘requests’ library to self.url and
+        self.port using a “/ping” endpoint. This makes sense because our node doesn’t call
+        this – other nodes will call this method to contact us. This handles a timeout error
+        by setting a timeout_error flag, which is passed into get_rpc_error at the end of
+        the method. Any other exceptions are handled in a similar fashion.
+
+        The response is then decoded if there is one, then an RPCError is returned.
+
+        :param sender:
+        :return:
+        """
         random_id = ID.random_id()
         encoded_data = encode_data(
             dict(PingSubnetRequest(
@@ -342,9 +384,6 @@ class TCPSubnetProtocol(IProtocol):
             timeout_error = False
             error = e
 
-        # if ret.status_code == 200:
-        # TODO: Add error handling
-
         formatted_response = None
         if ret:
             encoded_data = ret.content
@@ -360,7 +399,7 @@ class TCPProtocol(IProtocol):
         self.url = url
         self.port = port
         self.responds = True
-        self.type = "TCPSubnetProtocol"
+        self.type = "TCPProtocol"
 
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
         id: ID = ID.random_id()
