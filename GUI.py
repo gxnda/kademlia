@@ -352,9 +352,13 @@ class UploadFrame(ctk.CTkFrame):
         self.enter_file_textbox = ctk.CTkTextbox(self, width=150, height=20, font=Fonts.text_font)
         self.enter_file_textbox.grid(column=1, row=1, padx=20, pady=10)
 
+        self.back_button = ctk.CTkButton(self, text="Back", font=Fonts.text_font,
+                                         command=self.parent.make_network_frame)
+        self.back_button.grid(column=0, row=2, padx=20, pady=10)
+
         self.upload_button = ctk.CTkButton(self, text="Upload", font=Fonts.text_font,
                                            command=self.handle_upload)
-        self.upload_button.grid(column=0, row=2, columnspan=2, padx=20, pady=10)
+        self.upload_button.grid(column=1, row=2, columnspan=1, padx=20, pady=10)
 
     def handle_upload(self):
         file_to_upload = self.enter_file_textbox.get("0.0", "end").strip("\n")
@@ -389,9 +393,13 @@ class DownloadFrame(ctk.CTkFrame):
         self.enter_id_textbox = ctk.CTkTextbox(self, width=150, height=20, font=Fonts.text_font)
         self.enter_id_textbox.grid(column=1, row=1, padx=20, pady=10)
 
+        self.back_button = ctk.CTkButton(self, text="Back", font=Fonts.text_font,
+                                         command=self.parent.make_network_frame)
+        self.back_button.grid(column=0, row=2, padx=20, pady=10)
+
         self.download_button = ctk.CTkButton(self, text="Download", font=Fonts.text_font,
                                              command=self.handle_download)
-        self.download_button.grid(column=0, row=2, columnspan=2, padx=20, pady=10)
+        self.download_button.grid(column=1, row=2, columnspan=1, padx=20, pady=10)
 
     def handle_download(self):
         id_from_textbox: str = self.enter_id_textbox.get("0.0", "end").strip("\n")
