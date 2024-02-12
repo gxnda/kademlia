@@ -323,7 +323,7 @@ class DHT:
         bucket_refresh_timer.elapsed += self.bucket_refresh_timer_elapsed
         bucket_refresh_timer.start()
 
-    def _bucket_refresh_timer_elapsed(self, sender: object, e):
+    def _bucket_refresh_timer_elapsed(self):
         now: datetime = datetime.now()
         # Put into a separate list as bucket collections may be modified.
         current_buckets: list[KBucket] = [
@@ -334,7 +334,7 @@ class DHT:
         for b in current_buckets:
             self._refresh_bucket(b)
 
-    def _key_value_republish_elapsed(self, sender: object, e) -> None:
+    def _key_value_republish_elapsed(self) -> None:
         """
         Replicate key values if the key value hasn't been touched within
         the republish interval. Also don't do a FindNode lookup if the
@@ -355,7 +355,7 @@ class DHT:
                                           self._republish_storage.get(key))
             self._republish_storage.touch(k)
 
-    def _expire_keys_elapsed(self, sender: object, e) -> None:
+    def _expire_keys_elapsed(self) -> None:
         """
         Expired key-values are removed from the republish and
         cache storage.
