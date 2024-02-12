@@ -357,8 +357,7 @@ class DHT:
 
     def _expire_keys_elapsed(self) -> None:
         """
-        Expired key-values are removed from the republish and
-        cache storage.
+        Removes expired key-values from republish and cache storage.
         """
         self._remove_expired_data(self._cache_storage)
         self._remove_expired_data(self._republish_storage)
@@ -377,12 +376,15 @@ class DHT:
         for key in expired:
             store.remove(key)
 
-    def _originator_republish_elapsed(self, sender: object, e) -> None:
+    def _originator_republish_elapsed(self) -> None:
         """
+        Redistributes expired key-value pars if we are the publisher.
+
+
         Spec: “For Kademlia’s current application (file sharing),
         we also require the original publisher of a (key,value)
         pair to republish it every 24 hours. Otherwise, (key,value)
-        pairs expire 24 hours after publication, so as to limit stale
+        pairs expire 24 hours after publication, to limit stale
         index information in the system. For other applications, such
         as digital certificates or cryptographic hash to value mappings,
         longer expiration times may be appropriate.”
@@ -412,7 +414,7 @@ class DHT:
 
             self._originator_storage.touch(k.value)
 
-    def _get_separating_nodes_count(self, contact_a: Contact, contact_b: Contact):
+    def _get_separating_nodes_count(self, contact_a: Contact, contact_b: Contact) -> int:
         """
         Returns the number of contacts between 2 contacts in our bucket list.
         :param contact_a:
@@ -466,24 +468,40 @@ class DHT:
         if count == Constants.EVICTION_LIMIT:
             self._replace_contact(to_evict)
 
-    def _add_contact_to_evict(self, key: int) -> int:
+    def _add_contact_to_evict(self, key_to_evict: int) -> int:
+        """
+        Increments how many times we have tried to evict a given key, returning number of attempts.
+        :param key_to_evict: to_evict
+        :return: number of attempts
+        """
         # self.eviction_count is a dictionary of ID keys ->
         # how many times they have been considered for eviction.
-        if key not in self.eviction_count:
-            self.eviction_count[key] = 0
-        count = self.eviction_count[key] + 1
-        self.eviction_count[key] = count
+        if key_to_evict not in self.eviction_count:
+            self.eviction_count[key_to_evict] = 0
+        self.eviction_count[key_to_evict] += 1
 
-        return count
+        return self.eviction_count[key_to_evict]
 
     def _replace_contact(self, to_evict: Contact) -> None:
+        """
+        Replaces an evicted contact with a pending one.
+        :param to_evict:
+        :return:
+        """
         bucket = self.node.bucket_list.get_kbucket(to_evict.id)
         # Prevent other threads from manipulating the bucket list or buckets
         # lock(self.node.bucket_list)
         self._evict_contact(bucket, to_evict)
-        self.replace_with_pending_contact(bucket)
+        self._replace_with_pending_contact(bucket)
 
     def _evict_contact(self, bucket: KBucket, to_evict: Contact) -> None:
+        """
+        Removes all attempts to evict to_evict, then removes it from the given bucket,
+        raising an error if it is not in the bucket.
+        :param bucket:
+        :param to_evict:
+        :return:
+        """
 
         print("[Client] Evicting contact from bucket.")
 
@@ -517,9 +535,10 @@ class DHT:
         print(f"[Client] Loaded DHT from file {filename}.")
         return data
 
-    def replace_with_pending_contact(self, bucket: KBucket):
+    def _replace_with_pending_contact(self, bucket: KBucket) -> None:
         """
-        Find a pending contact that goes into the bucket that now has room.
+        Find a pending contact that goes into the bucket that now has room;
+        that pending contact is no longer pending.
         :param bucket:
         :return:
         """
