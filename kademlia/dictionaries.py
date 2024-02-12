@@ -25,8 +25,8 @@ class ContactQueueItem(TypedDict):
 
 class GetCloserNodesReturn(TypedDict):
     found: bool
-    found_by: Contact
-    val: str
+    found_by: Contact | None
+    val: str | None
 
 
 class BaseRequest(TypedDict):
@@ -87,7 +87,7 @@ class CommonRequest(TypedDict):
     random_id: int
     sender: int
     key: int
-    value: int
+    value: str | None
     is_cached: bool
     expiration_time_sec: int
 
@@ -136,6 +136,6 @@ class StoreValue(TypedDict):
 
     expiration_time: int
     """
-    value: str | bytes
+    value: str  # | bytes
     republish_timestamp: str
     expiration_time: int

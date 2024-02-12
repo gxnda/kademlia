@@ -25,7 +25,7 @@ class ID:
     def hex(self) -> str:
         return hex(self.value)
 
-    def denary(self) -> int:
+    def decimal(self) -> int:
         return self.value
 
     def bin(self) -> str:

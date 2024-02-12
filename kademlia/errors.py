@@ -48,6 +48,15 @@ class RPCError(Exception):
                  peer_error: bool = False,
                  peer_error_message: str | None = None
                  ):
+        """
+        Initialises an RPCError method – having all these error types together allows checking for RPCErrors
+        very easy, and still readable.
+        :param error_message:
+        :param timeout_error:
+        :param id_mismatch_error:
+        :param peer_error:
+        :param peer_error_message:
+        """
         super().__init__(error_message)
         self.protocol_error_message: str | None = error_message
 
@@ -65,6 +74,10 @@ class RPCError(Exception):
             raise ValueError("Parameter peer error message requires a peer error.")
 
     def has_error(self) -> bool:
+        """
+        Returns True if any type of error is true, else False.
+        :return:
+        """
         print(self.timeout_error, self.protocol_error, self.id_mismatch_error, self.peer_error)
         return self.timeout_error or \
             self.protocol_error or \
@@ -72,6 +85,10 @@ class RPCError(Exception):
             self.peer_error
 
     def __str__(self):
+        """
+        Returns error message, or “No error” if there is none.
+        :return:
+        """
         if self.has_error():
             if self.protocol_error:
                 return f"Protocol error: {self.protocol_error_message}"

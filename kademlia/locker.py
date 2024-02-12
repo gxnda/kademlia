@@ -18,16 +18,16 @@ class WithLock:
         """
         Creates lock object to be used in __enter__ and __exit__.
         """
-        self.lock = lock
+        self.__lock = lock
 
     def __enter__(self) -> None:
         """
         Change the state to locked and returns immediately.
         """
-        self.lock.acquire()
+        self.__lock.acquire()
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         """
         Changes the state to unlocked; this is called from another thread.
         """
-        self.lock.release()
+        self.__lock.release()
