@@ -15,6 +15,13 @@ class Node:
                  contact: Contact,
                  storage: IStorage,
                  cache_storage=None):
+        """
+        Initialises the node object. This object is used to represent a device on the
+        network – contains IP, port, ID, storage, cache_storage, and the master DHT object controlling it.
+        :param contact:
+        :param storage:
+        :param cache_storage:
+        """
 
         if not cache_storage and not DEBUG:
             raise ValueError(
@@ -50,7 +57,10 @@ class Node:
               is_cached: bool = False,
               expiration_time_sec: int = 0) -> None:
         """
-        Store a key-value pair in the republish or cache storage.
+        Stores a key-value pair in main/cache storage. This adds the sender to our bucket list – so it
+        will error if the sender is ourselves. Then it will send key values if the contact is new
+        (and not is_cached), then it will save the key-value pair in the corresponding storage object.
+
         :param key:
         :param sender:
         :param val:
@@ -74,7 +84,7 @@ class Node:
     def find_node(self, key: ID,
                   sender: Contact) -> tuple[list[Contact], str | None]:
         """
-        Finds K close contacts to a given ID, while exluding the sender.
+        Finds K close contacts to a given ID, whilst excluding the sender.
         It also adds the sender if it hasn't seen it before.
         :param key: K close contacts are found near this ID.
         :param sender: Contact to be excluded and added if new.
@@ -97,15 +107,15 @@ class Node:
     def find_value(self, key: ID, sender: Contact) \
             -> tuple[list[Contact] | None, str | None]:
         """
-        Find value in self.storage, testing
-        self.cache_storage if it is not in the former.
-        If it is not in either, it gets K
-        close contacts from the bucket list.
+        Sends key values if new contact, then attempts to find the value of a key-value pair in
+        our storage (then cache storage), given the key. If it cannot do that, it will return
+        K contacts that are closer to the key than it is.
         """
-        print("find_value called")
         if sender.id == self.our_contact.id:
             raise SendingQueryToSelfError("Sender cannot be ourselves.")
+
         self.send_key_values_if_new_contact(sender)
+
         if self.storage.contains(key):
             print(f"[DEBUG] Value in self.storage of {self.our_contact.id}.")
             return None, self.storage.get(key)
@@ -155,6 +165,11 @@ class Node:
                             self.dht.handle_error(error, sender)
 
     def _is_new_contact(self, sender: Contact) -> bool:
+        """
+        Returns NOT(if the contact exists in our bucket list or in our DHT’s pending contact list.)
+        :param sender:
+        :return:
+        """
         ret: bool
         # with self.bucket_list.lock:
         ret: bool = self.bucket_list.contact_exists(sender)
@@ -178,6 +193,7 @@ class Node:
     # Server entry points
 
     def server_ping(self, request: CommonRequest) -> dict:
+        print("[Server] Ping called")
         protocol: IProtocol = request["protocol"]
         self.ping(
             Contact(
@@ -203,6 +219,7 @@ class Node:
         return {"random_id": request["random_id"]}
 
     def server_find_node(self, request: CommonRequest) -> dict:
+        print("[Server] Find node called")
         protocol: IProtocol = request["protocol"]
 
         contacts, val = self.find_node(

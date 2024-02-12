@@ -13,11 +13,11 @@ from kademlia.node import Node
 
 
 class BaseServer(ThreadingHTTPServer):
-    def __init__(self, server_address: tuple[str, int], RequestHandlerClass):
+    def __init__(self, server_address: tuple[str, int], request_handler_class):
         ThreadingHTTPServer.__init__(
             self,
             server_address=server_address,
-            RequestHandlerClass=RequestHandlerClass
+            RequestHandlerClass=request_handler_class
         )
 
         self.routing_methods: dict[str, type] = {
@@ -30,7 +30,6 @@ class BaseServer(ThreadingHTTPServer):
     def start(self) -> None:
         """
         Starts the server.
-        Holds up the entire program though, would recommend placing in a thread.
         :return:
         """
         print("[Server] Starting server...")
@@ -47,7 +46,8 @@ class BaseServer(ThreadingHTTPServer):
 
     def thread_start(self) -> threading.Thread:
         """
-        Starts the server on a thread, which is returned
+        Starts the server on a specific thread that is returned –
+        this is probably obsolete now that ThreadingHTTPServer is used, instead of HTTPServer.
         :return: Thread the server is running on
         """
         thread = threading.Thread(target=self.start)
@@ -204,7 +204,7 @@ class TCPSubnetServer(BaseServer):
     def __init__(self, server_address: tuple[str, int]):
         super().__init__(
             server_address=server_address,
-            RequestHandlerClass=HTTPSubnetRequestHandler
+            request_handler_class=HTTPSubnetRequestHandler
         )
         self.subnets: dict = {}
         self.routing_methods: dict[str, type] = {
@@ -350,12 +350,17 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
 class TCPServer(BaseServer):
     def __init__(self, node: Node):
+        """
+        Creates a server using TCP, based on a Threading HTTP Server from http.server, the
+        given node provides the IP and port tuple to start the server.
+        :param node:
+        """
         self.node = node
         server_address: tuple[str, int] = (self.node.our_contact.protocol.url, self.node.our_contact.protocol.port)
 
         super().__init__(
             server_address=server_address,
-            RequestHandlerClass=HTTPRequestHandler
+            request_handler_class=HTTPRequestHandler
         )
 
 
