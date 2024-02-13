@@ -208,7 +208,14 @@ class Router(BaseRouter):
                rpc_call: Callable,
                give_me_all: bool = False) -> FindResult:
         """
-        Performs main Kademlia Lookup.
+        This performs the main Kademlia lookup algorithm serially.
+        This method initiates a Kademlia lookup operation, searching for nodes closest to the given key.
+        starts by getting nodes from the closest non-empty k-bucket and continues querying nodes
+        serially until it has gathered responses from the closest k nodes or until we run out of
+        nodes to contact.
+
+
+
         :param key: Key to be looked up
         :param rpc_call: RPC call to be used.
         :param give_me_all: If all contacts should be returned or not - for testing purposes mainly.
@@ -343,18 +350,22 @@ class Router(BaseRouter):
 class ParallelRouter(BaseRouter):
     def __init__(self, node: Node = None):
         super().__init__(node)
-        self._contact_queue = my_queues.InfiniteLinearQueue()
-        self._semaphore = threading.Semaphore()
-        self.now: datetime = datetime.now()
-        self.stop_work = False
-        self.threads: list[threading.Thread] = []
-        self._initialise_thread_pool()
+        self.__contact_queue = my_queues.InfiniteLinearQueue()
+        self.__semaphore = threading.Semaphore()
+        self.__now: datetime = datetime.now()
+        self.__stop_work = False
+        self.__threads: list[threading.Thread] = []
+        self.__initialise_thread_pool()
 
-    def _initialise_thread_pool(self):
+    def __initialise_thread_pool(self) -> None:
+        """
+        Creates and starts MAX-THREADS # of threads, which all run self.rpc-caller.
+        :return:
+        """
         for _ in range(Constants.MAX_THREADS):
-            thread = threading.Thread(target=self.rpc_caller)
+            thread = threading.Thread(target=self.__rpc_caller)
             # thread.is_background = True
-            self.threads.append(thread)
+            self.__threads.append(thread)
             thread.start()
 
     def queue_work(self,
@@ -364,8 +375,20 @@ class ParallelRouter(BaseRouter):
                    closer_contacts: list[Contact],
                    further_contacts: list[Contact],
                    find_result: FindResult) -> None:
+        """
+        Adds new Contact Queue Item to self.__contact-queue, all the
+        parameters listed are added. The semaphore is released at the end of
+        this function to signal that there is work available in the queue.
+        :param key:
+        :param contact:
+        :param rpc_call:
+        :param closer_contacts:
+        :param further_contacts:
+        :param find_result:
+        :return:
+        """
 
-        self._contact_queue.enqueue(
+        self.__contact_queue.enqueue(
             ContactQueueItem(
                 key=key,
                 contact=contact,
@@ -375,18 +398,24 @@ class ParallelRouter(BaseRouter):
                 find_result=find_result)
         )
 
-        self._semaphore.release()
+        self.__semaphore.release()
 
-    def rpc_caller(self) -> None:
+    def __rpc_caller(self) -> None:
         """
-        "when a value is found, it takes a snapshot of the current closer contacts and stores
-        all the information about a closer contact in fields belonging to the ParallelLookup class."
+        This is ran on each thread in parallel inside the Router; it is an infinite loop that
+        exists for as long as the Router is running. It will check for work from the semaphore
+         – if there is no work it will wait until there is. Once there is work it will dequeue
+         an item from the queue and get K nodes closer to “key” than “contact”, updating the
+         FindResult – this works even though it has been dequeued because python refers to
+         lists as references (for example, if you pass a list into a function, the function
+         can edit the list, and that will persist outside the function), so we can refer to
+         item[“findResult”] because the reference will persist in the “lookup” method.
         :return:
         """
         flag = True
         while flag:  # I hate this.
-            self._semaphore.acquire()
-            item: ContactQueueItem = self._contact_queue.dequeue()
+            self.__semaphore.acquire()
+            item: ContactQueueItem = self.__contact_queue.dequeue()
             if item:
                 found, val, found_by, item["closer_contacts"], item["further_contacts"] = self.get_closer_nodes(
                         item["key"],
@@ -396,7 +425,7 @@ class ParallelRouter(BaseRouter):
                         item["further_contacts"]
                     )
                 if val or found_by:
-                    if not self.stop_work:
+                    if not self.__stop_work:
                         # Possible multiple "found"
                         # lock(locker)
                         item["find_result"]["found"] = True
@@ -405,33 +434,48 @@ class ParallelRouter(BaseRouter):
                         item["find_result"]["contacts"] = item["closer_contacts"]
 
     def set_query_time(self) -> None:
-        self.now = datetime.now()
-
-    def query_time_expired(self) -> bool:
         """
-        Returns true if the query time has expired.
+        Sets self.now() to current time.
         :return:
         """
-        return (datetime.now() - self.now).total_seconds() > Constants.REQUEST_TIMEOUT
+        self.__now = datetime.now()
 
-    def dequeue_remaining_work(self):
+    def _query_time_expired(self) -> bool:
+        """
+        Returns true if the query time has expired.
+
+        Returns if the time since query was triggered is longer than Constants REQUEST-TIMEOUT.
+        :return:
+        """
+        return (datetime.now() - self.__now).total_seconds() > Constants.REQUEST_TIMEOUT
+
+    def __dequeue_remaining_work(self):
+        """
+        Dequeues everything from the contact queue.
+        :return:
+        """
         dequeue_result = True
         while dequeue_result:
-            dequeue_result = self._contact_queue.dequeue()
+            dequeue_result = self.__contact_queue.dequeue()
 
-    def stop_remaining_work(self):
-        self.dequeue_remaining_work()
-        self.stop_work = True
-
-    def parallel_found(self, find_result: FindResult, found_ret: FindResult) -> tuple[bool, FindResult]:
+    def _stop_remaining_work(self):
         """
-        # TODO: Fix?
+        Dequeues everything from the contact queue, then sets “stop work” to True, so no more work will be done.
+        :return:
+        """
+        self.__dequeue_remaining_work()
+        self.__stop_work = True
+
+    @classmethod
+    def parallel_found(cls, find_result: FindResult, found_ret: FindResult) -> tuple[bool, FindResult]:
+        """
+        Overlays found-ret with find-result if find-result has a value.
+        It then returns if the overlay has been performed, and the new found_ret.
         :param find_result:
-        :param found_ret: given as a tuple so that it is used as reference.
+        :param found_ret:
         :return:
         """
         # lock(locker)
-
         if find_result["found"]:
             # lock(find_result["contacts"]
             # lock found ret
@@ -443,6 +487,27 @@ class ParallelRouter(BaseRouter):
         return find_result["found"], found_ret
 
     def lookup(self, key: ID, rpc_call: Callable, give_me_all: bool = False) -> FindResult:
+        """
+        Performs a similar algorithm to what has been performed in "Router", but this
+        time it is performed in parallel. First it makes sure that self.node actually exists
+        to prevent any strange errors from happening down the line. It then gets a list
+        of K 'all nodes' it intends to query, and then bits of chunks of ALPHA each time and
+        queries them individually. It then groups these ALPHA nodes_to_query into closer_contacts
+        and further_contacts, depending on if they are closer than or further than our ID to the
+        parameter "key" by the XOR metric. All of the closer and further contacts are then placed
+        into a ContactQueueItem (and appended to our contact queue) with each member of the nodes
+        to query - This will be handled by the Constants.MAX_THREADS running rpc_caller. The
+        time since last query is then updated. This process then iterates, biting of chunks of
+        ALPHA contacts until there are no closer or further uncontacted nodes, or until one of the threads
+        handling the contact queue finds the value we are looking for which matches the key-value
+        pair with "key", if that is the case, the FindResult object containing the value will be returned.
+
+
+        :param key:
+        :param rpc_call:
+        :param give_me_all:
+        :return:
+        """
 
         if not isinstance(self.node, Node):
             raise TypeError("ParallelRouter must have instance node.")
@@ -458,7 +523,7 @@ class ParallelRouter(BaseRouter):
         # TODO: Why do I do this?
         if TRY_CLOSEST_BUCKET:
             # Spec: The lookup initiator starts by picking a nodes from its closest non-empty k-bucket
-            bucket = self.find_closest_nonempty_kbucket(key)
+            bucket = self.find_closest_nonempty_kbucket(key)  # TODO: Is this ever used?
 
             # Not in spec -- sort by the closest nodes in the closest bucket.
             all_nodes: list[Contact] = self.node.bucket_list.get_close_contacts(
@@ -520,13 +585,7 @@ class ParallelRouter(BaseRouter):
 
             found, found_return = self.parallel_found(find_result, found_return)
             if found:
-
-                # For unit testing
-                if DEBUG:
-                    closer_contacts_unit_test = closer_contacts
-                    further_contacts_unit_test = further_contacts
-
-                self.stop_remaining_work()
+                self._stop_remaining_work()
                 return found_return
 
             closer_uncontacted_nodes = [c for c in closer_contacts if c not in contacted_nodes]
@@ -535,7 +594,7 @@ class ParallelRouter(BaseRouter):
             have_closer = len(closer_uncontacted_nodes) > 0
             have_further = len(further_uncontacted_nodes) > 0
 
-            have_work = have_closer or have_further or not self.query_time_expired()
+            have_work = have_closer or have_further or not self._query_time_expired()
 
             # for the k nodes the initiator has heard of closest to the target...
             alpha_nodes = None
@@ -553,22 +612,22 @@ class ParallelRouter(BaseRouter):
                 else:
                     alpha_nodes = further_uncontacted_nodes
 
-                if alpha_nodes:
-                    for a in alpha_nodes:
-                        if a.id not in [c.id for c in contacted_nodes]:
-                            contacted_nodes.append(a)
-                        self.queue_work(
-                            key=key,
-                            contact=a,
-                            rpc_call=rpc_call,
-                            closer_contacts=closer_contacts,
-                            further_contacts=further_contacts,
-                            find_result=find_result
-                        )
+            if alpha_nodes:
+                for a in alpha_nodes:
+                    if a.id not in [c.id for c in contacted_nodes]:
+                        contacted_nodes.append(a)
+                    self.queue_work(
+                        key=key,
+                        contact=a,
+                        rpc_call=rpc_call,
+                        closer_contacts=closer_contacts,
+                        further_contacts=further_contacts,
+                        find_result=find_result
+                    )
 
-                self.set_query_time()
+            self.set_query_time()
 
-        self.stop_remaining_work()
+        self._stop_remaining_work()
         return FindResult(
             found=False,
             contacts=ret if give_me_all else sorted(ret[0:Constants.K], key=lambda c: c.id ^ key),
