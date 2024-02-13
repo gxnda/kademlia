@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from .main import DEBUG
+from kademlia.main import DEBUG
 
 
 @dataclass

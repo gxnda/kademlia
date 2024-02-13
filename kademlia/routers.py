@@ -511,7 +511,6 @@ class ParallelRouter(BaseRouter):
 
         if not isinstance(self.node, Node):
             raise TypeError("ParallelRouter must have instance node.")
-
         have_work: bool = True
         find_result: FindResult = FindResult(found=False, found_by=None, val="", contacts=[])
         ret: list[Contact] = []
@@ -520,49 +519,33 @@ class ParallelRouter(BaseRouter):
         further_contacts: list[Contact] = []
         found_return = FindResult(found=False, found_by=None, val="", contacts=[])
 
-        # TODO: Why do I do this?
-        if TRY_CLOSEST_BUCKET:
-            # Spec: The lookup initiator starts by picking a nodes from its closest non-empty k-bucket
-            bucket = self.find_closest_nonempty_kbucket(key)  # TODO: Is this ever used?
-
-            # Not in spec -- sort by the closest nodes in the closest bucket.
-            all_nodes: list[Contact] = self.node.bucket_list.get_close_contacts(
-                key, self.node.our_contact.id)[0:Constants.K]
-
-            nodes_to_query: list[Contact] = all_nodes[0:Constants.A]
+        if DEBUG:
+            all_nodes: list[Contact] = self.node.bucket_list.get_kbucket(key).contacts[0:Constants.K]
         else:
-            if DEBUG:
-                all_nodes: list[Contact] = self.node.bucket_list.get_kbucket(key).contacts[0:Constants.K]
+            # For unit testing, this is a bad way to get a list of close contacts with virtual nodes
+            # because we're always going to get the closest nodes right at the get go.
+            all_nodes: list[Contact] = self.node.bucket_list.get_close_contacts(key, self.node.our_contact.id)[0:Constants.K]
+
+        nodes_to_query: list[Contact] = all_nodes[0:Constants.A]
+        # Also not explicitly in specification:
+        # any closer node in the alpha list is immediately added to our closer contact list,
+        # and any further node in the alpha list is immediately added to our further contact list.
+        for c in nodes_to_query:
+            if (c.id ^ key) < (self.node.our_contact.id ^ key):
+                closer_contacts.append(c)
             else:
-                # For unit testing, this is a bad way to get a list of close contacts with virtual nodes
-                # because we're always going to get the closest nodes right at the get go.
-                all_nodes: list[Contact] = self.node.bucket_list.get_close_contacts(key, self.node.our_contact.id)[0:Constants.K]
-
-            nodes_to_query: list[Contact] = all_nodes[0:Constants.A]
-
-            # Also not explicitly in specification:
-            # any closer node in the alpha list is immediately added to our closer contact list,
-            # and any further node in the alpha list is immediately added to our further contact list.
-            for c in nodes_to_query:
-                if (c.id ^ key) < (self.node.our_contact.id ^ key):
-                    closer_contacts.append(c)
-                else:
-                    further_contacts.append(c)
-
-            # the remaining contacts can be put here.
-            for c in all_nodes:
-                if c not in nodes_to_query:
-                    further_contacts.append(c)
-
+                further_contacts.append(c)
+        # the remaining contacts can be put here.
+        for c in all_nodes:
+            if c not in nodes_to_query:
+                further_contacts.append(c)
         # we're about to contact these nodes.
         for c in nodes_to_query:
             if c.id not in [i.id for i in contacted_nodes]:
                 contacted_nodes.append(c)
 
         # Spec: the initiator then sends parallel asynchronous FIND_NODE RPCs to the
-        # Constants.A nodes it has chosen, Constants.A is a system-wide concurrency parameter,
-        # such as 3.
-
+        # Constants.A nodes it has chosen.
         for c in nodes_to_query:
             self.queue_work(key=key,
                             contact=c,
@@ -572,7 +555,6 @@ class ParallelRouter(BaseRouter):
                             find_result=find_result)
 
         self.set_query_time()
-
         # add any new closer contacts to the list we're going to return.
         for c in closer_contacts:
             if c.id not in [r.id for r in ret]:
@@ -593,7 +575,6 @@ class ParallelRouter(BaseRouter):
 
             have_closer = len(closer_uncontacted_nodes) > 0
             have_further = len(further_uncontacted_nodes) > 0
-
             have_work = have_closer or have_further or not self._query_time_expired()
 
             # for the k nodes the initiator has heard of closest to the target...
@@ -606,26 +587,40 @@ class ParallelRouter(BaseRouter):
                 else:
                     alpha_nodes = closer_uncontacted_nodes
 
+                if alpha_nodes:
+                    for a in alpha_nodes:
+                        if a.id not in [c.id for c in contacted_nodes]:
+                            contacted_nodes.append(a)
+                        self.queue_work(
+                            key=key,
+                            contact=a,
+                            rpc_call=rpc_call,
+                            closer_contacts=closer_contacts,
+                            further_contacts=further_contacts,
+                            find_result=find_result
+                        )
+                self.set_query_time()
+
             elif have_further:
                 if len(further_uncontacted_nodes) >= Constants.A:
                     alpha_nodes = further_uncontacted_nodes[0: Constants.A - 1]
                 else:
                     alpha_nodes = further_uncontacted_nodes
 
-            if alpha_nodes:
-                for a in alpha_nodes:
-                    if a.id not in [c.id for c in contacted_nodes]:
-                        contacted_nodes.append(a)
-                    self.queue_work(
-                        key=key,
-                        contact=a,
-                        rpc_call=rpc_call,
-                        closer_contacts=closer_contacts,
-                        further_contacts=further_contacts,
-                        find_result=find_result
-                    )
+                if alpha_nodes:
+                    for a in alpha_nodes:
+                        if a.id not in [c.id for c in contacted_nodes]:
+                            contacted_nodes.append(a)
+                        self.queue_work(
+                            key=key,
+                            contact=a,
+                            rpc_call=rpc_call,
+                            closer_contacts=closer_contacts,
+                            further_contacts=further_contacts,
+                            find_result=find_result
+                        )
+                self.set_query_time()
 
-            self.set_query_time()
 
         self._stop_remaining_work()
         return FindResult(

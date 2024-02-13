@@ -442,6 +442,7 @@ class DownloadFrame(ctk.CTkFrame):
             self.parent.show_error("ID out of range.")
         else:
             id_to_download: id.ID = id.ID(int(id_from_entry))
+            print("calling find value")
             found, contacts, val = self.parent.dht.find_value(key=id_to_download)
             # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
             if not found:

@@ -342,6 +342,11 @@ class NodeLookupTests(unittest.TestCase):
         )
 
     def test_no_nodes_to_query(self):
+        """
+        Creates K nodes and adds them to our routers bucket list, where each node knows about
+        the other peers.
+        :return:
+        """
         router_node_contact = Contact(id=ID.random_id(),
                                       protocol=None)
         router = Router(
@@ -379,11 +384,12 @@ class NodeLookupTests(unittest.TestCase):
 
         for c in contacts_to_query:
             # should I read the output?
-            router.get_closer_nodes(key=key,
-                                    node_to_query=c,
-                                    rpc_call=router.rpc_find_nodes,
-                                    closer_contacts=closer_contacts,
-                                    further_contacts=further_contacts)
+            found, val, found_by, closer_contacts, further_contacts = \
+                router.get_closer_nodes(key=key,
+                                        node_to_query=c,
+                                        rpc_call=router.rpc_find_nodes,
+                                        closer_contacts=closer_contacts,
+                                        further_contacts=further_contacts)
 
             closer_compare_arr = []
             for contact in further_contacts:

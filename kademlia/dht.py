@@ -153,6 +153,7 @@ class DHT:
         :param key: Key to search for value pair.
         :return: Found: bool (If it is found or not), contacts: list[Contact], val: str | None (value returned)
         """
+        print("touch bucket with key")
         self.touch_bucket_with_key(key)
         contacts_queried: list[Contact] = []
 
@@ -161,17 +162,20 @@ class DHT:
         # - Add to docstring when finished
         val: str | None = None
 
+        print("try get originator value")
         found, our_val = self._originator_storage.try_get_value(key)
         # There has to be a better way to do this.
         if our_val:
             found = True
             val = our_val
         else:
+            print("try get republish value")
             found, our_val = self._republish_storage.try_get_value(key)
             if our_val:
                 found = True
                 val = our_val
             else:
+                print("try get cache value")
                 found, our_val = self._cache_storage.try_get_value(key)
                 if our_val:
                     found = True
@@ -185,7 +189,6 @@ class DHT:
                         val = lookup["val"]
                         # Find the closest contact (other than the one the value was found by)
                         # in which to "cache" the key-value.
-                        print(lookup["contacts"], lookup["found_by"])
 
                         store_to: Contact | None = None
                         for c in lookup["contacts"]:

@@ -210,7 +210,7 @@ class BucketList:
 
         contact.touch()  # Update the time last seen to now
 
-        print("[Client] Add contact called.")
+        # print("[Client] Add contact called.")
         # with self.lock:
         kbucket: KBucket = self.get_kbucket(contact.id)
         if kbucket.contains(contact.id):
@@ -254,7 +254,7 @@ class BucketList:
 
         else:
             # Bucket is not full, nothing special happens.
-            print("[Client] Adding contact to bucket")
+            # print("[Client] Adding contact to bucket")
             kbucket.add_contact(contact)
 
     def get_close_contacts(self, key: ID, exclude: ID) -> list[Contact]:
