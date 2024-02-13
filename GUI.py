@@ -649,7 +649,7 @@ class BootstrapFrame(ctk.CTkFrame):
             self.parent.show_error("ID must not be empty.")
         elif not known_id_value.isnumeric():
             self.parent.show_error("ID was not a number.")
-        elif int(known_id_value) < 0 or int(known_id_value) > 2 ** Constants.ID_LENGTH_BITS:  # Slightly too hardcoded for me,
+        elif int(known_id_value) < 0 or int(known_id_value) > 2 ** Constants.ID_LENGTH_BITS:
             # what if they want to change ID range?
             self.parent.show_error("ID out of range")
         else:
