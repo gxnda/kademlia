@@ -197,6 +197,7 @@ class ErrorWindow(ctk.CTk):
 class MainGUI(ctk.CTk):
     def __init__(self, appearance_mode="dark"):
         ctk.CTk.__init__(self)
+        self.settings_button = None
         self.appearance_mode = appearance_mode
         ctk.set_appearance_mode(appearance_mode)
         # self.geometry("600x500")
@@ -295,6 +296,7 @@ class MainGUI(ctk.CTk):
         dark_icon = Image.open(r"assets/settings_icon_light.png")
         light_icon = Image.open(r"assets/settings_icon_dark.png")
         settings_icon = ctk.CTkImage(light_image=light_icon, dark_image=dark_icon, size=(30, 30))
+        print(type(self), type(settings_icon), type(self.open_settings))
         self.settings_button = ctk.CTkButton(self, image=settings_icon, text="",
                                              bg_color="transparent", fg_color="transparent",
                                              width=28, command=self.open_settings)
