@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 import json
 from typing import Optional
@@ -131,6 +132,7 @@ class SecondaryJSONStorage(IStorage):
         :param expiration_time_sec:
         :return:
         """
+        os.makedirs(os.path.dirname(self.filename), exist_ok=True)
         with open(self.filename, "w+") as f:
             try:
                 json_data: dict[int, StoreValue] = json.load(f)

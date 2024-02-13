@@ -116,32 +116,36 @@ class StatusWindow(ctk.CTk):
 
 
 class Settings(ctk.CTk):
-    def __init__(self, hash_table: dht.DHT, appearance_mode="dark"):
+    def __init__(self, hash_table: dht.DHT | None, appearance_mode="dark"):
         super().__init__()
         ctk.set_appearance_mode(appearance_mode)
 
         self.appearance_mode = appearance_mode
 
-        self.dht: dht.DHT = hash_table
+        self.dht: dht.DHT | None = hash_table
 
         self.title("Kademlia Settings")
 
         self.settings_title = ctk.CTkLabel(self, text="Settings", font=Fonts.title_font)
         self.settings_title.grid(column=0, row=0, columnspan=2, padx=20, pady=20)
 
-        self.dht_export_label = ctk.CTkLabel(self, text="File to export to:", width=150, font=Fonts.text_font)
-        self.dht_export_label.grid(column=0, row=1, padx=10, pady=10)
+        if self.dht:
+            self.dht_export_label = ctk.CTkLabel(self, text="File to export to:", width=150, font=Fonts.text_font)
+            self.dht_export_label.grid(column=0, row=1, padx=10, pady=10)
 
-        self.dht_export_file = ctk.CTkTextbox(self, width=200, height=20, font=Fonts.text_font)
-        self.dht_export_file.grid(column=1, row=1, padx=10, pady=10)
-        self.dht_export_file.insert("1.0", f"dht.pickle")
+            self.dht_export_file = ctk.CTkEntry(self, width=200, height=20, font=Fonts.text_font)
+            self.dht_export_file.grid(column=1, row=1, padx=10, pady=10)
+            self.dht_export_file.insert("1", f"dht.pickle")
 
-        self.export_dht_button = ctk.CTkButton(self, text="Export/Save DHT", font=Fonts.text_font, command=self.export_dht)
-        self.export_dht_button.grid(column=1, row=2, padx=10, pady=10)
+            self.export_dht_button = ctk.CTkButton(self, text="Export/Save DHT", font=Fonts.text_font, command=self.export_dht)
+            self.export_dht_button.grid(column=1, row=2, padx=10, pady=10)
 
-        self.view_contact_button = ctk.CTkButton(self, text="View our contact", font=Fonts.text_font,
-                                                 command=self.view_contact)
-        self.view_contact_button.grid(column=0, row=2, padx=10, pady=10)
+            self.view_contact_button = ctk.CTkButton(self, text="View our contact", font=Fonts.text_font,
+                                                     command=self.view_contact)
+            self.view_contact_button.grid(column=0, row=2, padx=10, pady=10)
+        else:
+            no_dht_label = ctk.CTkLabel(self, text="You have not made a DHT yet! You should not be able to access this.")
+            no_dht_label.grid(column=0, row=1, padx=10, pady=10)
 
     def show_error(self, error_message: str):
         print(f"[Error] {error_message}")
@@ -154,7 +158,7 @@ class Settings(ctk.CTk):
         status_window.mainloop()
 
     def export_dht(self):
-        file = self.dht_export_file.get("0.0", "end").strip("\n")
+        file = self.dht_export_file.get().strip("\n")
         try:
             self.dht.save(file)
             self.show_status(f"File saved successfully to {file}.")
@@ -253,7 +257,8 @@ class MainGUI(ctk.CTk):
         # Make directory of our_id at current working directory.
         create_dir_at = os.path.join(os.getcwd(), str(our_id.value))
         print(create_dir_at)
-        os.mkdir(create_dir_at)
+        if not exists(create_dir_at):
+            os.mkdir(create_dir_at)
         self.dht: dht.DHT = dht.DHT(
             id=our_id,
             protocol=protocol,
@@ -269,8 +274,12 @@ class MainGUI(ctk.CTk):
         self.make_network_frame()
 
     def open_settings(self):
-        settings_window = Settings(hash_table=self.dht, appearance_mode=self.appearance_mode)
-        settings_window.mainloop()
+        if hasattr(self, "dht"):
+            settings_window = Settings(hash_table=self.dht, appearance_mode=self.appearance_mode)
+            settings_window.mainloop()
+        else:
+            pass
+
 
     def thread_open_settings(self):
         """
@@ -298,10 +307,11 @@ class MainGUI(ctk.CTk):
 
     def clear_screen_and_keep_settings(self):
         self.clear_screen()
-        self.add_settings_icon()
+        if hasattr(self, "dht"):
+            self.add_settings_icon()
 
     def make_join_dht_frame(self):
-        self.clear_screen()
+        self.clear_screen_and_keep_settings()
         join = JoinNetworkMenuFrame(parent=self)
         join.pack(padx=20, pady=20)
 
@@ -345,12 +355,12 @@ class MainGUI(ctk.CTk):
         status_window.mainloop()
 
     def make_download_frame(self):
-        self.clear_screen()
+        self.clear_screen_and_keep_settings()
         download_frame = DownloadFrame(self)
         download_frame.pack(padx=20, pady=20)
 
     def make_upload_frame(self):
-        self.clear_screen()
+        self.clear_screen_and_keep_settings()
         upload_frame = UploadFrame(self)
         upload_frame.pack(padx=20, pady=20)
 
@@ -367,8 +377,8 @@ class UploadFrame(ctk.CTkFrame):
         self.enter_file_label = ctk.CTkLabel(self, text="File to upload:", font=Fonts.text_font)
         self.enter_file_label.grid(column=0, row=1, padx=20, pady=10)
 
-        self.enter_file_textbox = ctk.CTkTextbox(self, width=150, height=20, font=Fonts.text_font)
-        self.enter_file_textbox.grid(column=1, row=1, padx=20, pady=10)
+        self.enter_file_entry = ctk.CTkEntry(self, width=150, height=20, font=Fonts.text_font)
+        self.enter_file_entry.grid(column=1, row=1, padx=20, pady=10)
 
         self.back_button = ctk.CTkButton(self, text="Back", font=Fonts.text_font,
                                          command=self.parent.make_network_frame)
@@ -379,7 +389,7 @@ class UploadFrame(ctk.CTkFrame):
         self.upload_button.grid(column=1, row=2, columnspan=1, padx=20, pady=10)
 
     def handle_upload(self):
-        file_to_upload = self.enter_file_textbox.get("0.0", "end").strip("\n")
+        file_to_upload = self.enter_file_entry.get().strip("\n")
         if isfile(file_to_upload):
             filename = os.path.basename(file_to_upload)
             if not filename:  # os.path.basename returns "" on file paths ending in "/"
@@ -408,8 +418,8 @@ class DownloadFrame(ctk.CTkFrame):
         self.enter_id_label = ctk.CTkLabel(self, text="ID to download:", font=Fonts.text_font)
         self.enter_id_label.grid(column=0, row=1, padx=20, pady=10)
 
-        self.enter_id_textbox = ctk.CTkTextbox(self, width=150, height=20, font=Fonts.text_font)
-        self.enter_id_textbox.grid(column=1, row=1, padx=20, pady=10)
+        self.enter_id_entry = ctk.CTkEntry(self, width=150, height=20, font=Fonts.text_font)
+        self.enter_id_entry.grid(column=1, row=1, padx=20, pady=10)
 
         self.back_button = ctk.CTkButton(self, text="Back", font=Fonts.text_font,
                                          command=self.parent.make_network_frame)
@@ -420,16 +430,16 @@ class DownloadFrame(ctk.CTkFrame):
         self.download_button.grid(column=1, row=2, columnspan=1, padx=20, pady=10)
 
     def handle_download(self):
-        id_from_textbox: str = self.enter_id_textbox.get("0.0", "end").strip("\n")
+        id_from_entry: str = self.enter_id_entry.get().strip("\n")
 
-        if not id_from_textbox:
+        if not id_from_entry:
             self.parent.show_error("ID must not be empty.")
-        elif not id_from_textbox.isnumeric():
+        elif not id_from_entry.isnumeric():
             self.parent.show_error("ID was not a number.")
-        elif not 0 < int(id_from_textbox) < 2 ** Constants.ID_LENGTH_BITS:
+        elif not 0 < int(id_from_entry) < 2 ** Constants.ID_LENGTH_BITS:
             self.parent.show_error("ID out of range.")
         else:
-            id_to_download: id.ID = id.ID(int(id_from_textbox))
+            id_to_download: id.ID = id.ID(int(id_from_entry))
             found, contacts, val = self.parent.dht.find_value(key=id_to_download)
             # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
             if not found:
@@ -478,8 +488,8 @@ class LoadDHTFromFileFrame(ctk.CTkFrame):
         self.enter_file_name_text = ctk.CTkLabel(master=self, text="Load from file: ", font=Fonts.text_font)
         self.enter_file_name_text.grid(column=0, row=1, padx=20, pady=20)
 
-        self.file_name_textbox = ctk.CTkTextbox(master=self, width=150, height=30)
-        self.file_name_textbox.grid(column=1, row=1, padx=20, pady=20)
+        self.file_name_entry = ctk.CTkEntry(master=self, width=150, height=30)
+        self.file_name_entry.grid(column=1, row=1, padx=20, pady=20)
 
         self.back_button = ctk.CTkButton(master=self, text="Back", font=Fonts.text_font,
                                          command=self.parent.make_join_dht_frame)
@@ -490,7 +500,7 @@ class LoadDHTFromFileFrame(ctk.CTkFrame):
         self.load_button.grid(column=1, row=2, padx=20, pady=0)
 
     def load_dht(self):
-        filename = self.file_name_textbox.get("0.0", "end").strip("\n")
+        filename = self.file_name_entry.get().strip("\n")
 
         if not isfile(filename):
             self.parent.show_error(f"File not found:\n'{filename}'")
@@ -694,6 +704,8 @@ class BootstrapFrame(ctk.CTkFrame):
             protocol=known_protocol
         )
         print("[GUI] Bootstrapping from known contact")
+        if not hasattr(parent, "dht"):
+            parent.initialise_kademlia()
         parent.dht.bootstrap(known_contact)
 
         print("[GUI] Connecting to bootstrap server...")
