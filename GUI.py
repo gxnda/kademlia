@@ -50,8 +50,8 @@ class ContactViewer(ctk.CTk):
         self.port = port
         self.protocol_type = protocol_type
 
-        self.settings_title = ctk.CTkLabel(self, text="Our Contact:", font=Fonts.title_font)
-        self.settings_title.pack(padx=20, pady=30)
+        self.contact_viewer_title = ctk.CTkLabel(self, text="Our Contact:", font=Fonts.title_font)
+        self.contact_viewer_title.pack(padx=20, pady=30)
 
         self.id_label = ctk.CTkLabel(self, text=f"ID: {self.id}", font=Fonts.text_font)
         self.id_label.pack(padx=20, pady=10)
@@ -94,13 +94,18 @@ class ContactViewer(ctk.CTk):
 
 class StatusWindow(ctk.CTk):
     def __init__(self, message: str, copy_data=None):
+        """
+        Creates the status window, with option for copying data to clipboard if there is copy data.
+        :param message:
+        :param copy_data:
+        """
         ctk.CTk.__init__(self)
         self.copy_data = copy_data
         self.message = ctk.CTkLabel(self, text=message, font=Fonts.text_font)
         self.message.pack(padx=30, pady=20)
+        self.copy_button = ctk.CTkButton = ctk.CTkButton(self, text="Copy to clipboard", font=Fonts.text_font,
+                                                         command=self.copy)
         if copy_data:
-            self.copy_button = ctk.CTkButton = ctk.CTkButton(self, text="Copy to clipboard", font=Fonts.text_font,
-                                                             command=self.copy)
             self.copy_button.pack(padx=30, pady=20)
 
     def copy(self):
@@ -200,7 +205,19 @@ class MainGUI(ctk.CTk):
 
     def initialise_kademlia(self):
         """
-        Initialises Kademlia protocol.
+        Creates DHT, server and server thread. If GET-GLOBAL-IP is true, then it will get our global IP by
+        decoding a response from ‘https://api.ipify.org’, which according to a StackOverflow article is the
+        most efficient way to get your global IP in python. If GET-GLOBAL-IP is false, IP is set to “127.0.0.1”.
+        This is useful for DHTs on just the local networks, so no port forwarding needs to be set up.
+
+        Then a valid port is attempted to be found by getting a random integer between 5000 and 35000,
+        until the port is free. This allows for multiple instances on one device, because the port is not
+        hard coded. A TCPProtocol is created with this IP and Protocol. Then a contact is created with a
+        random ID, and the protocol we just created. A JSON storage object is setup for main storage, and
+        VirtualStorage for cache storage. These are placed into a subfolder with title “id.value”.
+
+        Now we have initialised Kademlia, the main network frame is launched.
+
         :return:
         """
         print("[Initialisation] Initialising Kademlia.")
@@ -257,6 +274,7 @@ class MainGUI(ctk.CTk):
 
     def thread_open_settings(self):
         """
+        OBSELETE - open_settings works fine.
         Opens the server window in a thread - this is not recommended to use.
         :return:
         """
@@ -387,8 +405,8 @@ class DownloadFrame(ctk.CTkFrame):
         self.title = ctk.CTkLabel(self, text="Download File", font=Fonts.title_font)
         self.title.grid(column=0, row=0, columnspan=2, padx=20, pady=10)
 
-        self.enter_file_label = ctk.CTkLabel(self, text="ID to download:", font=Fonts.text_font)
-        self.enter_file_label.grid(column=0, row=1, padx=20, pady=10)
+        self.enter_id_label = ctk.CTkLabel(self, text="ID to download:", font=Fonts.text_font)
+        self.enter_id_label.grid(column=0, row=1, padx=20, pady=10)
 
         self.enter_id_textbox = ctk.CTkTextbox(self, width=150, height=20, font=Fonts.text_font)
         self.enter_id_textbox.grid(column=1, row=1, padx=20, pady=10)
@@ -479,16 +497,21 @@ class LoadDHTFromFileFrame(ctk.CTkFrame):
             return None
 
         loaded_dht = dht.DHT.load(filename=filename)
-        self.parent.server.thread_stop(self.parent.server_thread)
+        try:
+            self.parent.server.thread_stop(self.parent.server_thread)
+        except Exception:
+            # The server hasn't been set up, any error doesn't matter
+            # because a new ones being made anyway.
+            pass
+
         self.parent.dht = loaded_dht
 
         try:
             self.parent.server = networking.TCPServer(self.parent.dht.node)
             self.parent.server_thread = self.parent.server.thread_start()
+            self.parent.make_network_frame()
         except Exception as e:
             self.parent.show_error(str(e))
-
-        self.parent.make_network_frame()
 
 
 class JoinNetworkMenuFrame(ctk.CTkFrame):
@@ -522,12 +545,12 @@ class JoinNetworkMenuFrame(ctk.CTkFrame):
 
 
 class BootstrapFromJSON(ctk.CTkFrame):
-    def __init__(self, parent: MainGUI, **kwargs):
+    def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
         ctk.CTkFrame.__init__(self, parent, **kwargs)
-        self.configure(fg_color="transparent")
+        self.configure(fg_color=fg_color)
         self.parent = parent
 
-        self.title = ctk.CTkLabel(self, text="Bootstrap from JSON", font=Fonts.title_font)
+        self.title = ctk.CTkLabel(self, text="Bootstrap from Contact JSON", font=Fonts.title_font)
         self.title.grid(row=0, column=0, columnspan=2, padx=10, pady=20)
 
         filename_label = ctk.CTkLabel(master=self, text="Filename:", font=Fonts.text_font)
@@ -580,10 +603,10 @@ class BootstrapFromJSON(ctk.CTkFrame):
 
 
 class BootstrapFrame(ctk.CTkFrame):
-    def __init__(self, parent: MainGUI, **kwargs):
+    def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
         
         ctk.CTkFrame.__init__(self, parent, **kwargs)
-        self.configure(fg_color="transparent")
+        self.configure(fg_color=fg_color)
         self.parent = parent
 
         self.title = ctk.CTkLabel(self, text="Bootstrap from known peer", font=Fonts.title_font)
@@ -607,9 +630,9 @@ class BootstrapFrame(ctk.CTkFrame):
         self.id_entry = ctk.CTkEntry(master=self, width=150)
         self.id_entry.grid(row=3, column=1, padx=5, pady=10, sticky="ew")
 
-        self.return_to_menu_button = ctk.CTkButton(self, text="Back", font=Fonts.text_font,
-                                                   command=self.parent.make_join_dht_frame)
-        self.return_to_menu_button.grid(row=4, column=0, columnspan=1, padx=5, pady=10)
+        self.back_button = ctk.CTkButton(self, text="Back", font=Fonts.text_font,
+                                         command=self.parent.make_join_dht_frame)
+        self.back_button.grid(row=4, column=0, columnspan=1, padx=5, pady=10)
 
         self.load_from_json_button = ctk.CTkButton(self, text="Load from file", font=Fonts.text_font,
                                                    command=self.parent.make_bootstrap_from_json_frame)
