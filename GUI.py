@@ -158,8 +158,8 @@ class Settings(ctk.CTk):
         status_window.mainloop()
 
     def export_dht(self):
-        file = self.dht_export_file.get().strip("\n")
         try:
+            file = self.dht_export_file.get().strip("\n")
             self.dht.save(file)
             self.show_status(f"File saved successfully to {file}.")
         except Exception as e:
@@ -257,7 +257,7 @@ class MainGUI(ctk.CTk):
 
         # Make directory of our_id at current working directory.
         create_dir_at = os.path.join(os.getcwd(), str(our_id.value))
-        print(create_dir_at)
+        print("[GUI] Making directory at", create_dir_at)
         if not exists(create_dir_at):
             os.mkdir(create_dir_at)
         self.dht: dht.DHT = dht.DHT(
@@ -296,7 +296,6 @@ class MainGUI(ctk.CTk):
         dark_icon = Image.open(r"assets/settings_icon_light.png")
         light_icon = Image.open(r"assets/settings_icon_dark.png")
         settings_icon = ctk.CTkImage(light_image=light_icon, dark_image=dark_icon, size=(30, 30))
-        print(type(self), type(settings_icon), type(self.open_settings))
         self.settings_button = ctk.CTkButton(self, image=settings_icon, text="",
                                              bg_color="transparent", fg_color="transparent",
                                              width=28, command=self.open_settings)
@@ -718,3 +717,4 @@ if __name__ == "__main__":
     app = MainGUI("light")
     app.mainloop()
     print("Done!")
+    exit(0)

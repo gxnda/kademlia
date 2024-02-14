@@ -162,20 +162,17 @@ class DHT:
         # - Add to docstring when finished
         val: str | None = None
 
-        print("try get originator value")
         found, our_val = self._originator_storage.try_get_value(key)
         # There has to be a better way to do this.
         if our_val:
             found = True
             val = our_val
         else:
-            print("try get republish value")
             found, our_val = self._republish_storage.try_get_value(key)
             if our_val:
                 found = True
                 val = our_val
             else:
-                print("try get cache value")
                 found, our_val = self._cache_storage.try_get_value(key)
                 if our_val:
                     found = True
@@ -198,7 +195,7 @@ class DHT:
 
                         if store_to:
                             separating_nodes: int = self._get_separating_nodes_count(self.our_contact, store_to)
-                            print("Separating nodes:", separating_nodes)
+                            print("Separating nodes:", separating_nodes)  # TODO: remove
                             exp_time_sec: int = Constants.EXPIRATION_TIME_SEC // (2 ** separating_nodes)
                             error: RPCError = store_to.protocol.store(self.node.our_contact, key, lookup["val"],
                                                                       exp_time_sec=exp_time_sec)
