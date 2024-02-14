@@ -133,9 +133,10 @@ class SecondaryJSONStorage(IStorage):
         :return:
         """
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
-        with open(self.filename, "w+") as f:
+        with open(self.filename, "r") as f:
+            print(f"Set at {self.filename}.")
             try:
-                json_data: dict[int, StoreValue] = json.load(f)
+                json_data: dict = json.load(f)
             except json.JSONDecodeError:
                 json_data = {}
 
@@ -144,7 +145,14 @@ class SecondaryJSONStorage(IStorage):
             expiration_time=expiration_time_sec,
             republish_timestamp=datetime.now().isoformat()
         )
+        if key.value in json_data:
+            json_data.pop(key.value)
+        if str(key.value) in json_data:
+            json_data.pop(str(key.value))
+
+            print(json_data)
         json_data[key.value] = to_store
+        print(json_data)
 
         with open(self.filename, "w") as f:
             json.dump(json_data, f)
@@ -155,15 +163,19 @@ class SecondaryJSONStorage(IStorage):
         :param key:
         :return:
         """
-        with open(self.filename, "w+") as f:
+        with open(self.filename, "r") as f:
+            print(f"Contains at {self.filename}")
+            f.seek(0)
             try:
                 json_data: dict[int, StoreValue] = json.load(f)
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
+                print(e)
                 json_data = {}
+
         if isinstance(key, ID):
-            return key.value in json_data
+            return str(key.value) in list(json_data.keys())
         else:
-            return key in json_data
+            return str(key) in list(json_data.keys())
 
     def get_timestamp(self, key: int | ID) -> datetime:
         """
@@ -171,7 +183,8 @@ class SecondaryJSONStorage(IStorage):
         :param key:
         :return:
         """
-        with open(self.filename, "w+") as f:
+        with open(self.filename, "r") as f:
+            print(f"Get timestamp at {self.filename}")
             try:
                 json_data: dict[int, StoreValue] = json.load(f)
             except json.JSONDecodeError:
@@ -187,15 +200,19 @@ class SecondaryJSONStorage(IStorage):
         :param key:
         :return:
         """
-        with open(self.filename, "w+") as f:
-            try:
-                json_data: dict[int, StoreValue] = json.load(f)
-            except json.JSONDecodeError:
-                json_data = {}
+        with open(self.filename, "r") as f:
+            f.seek(0)
+            print(f"Get at {self.filename}")
+            # try:
+            json_data: dict = json.load(f)
+            print("fdata", json_data)
+            # except json.JSONDecodeError as e:
+            #     print(e)
+            #    json_data = {}
         if isinstance(key, ID):
-            return json_data[key.value]["value"]
+            return json_data[str(key.value)]["value"]
         elif isinstance(key, int):
-            return json_data[key]["value"]
+            return json_data[str(key)]["value"]
         else:
             raise TypeError("'get()' parameter 'key' must be type ID or int.")
 
@@ -205,7 +222,8 @@ class SecondaryJSONStorage(IStorage):
         :param key:
         :return:
         """
-        with open(self.filename, "w+") as f:
+        with open(self.filename, "r") as f:
+            print(f"Get expiration time at {self.filename}")
             try:
                 json_data: dict[int, StoreValue] = json.load(f)
             except json.JSONDecodeError:
@@ -218,7 +236,8 @@ class SecondaryJSONStorage(IStorage):
         :param key:
         :return:
         """
-        with open(self.filename, "w+") as f:
+        with open(self.filename, "r") as f:
+            print(f"Remove at {self.filename}")
             try:
                 json_data: dict[int, StoreValue] = json.load(f)
             except json.JSONDecodeError:
@@ -235,7 +254,8 @@ class SecondaryJSONStorage(IStorage):
         Returns all keys stored by the storage file as a list of integers.
         :return:
         """
-        with open(self.filename, "w+") as f:
+        with open(self.filename, "r") as f:
+            print(f"Get keys at {self.filename}")
             try:
                 json_data: dict[int, StoreValue] = json.load(f)
             except json.JSONDecodeError:
@@ -248,7 +268,8 @@ class SecondaryJSONStorage(IStorage):
         :param key:
         :return:
         """
-        with open(self.filename, "w+") as f:
+        with open(self.filename, "r") as f:
+            print(f"Touch at {self.filename}")
             try:
                 json_data: dict[int, StoreValue] = json.load(f)
             except json.JSONDecodeError:
@@ -261,18 +282,27 @@ class SecondaryJSONStorage(IStorage):
             json.dump(json_data, f)
 
     def try_get_value(self, key: ID) -> tuple[bool, int | str]:
-        with open(self.filename, "w+") as f:
+
+        with open(self.filename, "r") as f:
+            print(f"Try get value at {self.filename}")
             try:
-                json_data: dict[int, StoreValue] = json.load(f)
-            except json.JSONDecodeError:
+                f.seek(0)
+                print("File:", f.read())
+                f.seek(0)
+                # Key is a string because JSON library stores integers at strings
+                json_data: dict[str,  StoreValue] = json.load(f)
+                print(json_data)
+            except json.JSONDecodeError as e:
+                print(e)
                 json_data = {}
         val = None
         ret = False
-        if key.value in json_data:
-            val = json_data[key.value]["value"]
+        if str(key.value) in json_data:
+            val = json_data[str(key.value)]["value"]
             ret = True
-        with open(self.filename, "w") as f:
-            json.dump(json_data, f)
+        if json_data != {}:
+            with open(self.filename, "w") as f:
+                json.dump(json_data, f)
 
         return ret, val
 
@@ -286,6 +316,7 @@ class SecondaryJSONStorage(IStorage):
         :return:
         """
         with open(filename) as f:
+            print(f"Set file at {self.filename}")
             file_data = f.read()
         data_dict = {"filename": filename, "file_data": file_data}
         encoded_data: bytes = pickler.plain_encode_data(data=data_dict)

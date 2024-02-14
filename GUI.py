@@ -136,7 +136,7 @@ class Settings(ctk.CTk):
             self.dht_export_file = ctk.CTkEntry(self, width=200, height=20, font=Fonts.text_font)
             self.dht_export_file.grid(column=1, row=1, padx=10, pady=10)
             self.dht_export_file.insert("1", f"dht.pickle")
-
+            print("CTK BUTTON TYPE", type(ctk.CTkButton))
             self.export_dht_button = ctk.CTkButton(self, text="Export/Save DHT", font=Fonts.text_font, command=self.export_dht)
             self.export_dht_button.grid(column=1, row=2, padx=10, pady=10)
 

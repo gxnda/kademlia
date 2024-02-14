@@ -1,3 +1,4 @@
+import math
 import random
 import unittest
 
@@ -12,7 +13,7 @@ from kademlia.networking import TCPSubnetServer
 from kademlia.node import Node
 from kademlia.protocols import TCPSubnetProtocol, VirtualProtocol
 from kademlia.routers import ParallelRouter, Router
-from kademlia.storage import VirtualStorage
+from kademlia.storage import VirtualStorage, SecondaryJSONStorage
 
 if DEBUG:
     random.seed(1)
@@ -218,6 +219,11 @@ class AddContactTest(unittest.TestCase):
         for i in range(Constants.K):
             bucket_list.add_contact(Contact(ID.random_id()))
         bucket_list.add_contact(Contact(ID.random_id()))
+
+        print(f"KBucket range for first bucket: {bucket_list.buckets[0].low()}, "
+              f"{bucket_list.buckets[0].high()}, high log 2: {math.log(bucket_list.buckets[0].high(), 2)}")
+        print(f"KBucket range for second bucket: {bucket_list.buckets[1].low()}, "
+              f"{bucket_list.buckets[1].high()}, high log 2: {math.log(bucket_list.buckets[1].high(), 2)}")
 
         self.assertTrue(
             len(bucket_list.buckets) > 1,
@@ -1580,7 +1586,7 @@ class TCPSubnetTests(unittest.TestCase):
         self.assertFalse(
             contacts, "Expected to find value."  # huh?
         )
-
+        print(f"We stored '{val}' on the other node, we got back '{test_value}'.")
         self.assertTrue(
             val == test_value, "Value does not match expected value from peer."
         )
@@ -1617,6 +1623,33 @@ class TCPSubnetTests(unittest.TestCase):
         )
 
         server.thread_stop(thread)
+
+class JSONStorageTests(unittest.TestCase):
+    def test_get_set(self):
+        storage = SecondaryJSONStorage(f"{ID(1)}/test_storage.json")
+        store_id = ID(1)
+        storage.set(store_id, "Test")
+        self.assertTrue(storage.contains(store_id), "Expected storage to contain data")
+        ret_val = storage.get(store_id)
+        self.assertEqual(ret_val, "Test")
+
+
+class IDIntegerTests(unittest.TestCase):
+    def test_xor(self):
+        id_23 = ID(23)
+        self.assertTrue(ID(23) ^ 14 == 23 ^ 14)  # Typical
+        self.assertTrue(ID(14) ^ 23 == 14 ^ 23)  # Typical
+        self.assertTrue(ID(2352) ^ 53 == 2352 ^ 53)  # Typical
+        self.assertTrue(ID(0) ^ 0 == 0 ^ 0)  # Boundary
+        self.assertTrue(ID(2 ** 160 - 1) ^ 4 == (2 ** 160 - 1) ^ 4)  # Boundary
+        with self.assertRaises(ValueError):
+            overrange_id = ID(2 ** 160)  # Boundary Erroneous
+
+        with self.assertRaises(ValueError):
+            overrange_id = ID(2 ** 160 + 7)  # Erroneous
+
+        with self.assertRaises(ValueError):
+            overrange_id = ID(-1)  # Erroneous
 
 
 if __name__ == '__main__':
