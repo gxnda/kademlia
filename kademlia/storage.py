@@ -120,6 +120,11 @@ class SecondaryJSONStorage(IStorage):
         :param filename: Filename to save values to - must end in .json!
         """
         self.filename = filename
+        if not os.path.exists(self.filename):
+            cwd = os.getcwd()
+            os.mkdir(os.path.join(cwd, os.path.dirname(self.filename)))
+            with open(self.filename, "w") as f:
+                pass  # Makes file.
 
     def set(self, key: ID, value: str | bytes, expiration_time_sec: int = 0) -> None:
         """
@@ -239,12 +244,12 @@ class SecondaryJSONStorage(IStorage):
         with open(self.filename, "r") as f:
             print(f"Remove at {self.filename}")
             try:
-                json_data: dict[int, StoreValue] = json.load(f)
+                json_data: dict[str, StoreValue] = json.load(f)
             except json.JSONDecodeError:
                 json_data = {}
 
-        if key in json_data:
-            json_data.pop(key, None)
+        if str(key) in json_data:
+            json_data.pop(str(key), None)
 
         with open(self.filename, "w") as f:
             json.dump(json_data, f)

@@ -1,5 +1,7 @@
 import math
+import os
 import random
+import shutil
 import unittest
 
 from kademlia.buckets import BucketList, KBucket
@@ -1616,7 +1618,7 @@ class TCPSubnetTests(unittest.TestCase):
         test_value = "Test"
 
         error: RPCError = p2.store(c1, test_id, test_value)
-        print("[Unit tests] [Error]", error)
+        # print("[Unit tests] [Error]", error)
         self.assertTrue(
             error.timeout_error,
             "Expected timeout when contacting unresponsive node."
@@ -1624,14 +1626,26 @@ class TCPSubnetTests(unittest.TestCase):
 
         server.thread_stop(thread)
 
+
 class JSONStorageTests(unittest.TestCase):
     def test_get_set(self):
+        if os.path.exists("1"):
+            shutil.rmtree("1")
         storage = SecondaryJSONStorage(f"{ID(1)}/test_storage.json")
         store_id = ID(1)
         storage.set(store_id, "Test")
         self.assertTrue(storage.contains(store_id), "Expected storage to contain data")
         ret_val = storage.get(store_id)
         self.assertEqual(ret_val, "Test")
+
+    def test_remove(self):
+        if os.path.exists("1"):
+            shutil.rmtree("1")
+        storage = SecondaryJSONStorage(f"{ID(1)}/test_storage.json")
+        storage.set(ID(2), "to remove")
+        self.assertTrue(storage.contains(2), "We should have added the ID.")
+        storage.remove(2)
+        self.assertFalse(storage.contains(2), "Should have removed the ID.")
 
 
 class IDIntegerTests(unittest.TestCase):
