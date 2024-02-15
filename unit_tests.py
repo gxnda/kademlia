@@ -9,16 +9,12 @@ from kademlia.constants import Constants
 from kademlia.contact import Contact
 from kademlia.dht import DHT
 from kademlia.errors import RPCError, TooManyContactsError
-from kademlia.helpers import DEBUG
 from kademlia.id import ID
 from kademlia.networking import TCPSubnetServer
 from kademlia.node import Node
 from kademlia.protocols import TCPSubnetProtocol, VirtualProtocol
 from kademlia.routers import ParallelRouter, Router
 from kademlia.storage import VirtualStorage, SecondaryJSONStorage
-
-if DEBUG:
-    random.seed(1)
 
 
 def setup_split_failure(bucket_list=None):

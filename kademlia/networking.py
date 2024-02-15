@@ -4,8 +4,8 @@ from time import sleep
 from typing import Optional, TypedDict, Callable
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-import kademlia.main as main
 import kademlia.pickler as pickler
+from kademlia.constants import Constants
 from kademlia.dictionaries import PingRequest, StoreRequest, FindNodeRequest, FindValueRequest, ErrorResponse, \
     CommonRequest, PingSubnetRequest, StoreSubnetRequest, FindNodeSubnetRequest, FindValueSubnetRequest
 from kademlia.id import ID
@@ -75,7 +75,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
         # lock isn't used because I don't want to make the program wait.
 
         # Test what happens if a node does not respond
-        if main.DEBUG:
+        if Constants.DEBUG:
             if node.our_contact.protocol.type == "TCPSubnetProtocol":
                 if not node.our_contact.protocol.responds:
                     # Exceeds 500ms timeout
@@ -225,7 +225,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         # lock isn't used because I don't want to make the program wait.
 
         # Test what happens if a node does not respond
-        if main.DEBUG:
+        if Constants.DEBUG:
             if node.our_contact.protocol.type == "TCPSubnetProtocol":
                 if not node.our_contact.protocol.responds:
                     # Exceeds 500ms timeout

@@ -11,8 +11,6 @@ from kademlia.contact import Contact
 from kademlia.dictionaries import ContactQueueItem, FindResult
 from kademlia.errors import AllKBucketsAreEmptyError, ValueCannotBeNoneError
 from kademlia.id import ID
-from kademlia.helpers import TRY_CLOSEST_BUCKET
-from kademlia.main import DEBUG
 from kademlia.node import Node
 
 
@@ -224,7 +222,7 @@ class Router(BaseRouter):
         contacted_nodes = []
         closer_uncontacted_nodes = []
         further_uncontacted_nodes = []
-        if TRY_CLOSEST_BUCKET:
+        if Constants.TRY_CLOSEST_BUCKET:
             # Spec: The lookup initator starts by picking a nodes from its closest non-empty k-bucket
             bucket: KBucket = self.find_closest_nonempty_kbucket(key)
 
@@ -236,7 +234,7 @@ class Router(BaseRouter):
             for i in all_nodes[Constants.A + 1:]:
                 self.further_contacts.append(i)
         else:
-            if DEBUG:
+            if Constants.DEBUG:
                 all_nodes: list[Contact] = self.node.bucket_list.get_kbucket(key).contacts[0:Constants.K]
             else:
                 # This is a bad way to get a list of close contacts with virtual nodes because we're always going to
@@ -519,7 +517,7 @@ class ParallelRouter(BaseRouter):
         further_contacts: list[Contact] = []
         found_return = FindResult(found=False, found_by=None, val="", contacts=[])
 
-        if DEBUG:
+        if Constants.DEBUG:
             all_nodes: list[Contact] = self.node.bucket_list.get_kbucket(key).contacts[0:Constants.K]
         else:
             # For unit testing, this is a bad way to get a list of close contacts with virtual nodes

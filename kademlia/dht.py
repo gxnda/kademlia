@@ -1,21 +1,19 @@
-import os
 import threading
 from datetime import datetime, timedelta
 from typing import Callable, Optional
 
 import dill
 
-from kademlia import helpers, main
+from kademlia import helpers
 from kademlia.buckets import KBucket
 from kademlia.constants import Constants
 from kademlia.contact import Contact
-from kademlia.dictionaries import FindResult, StoreValue
+from kademlia.dictionaries import FindResult
 from kademlia.errors import BucketDoesNotContainContactToEvictError, RPCError
 from kademlia.id import ID
 from kademlia.interfaces import IProtocol, IStorage
 from kademlia.node import Node
 from kademlia.routers import BaseRouter
-from kademlia.storage import VirtualStorage, SecondaryJSONStorage
 
 
 class DHT:

@@ -6,7 +6,6 @@ from kademlia.contact import Contact
 from kademlia.errors import BucketDoesNotContainContactToEvictError, OurNodeCannotBeAContactError, OutOfRangeError, \
     RPCError, TooManyContactsError
 from kademlia.id import ID
-from kademlia.main import DEBUG
 
 
 class KBucket:
@@ -279,7 +278,7 @@ class BucketList:
                     contacts.append(contact)
         # print(contacts)
         contacts = sorted(contacts, key=lambda c: c.id ^ key)[:Constants.K]
-        if len(contacts) > Constants.K and DEBUG:
+        if len(contacts) > Constants.K and Constants.DEBUG:
             raise ValueError(
                 f"Contacts should be smaller than or equal to K. Has length {len(contacts)}, "
                 f"which is {Constants.K - len(contacts)} too big.")

@@ -5,7 +5,6 @@ from kademlia.dictionaries import CommonRequest
 from kademlia.errors import RPCError, SenderIsSelfError, SendingQueryToSelfError
 from kademlia.id import ID
 from kademlia.interfaces import IProtocol, IStorage
-from kademlia.main import DEBUG
 from kademlia.storage import VirtualStorage
 
 
@@ -23,7 +22,7 @@ class Node:
         :param cache_storage:
         """
 
-        if not cache_storage and not DEBUG:
+        if not cache_storage and not Constants.DEBUG:
             raise ValueError(
                 "cache_storage must be supplied to type node if debug mode is not enabled."
             )

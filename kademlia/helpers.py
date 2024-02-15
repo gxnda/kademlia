@@ -3,15 +3,9 @@ from hashlib import sha1
 import random
 
 from kademlia.contact import Contact
-from kademlia.main import DEBUG
 from kademlia.node import Node
 from kademlia.id import ID
 from kademlia.storage import VirtualStorage
-
-TRY_CLOSEST_BUCKET = False  # TODO: Find somewhere good to put this / remove it entirely.
-
-if DEBUG:
-    random.seed(2)  # For consistent testing
 
 
 def empty_node():

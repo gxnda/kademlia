@@ -7,7 +7,6 @@ from os.path import exists, isfile
 from random import randint
 
 import customtkinter as ctk
-import dill
 from PIL import Image
 from requests import get
 
