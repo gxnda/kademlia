@@ -741,7 +741,7 @@ class BootstrapFrame(ctk.CTkFrame):
 
 
 if __name__ == "__main__":
-    app = MainGUI("dark")
+    app = MainGUI("dark")  # can also be light
     app.mainloop()
     print("Done!")
     exit(0)
