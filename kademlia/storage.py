@@ -122,8 +122,9 @@ class SecondaryJSONStorage(IStorage):
         self.filename = filename
         if not os.path.exists(self.filename):
             cwd = os.getcwd()
-            os.mkdir(os.path.join(cwd, os.path.dirname(self.filename)))
-            with open(self.filename, "w") as f:
+            if not os.path.exists(os.path.join(cwd, os.path.dirname(self.filename))):
+                os.mkdir(os.path.join(cwd, os.path.dirname(self.filename)))
+            with open(self.filename, "w"):
                 pass  # Makes file.
 
     def set(self, key: ID, value: str | bytes, expiration_time_sec: int = 0) -> None:
@@ -192,7 +193,8 @@ class SecondaryJSONStorage(IStorage):
             print(f"Get timestamp at {self.filename}")
             try:
                 json_data: dict[int, StoreValue] = json.load(f)
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
+                print(e)
                 json_data = {}
         if isinstance(key, ID):
             return datetime.fromisoformat(json_data[key.value]["republish_timestamp"])

@@ -1,3 +1,4 @@
+import os
 import threading
 from datetime import datetime, timedelta
 from typing import Callable, Optional
@@ -520,6 +521,7 @@ class DHT:
         Saves DHT to file.
         """
         print(f"[Client] Saving DHT to {filename}...")
+        helpers.make_sure_filepath_exists(filename)
         with open(filename, "wb") as output_file:
             dill.dump(self, file=output_file)
         print(f"[Client] Saved DHT to {filename}.")

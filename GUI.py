@@ -7,10 +7,11 @@ from os.path import exists, isfile
 from random import randint
 
 import customtkinter as ctk
+import dill
 from PIL import Image
 from requests import get
 
-from kademlia import dht, id, networking, protocols, node, contact, storage, routers
+from kademlia import dht, id, networking, protocols, node, contact, storage, routers, errors
 from kademlia.constants import Constants
 
 """
@@ -328,7 +329,7 @@ class MainGUI(ctk.CTk):
 
     def make_bootstrap_from_json_frame(self):
         self.clear_screen_and_keep_settings()
-        bootstrap_from_json = BootstrapFromJSON(parent=self)
+        bootstrap_from_json = BootstrapFromJSONFrame(parent=self)
         bootstrap_from_json.pack(padx=20, pady=20)
 
     def make_network_frame(self):
@@ -437,7 +438,7 @@ class DownloadFrame(ctk.CTkFrame):
             self.parent.show_error("ID must not be empty.")
         elif not id_from_entry.isnumeric():
             self.parent.show_error("ID was not a number.")
-        elif not 0 < int(id_from_entry) < 2 ** Constants.ID_LENGTH_BITS:
+        elif not 0 <= int(id_from_entry) < 2 ** Constants.ID_LENGTH_BITS:
             self.parent.show_error("ID out of range.")
         else:
             id_to_download: id.ID = id.ID(int(id_from_entry))
@@ -490,7 +491,7 @@ class LoadDHTFromFileFrame(ctk.CTkFrame):
         self.enter_file_name_text = ctk.CTkLabel(master=self, text="Load from file: ", font=Fonts.text_font)
         self.enter_file_name_text.grid(column=0, row=1, padx=20, pady=20)
 
-        self.file_name_entry = ctk.CTkEntry(master=self, width=150, height=30)
+        self.file_name_entry = ctk.CTkEntry(master=self, width=150, height=30, font=Fonts.text_font)
         self.file_name_entry.grid(column=1, row=1, padx=20, pady=20)
 
         self.back_button = ctk.CTkButton(master=self, text="Back", font=Fonts.text_font,
@@ -506,12 +507,16 @@ class LoadDHTFromFileFrame(ctk.CTkFrame):
 
         if not isfile(filename):
             self.parent.show_error(f"File not found:\n'{filename}'")
-            return None
+            return
+        try:
+            loaded_dht = dht.DHT.load(filename=filename)
+        except pickle.UnpicklingError:
+            self.parent.show_error("File was invalid.")
+            return
 
-        loaded_dht = dht.DHT.load(filename=filename)
         try:
             self.parent.server.thread_stop(self.parent.server_thread)
-        except Exception:
+        except:
             # The server hasn't been set up, any error doesn't matter
             # because a new ones being made anyway.
             pass
@@ -524,6 +529,7 @@ class LoadDHTFromFileFrame(ctk.CTkFrame):
             self.parent.make_network_frame()
         except Exception as e:
             self.parent.show_error(str(e))
+            return
 
 
 class JoinNetworkMenuFrame(ctk.CTkFrame):
@@ -556,7 +562,7 @@ class JoinNetworkMenuFrame(ctk.CTkFrame):
         self.create_new_network_button.pack(padx=50, pady=10)
 
 
-class BootstrapFromJSON(ctk.CTkFrame):
+class BootstrapFromJSONFrame(ctk.CTkFrame):
     def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
         ctk.CTkFrame.__init__(self, parent, **kwargs)
         self.configure(fg_color=fg_color)
@@ -612,6 +618,7 @@ class BootstrapFromJSON(ctk.CTkFrame):
                     known_url=known_url,
                     known_port=known_port
                 )
+                self.parent.make_network_frame()
 
 
 class BootstrapFrame(ctk.CTkFrame):
@@ -661,7 +668,7 @@ class BootstrapFrame(ctk.CTkFrame):
         ip_regex = r"(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])"
         if not known_ip:
             self.parent.show_error("IP address must not be empty.")
-        elif not re.match(known_ip, ip_regex):
+        elif not re.match(string=known_ip, pattern=ip_regex):
             self.parent.show_error("IP address is invalid.")
         else:
             valid = True
@@ -684,7 +691,7 @@ class BootstrapFrame(ctk.CTkFrame):
             self.parent.show_error("ID must not be empty.")
         elif not known_id_value.isnumeric():
             self.parent.show_error("ID was not a number.")
-        elif int(known_id_value) < 0 or int(known_id_value) > 2 ** Constants.ID_LENGTH_BITS:
+        elif int(known_id_value) < 0 or int(known_id_value) >= 2 ** Constants.ID_LENGTH_BITS:
             # what if they want to change ID range?
             self.parent.show_error("ID out of range")
         else:
@@ -708,13 +715,33 @@ class BootstrapFrame(ctk.CTkFrame):
         print("[GUI] Bootstrapping from known contact")
         if not hasattr(parent, "dht"):
             parent.initialise_kademlia()
-        parent.dht.bootstrap(known_contact)
 
-        print("[GUI] Connecting to bootstrap server...")
+        print("[GUI] Connecting to known peer's network...")
+        try:
+            parent.dht.bootstrap(known_contact)
+            print("[GUI] Connected to known peer's network.")
+        except errors.RPCError as e:
+            if e.timeout_error:
+                parent.show_error("Timeout error trying to contact known peer.")
+                return
+            elif e.id_mismatch_error:
+                parent.show_error("Random ID returned does not match what was sent.")
+                return
+            elif e.peer_error:
+                parent.show_error(f"Peer error: {e}")
+                return
+            elif e.protocol_error:
+                parent.show_error(f"Protocol error: {e}")
+                return
+        except Exception as e:
+            parent.show_error(str(e))
+            print(e)
+            print(f"[ERROR] Error bootstrapping: {e}")
+            return
 
 
 if __name__ == "__main__":
-    app = MainGUI("light")
+    app = MainGUI("dark")
     app.mainloop()
     print("Done!")
     exit(0)

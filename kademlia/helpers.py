@@ -1,3 +1,4 @@
+import os
 from hashlib import sha1
 import random
 
@@ -52,6 +53,24 @@ def convert_file_to_key(filename: str) -> ID:
             sha1_hash.update(data)  # Update the hash object with the read data
     digest = int(sha1_hash.hexdigest(), 16)
     return ID(digest)
+
+
+def make_sure_filepath_exists(filename: str) -> None:
+    if os.path.isabs(filename):
+        print(f"[DEBUG] Path {filename} is absolute.")
+        path = filename
+    else:
+        print(f"[DEBUG] Path {filename} is not absolute.")
+        path = os.path.join(os.getcwd(), filename)
+        print(f"[DEBUG] Absolute version is {path}")
+    if not os.path.exists(path):
+        print(f"[DEBUG] Path does not exist.")
+        dirname = os.path.dirname(path)
+        if dirname:
+            if not os.path.exists(dirname):
+                os.mkdir(dirname)
+    else:
+        print("[DEBUG] Path already existed.")
 
 
 # class ContactListAndError(TypedDict):

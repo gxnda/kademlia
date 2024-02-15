@@ -1656,6 +1656,8 @@ class IDIntegerTests(unittest.TestCase):
         self.assertTrue(ID(2352) ^ 53 == 2352 ^ 53)  # Typical
         self.assertTrue(ID(0) ^ 0 == 0 ^ 0)  # Boundary
         self.assertTrue(ID(2 ** 160 - 1) ^ 4 == (2 ** 160 - 1) ^ 4)  # Boundary
+
+    def test_ranges(self):
         with self.assertRaises(ValueError):
             overrange_id = ID(2 ** 160)  # Boundary Erroneous
 
@@ -1664,6 +1666,29 @@ class IDIntegerTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             overrange_id = ID(-1)  # Erroneous
+
+    def test_equal(self):
+        self.assertTrue(ID(1) == 1)
+        self.assertTrue(ID(34) == 34)
+
+    def test_lt(self):
+        self.assertTrue(ID(1) < 2)
+        self.assertTrue(ID(54) < 70)
+
+    def test_le(self):
+        self.assertTrue(ID(1) <= 2)
+        self.assertTrue(ID(2) <= 2)
+        self.assertTrue(ID(54) <= 70)
+        self.assertTrue(ID(70) <= 70)
+
+    def test_gt(self):
+        self.assertTrue(ID(1) >= 1)
+        self.assertTrue(ID(1) >= 0)
+        self.assertTrue(ID(100) >= 100)
+        self.assertTrue(ID(2 ** 160 - 1) >= 1)
+
+
+
 
 
 if __name__ == '__main__':
