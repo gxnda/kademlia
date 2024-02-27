@@ -8,12 +8,15 @@ import kademlia.pickler as pickler
 from kademlia.constants import Constants
 from kademlia.dictionaries import PingRequest, StoreRequest, FindNodeRequest, FindValueRequest, ErrorResponse, \
     CommonRequest, PingSubnetRequest, StoreSubnetRequest, FindNodeSubnetRequest, FindValueSubnetRequest
+from kademlia.errors import IncorrectProtocolError
 from kademlia.id import ID
 from kademlia.node import Node
+from kademlia.protocols import TCPProtocol
 
 
 class BaseServer(ThreadingHTTPServer):
     def __init__(self, server_address: tuple[str, int], request_handler_class):
+        print(f"server address: {server_address}")
         ThreadingHTTPServer.__init__(
             self,
             server_address=server_address,
@@ -356,7 +359,10 @@ class TCPServer(BaseServer):
         :param node:
         """
         self.node = node
-        server_address: tuple[str, int] = (self.node.our_contact.protocol.url, self.node.our_contact.protocol.port)
+        if isinstance(self.node.our_contact.protocol, TCPProtocol):
+            server_address: tuple[str, int] = ("127.0.0.1", self.node.our_contact.protocol.port)
+        else:
+            raise IncorrectProtocolError("Invalid protocol.")
 
         super().__init__(
             server_address=server_address,
