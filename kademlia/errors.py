@@ -119,3 +119,7 @@ class ValueCannotBeNoneError(Exception):
 
 class UnknownRequestError(Exception):
     pass
+
+
+class IncorrectProtocolError(Exception):
+    pass
