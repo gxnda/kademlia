@@ -32,7 +32,7 @@ open UserInterface(), then check if the user is in a network already or not
 - the k-buckets are stored in a JSON file, which is used to check this, 
 and if the user is not in a network, the user is prompted to join a network.
 """
-USE_GLOBAL_IP = False
+USE_GLOBAL_IP = True
 
 
 class Fonts:
