@@ -5,9 +5,8 @@ import threading
 import json
 from os.path import exists, isfile
 from random import randint
+import tkinter as tk
 
-import customtkinter as ctk
-from PIL import Image
 from requests import get
 
 from kademlia import dht, id, networking, protocols, node, contact, storage, routers, errors
@@ -36,37 +35,36 @@ USE_GLOBAL_IP = True
 
 
 class Fonts:
-    title_font = ("Segoe UI", 20, "bold")
-    text_font = ("Segoe UI", 16)
+    title_font = ("Segoe UI", 16, "bold")
+    text_font = ("Segoe UI", 13)
 
 
-class ContactViewer(ctk.CTk):
-    def __init__(self, id: int, protocol_type: type, url: str, port: int, appearance_mode="dark"):
+class ContactViewer(tk.Tk):
+    def __init__(self, id: int, protocol_type: type, url: str, port: int):
         super().__init__()
-        ctk.set_appearance_mode(appearance_mode)
 
         self.id = id
         self.url = url
         self.port = port
         self.protocol_type = protocol_type
 
-        self.contact_viewer_title = ctk.CTkLabel(self, text="Our Contact:", font=Fonts.title_font)
+        self.contact_viewer_title = tk.Label(self, text="Our Contact:", font=Fonts.title_font)
         self.contact_viewer_title.pack(padx=20, pady=30)
 
-        self.id_label = ctk.CTkLabel(self, text=f"ID: {self.id}", font=Fonts.text_font)
+        self.id_label = tk.Label(self, text=f"ID: {self.id}", font=Fonts.text_font)
         self.id_label.pack(padx=20, pady=10)
 
-        self.protocol_type_label = ctk.CTkLabel(self, text=f"Protocol type: {self.protocol_type}", font=Fonts.text_font)
+        self.protocol_type_label = tk.Label(self, text=f"Protocol type: {self.protocol_type}", font=Fonts.text_font)
         self.protocol_type_label.pack(padx=20, pady=10)
 
-        self.url_label = ctk.CTkLabel(self, text=f"URL: {self.url}", font=Fonts.text_font)
+        self.url_label = tk.Label(self, text=f"URL: {self.url}", font=Fonts.text_font)
         self.url_label.pack(padx=20, pady=10)
 
-        self.port_label = ctk.CTkLabel(self, text=f"Port: {self.port}", font=Fonts.text_font)
+        self.port_label = tk.Label(self, text=f"Port: {self.port}", font=Fonts.text_font)
         self.port_label.pack(padx=20, pady=10)
 
-        self.export_button = ctk.CTkButton(self, text="Export our contact", font=Fonts.text_font,
-                                           command=self.export_contact)
+        self.export_button = tk.Button(self, text="Export our contact", font=Fonts.text_font,
+                                       command=self.export_contact)
         self.export_button.pack(padx=20, pady=10)
 
     def show_error(self, error_message: str):
@@ -92,20 +90,20 @@ class ContactViewer(ctk.CTk):
         status_window.mainloop()
 
 
-class StatusWindow(ctk.CTk):
+class StatusWindow(tk.Tk):
     def __init__(self, message: str, copy_data=None):
         """
         Creates the status window, with option for copying data to clipboard if there is copy data.
         :param message:
         :param copy_data:
         """
-        ctk.CTk.__init__(self)
+        tk.Tk.__init__(self)
         self.copy_data = copy_data
-        self.message = ctk.CTkLabel(self, text=message, font=Fonts.text_font)
+        self.message = tk.Label(self, text=message, font=Fonts.text_font)
         self.message.pack(padx=30, pady=20)
-        self.copy_button = ctk.CTkButton = ctk.CTkButton(self, text="Copy to clipboard", font=Fonts.text_font,
-                                                         command=self.copy)
         if copy_data:
+            self.copy_button = tk.Button = tk.Button(self, text="Copy to clipboard", font=Fonts.text_font,
+                                                     command=self.copy)
             self.copy_button.pack(padx=30, pady=20)
 
     def copy(self):
@@ -115,10 +113,9 @@ class StatusWindow(ctk.CTk):
         self.update()
 
 
-class Settings(ctk.CTk):
+class Settings(tk.Tk):
     def __init__(self, hash_table: dht.DHT | None, appearance_mode="dark"):
         super().__init__()
-        ctk.set_appearance_mode(appearance_mode)
 
         self.appearance_mode = appearance_mode
 
@@ -126,25 +123,26 @@ class Settings(ctk.CTk):
 
         self.title("Kademlia Settings")
 
-        self.settings_title = ctk.CTkLabel(self, text="Settings", font=Fonts.title_font)
+        self.settings_title = tk.Label(self, text="Settings", font=Fonts.title_font)
         self.settings_title.grid(column=0, row=0, columnspan=2, padx=20, pady=20)
 
         if self.dht:
-            self.dht_export_label = ctk.CTkLabel(self, text="File to export to:", width=150, font=Fonts.text_font)
+            self.dht_export_label = tk.Label(self, text="File to export to:", width=15, font=Fonts.text_font)
             self.dht_export_label.grid(column=0, row=1, padx=10, pady=10)
 
-            self.dht_export_file = ctk.CTkEntry(self, width=200, height=20, font=Fonts.text_font)
+            self.dht_export_file = tk.Entry(self, font=Fonts.text_font)
             self.dht_export_file.grid(column=1, row=1, padx=10, pady=10)
             self.dht_export_file.insert("1", f"dht.pickle")
-            print("CTK BUTTON TYPE", type(ctk.CTkButton))
-            self.export_dht_button = ctk.CTkButton(self, text="Export/Save DHT", font=Fonts.text_font, command=self.export_dht)
+            print("CTK BUTTON TYPE", type(tk.Button))
+            self.export_dht_button = tk.Button(self, text="Export/Save DHT", font=Fonts.text_font,
+                                               command=self.export_dht)
             self.export_dht_button.grid(column=1, row=2, padx=10, pady=10)
 
-            self.view_contact_button = ctk.CTkButton(self, text="View our contact", font=Fonts.text_font,
-                                                     command=self.view_contact)
+            self.view_contact_button = tk.Button(self, text="View our contact", font=Fonts.text_font,
+                                                 command=self.view_contact)
             self.view_contact_button.grid(column=0, row=2, padx=10, pady=10)
         else:
-            no_dht_label = ctk.CTkLabel(self, text="You have not made a DHT yet! You should not be able to access this.")
+            no_dht_label = tk.Label(self, text="You have not made a DHT yet! You should not be able to access this.")
             no_dht_label.grid(column=0, row=1, padx=10, pady=10)
 
     def show_error(self, error_message: str):
@@ -184,22 +182,21 @@ class Settings(ctk.CTk):
         contact_viewer.mainloop()
 
 
-class ErrorWindow(ctk.CTk):
+class ErrorWindow(tk.Tk):
     def __init__(self, error_message: str):
         super().__init__()
-        self.title = ctk.CTkLabel(self, text="Error", font=Fonts.title_font)
+        self.title = tk.Label(self, text="Error", font=Fonts.title_font)
         self.title.pack(padx=20, pady=20)
 
-        self.error_message = ctk.CTkLabel(self, text=error_message, font=Fonts.text_font)
+        self.error_message = tk.Label(self, text=error_message, font=Fonts.text_font)
         self.error_message.pack(padx=20, pady=10)
 
 
-class MainGUI(ctk.CTk):
+class MainGUI(tk.Tk):
     def __init__(self, appearance_mode="dark"):
-        ctk.CTk.__init__(self)
+        tk.Tk.__init__(self)
         self.settings_button = None
         self.appearance_mode = appearance_mode
-        ctk.set_appearance_mode(appearance_mode)
         # self.geometry("600x500")
         self.title("Kademlia")
 
@@ -281,7 +278,6 @@ class MainGUI(ctk.CTk):
         else:
             pass
 
-
     def thread_open_settings(self):
         """
         OBSELETE - open_settings works fine.
@@ -293,14 +289,8 @@ class MainGUI(ctk.CTk):
         settings_thread.start()
 
     def add_settings_icon(self):
-        dark_icon = Image.open(r"assets/settings_icon_light.png")
-        light_icon = Image.open(r"assets/settings_icon_dark.png")
-        settings_icon = ctk.CTkImage(light_image=light_icon, dark_image=dark_icon, size=(30, 30))
-        self.settings_button = ctk.CTkButton(self, image=settings_icon, text="",
-                                             bg_color="transparent", fg_color="transparent",
-                                             width=28, command=self.open_settings)
-
-        self.settings_button.pack(side=ctk.BOTTOM, anchor=ctk.S, padx=10, pady=10)
+        settings_button = tk.Button(self, text="Settings", command=self.open_settings, font=Fonts.text_font)
+        settings_button.pack(side=tk.BOTTOM, anchor=tk.S, padx=10, pady=10)
 
     def clear_screen(self):
         for child in self.winfo_children():
@@ -366,27 +356,27 @@ class MainGUI(ctk.CTk):
         upload_frame.pack(padx=20, pady=20)
 
 
-class UploadFrame(ctk.CTkFrame):
+class UploadFrame(tk.Frame):
     def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
-        ctk.CTkFrame.__init__(self, parent, **kwargs)
-        self.configure(fg_color=fg_color)
+        tk.Frame.__init__(self, parent, **kwargs)
+        # self.config(fg_color=fg_color)
         self.parent = parent
 
-        self.title = ctk.CTkLabel(self, text="Upload File", font=Fonts.title_font)
+        self.title = tk.Label(self, text="Upload File", font=Fonts.title_font)
         self.title.grid(column=0, row=0, columnspan=2, padx=20, pady=10)
 
-        self.enter_file_label = ctk.CTkLabel(self, text="File to upload:", font=Fonts.text_font)
+        self.enter_file_label = tk.Label(self, text="File to upload:", font=Fonts.text_font)
         self.enter_file_label.grid(column=0, row=1, padx=20, pady=10)
 
-        self.enter_file_entry = ctk.CTkEntry(self, width=150, height=20, font=Fonts.text_font)
+        self.enter_file_entry = tk.Entry(self, font=Fonts.text_font)
         self.enter_file_entry.grid(column=1, row=1, padx=20, pady=10)
 
-        self.back_button = ctk.CTkButton(self, text="Back", font=Fonts.text_font,
-                                         command=self.parent.make_network_frame)
+        self.back_button = tk.Button(self, text="Back", font=Fonts.text_font,
+                                     command=self.parent.make_network_frame)
         self.back_button.grid(column=0, row=2, padx=20, pady=10)
 
-        self.upload_button = ctk.CTkButton(self, text="Upload", font=Fonts.text_font,
-                                           command=self.handle_upload)
+        self.upload_button = tk.Button(self, text="Upload", font=Fonts.text_font,
+                                       command=self.handle_upload)
         self.upload_button.grid(column=1, row=2, columnspan=1, padx=20, pady=10)
 
     def handle_upload(self):
@@ -407,27 +397,26 @@ class UploadFrame(ctk.CTkFrame):
             self.parent.show_error(f"Path not found: {file_to_upload}")
 
 
-class DownloadFrame(ctk.CTkFrame):
+class DownloadFrame(tk.Frame):
     def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
-        ctk.CTkFrame.__init__(self, parent, **kwargs)
-        self.configure(fg_color=fg_color)
+        tk.Frame.__init__(self, parent, **kwargs)
         self.parent = parent
 
-        self.title = ctk.CTkLabel(self, text="Download File", font=Fonts.title_font)
+        self.title = tk.Label(self, text="Download File", font=Fonts.title_font)
         self.title.grid(column=0, row=0, columnspan=2, padx=20, pady=10)
 
-        self.enter_id_label = ctk.CTkLabel(self, text="ID to download:", font=Fonts.text_font)
+        self.enter_id_label = tk.Label(self, text="ID to download:", font=Fonts.text_font)
         self.enter_id_label.grid(column=0, row=1, padx=20, pady=10)
 
-        self.enter_id_entry = ctk.CTkEntry(self, width=150, height=20, font=Fonts.text_font)
+        self.enter_id_entry = tk.Entry(self, width=15, font=Fonts.text_font)
         self.enter_id_entry.grid(column=1, row=1, padx=20, pady=10)
 
-        self.back_button = ctk.CTkButton(self, text="Back", font=Fonts.text_font,
-                                         command=self.parent.make_network_frame)
+        self.back_button = tk.Button(self, text="Back", font=Fonts.text_font,
+                                     command=self.parent.make_network_frame)
         self.back_button.grid(column=0, row=2, padx=20, pady=10)
 
-        self.download_button = ctk.CTkButton(self, text="Download", font=Fonts.text_font,
-                                             command=self.handle_download)
+        self.download_button = tk.Button(self, text="Download", font=Fonts.text_font,
+                                         command=self.handle_download)
         self.download_button.grid(column=1, row=2, columnspan=1, padx=20, pady=10)
 
     def handle_download(self):
@@ -460,45 +449,43 @@ class DownloadFrame(ctk.CTkFrame):
                 self.parent.show_status(f"File downloaded to {os.path.join(cwd, filename)}.")
 
 
-class MainNetworkFrame(ctk.CTkFrame):
+class MainNetworkFrame(tk.Frame):
     def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
-        ctk.CTkFrame.__init__(self, parent, **kwargs)
-        self.configure(fg_color=fg_color)
+        tk.Frame.__init__(self, parent, **kwargs)
         self.parent = parent
 
-        self.title = ctk.CTkLabel(self, text="Kademlia", font=Fonts.title_font)
+        self.title = tk.Label(self, text="Kademlia", font=Fonts.title_font)
         self.title.grid(column=0, row=0, columnspan=2, padx=20, pady=10)
 
-        self.download_button = ctk.CTkButton(self, text="Download", font=Fonts.text_font,
-                                             command=self.parent.make_download_frame)
+        self.download_button = tk.Button(self, text="Download", font=Fonts.text_font,
+                                         command=self.parent.make_download_frame)
         self.download_button.grid(column=0, row=1, padx=10, pady=10)
 
-        self.upload_button = ctk.CTkButton(self, text="Upload", font=Fonts.text_font,
-                                           command=self.parent.make_upload_frame)
+        self.upload_button = tk.Button(self, text="Upload", font=Fonts.text_font,
+                                       command=self.parent.make_upload_frame)
         self.upload_button.grid(column=1, row=1, padx=10, pady=10)
 
 
-class LoadDHTFromFileFrame(ctk.CTkFrame):
+class LoadDHTFromFileFrame(tk.Frame):
     def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
-        ctk.CTkFrame.__init__(self, parent, **kwargs)
-        self.configure(fg_color=fg_color)
+        tk.Frame.__init__(self, parent, **kwargs)
         self.parent = parent
 
-        self.load_title = ctk.CTkLabel(master=self, text="Load DHT from file", font=Fonts.title_font)
+        self.load_title = tk.Label(master=self, text="Load DHT from file", font=Fonts.title_font)
         self.load_title.grid(column=0, row=0, columnspan=2, padx=20, pady=10)
 
-        self.enter_file_name_text = ctk.CTkLabel(master=self, text="Load from file: ", font=Fonts.text_font)
+        self.enter_file_name_text = tk.Label(master=self, text="Load from file: ", font=Fonts.text_font)
         self.enter_file_name_text.grid(column=0, row=1, padx=20, pady=20)
 
-        self.file_name_entry = ctk.CTkEntry(master=self, width=150, height=30, font=Fonts.text_font)
+        self.file_name_entry = tk.Entry(master=self, width=150, font=Fonts.text_font)
         self.file_name_entry.grid(column=1, row=1, padx=20, pady=20)
 
-        self.back_button = ctk.CTkButton(master=self, text="Back", font=Fonts.text_font,
-                                         command=self.parent.make_join_dht_frame)
+        self.back_button = tk.Button(master=self, text="Back", font=Fonts.text_font,
+                                     command=self.parent.make_join_dht_frame)
         self.back_button.grid(column=0, row=2, padx=20, pady=0)
 
-        self.load_button = ctk.CTkButton(master=self, text="Load DHT", font=Fonts.text_font,
-                                         command=self.load_dht)
+        self.load_button = tk.Button(master=self, text="Load DHT", font=Fonts.text_font,
+                                     command=self.load_dht)
         self.load_button.grid(column=1, row=2, padx=20, pady=0)
 
     def load_dht(self):
@@ -531,7 +518,7 @@ class LoadDHTFromFileFrame(ctk.CTkFrame):
             return
 
 
-class JoinNetworkMenuFrame(ctk.CTkFrame):
+class JoinNetworkMenuFrame(tk.Frame):
     """
       └── Join
           ├── Settings
@@ -539,49 +526,48 @@ class JoinNetworkMenuFrame(ctk.CTkFrame):
           ├── Create new network
           └── Bootstrap into a new network
     """
-    def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
-        ctk.CTkFrame.__init__(self, parent, **kwargs)
 
-        self.configure(fg_color=fg_color)
+    def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
+        tk.Frame.__init__(self, parent, **kwargs)
+
         self.parent = parent
 
-        join_title = ctk.CTkLabel(master=self, text="Join Network", font=Fonts.title_font)
+        join_title = tk.Label(master=self, text="Join Network", font=Fonts.title_font)
         join_title.pack(padx=50, pady=20)
 
-        self.load_button = ctk.CTkButton(master=self, text="Join stored network", font=Fonts.text_font,
-                                         command=self.parent.make_load_dht_frame)
+        self.load_button = tk.Button(master=self, text="Join stored network", font=Fonts.text_font,
+                                     command=self.parent.make_load_dht_frame)
         self.load_button.pack(padx=50, pady=10)
 
-        self.bootstrap_button = ctk.CTkButton(master=self, text="Bootstrap into existing network", font=Fonts.text_font,
-                                              command=self.parent.make_bootstrap_frame)
+        self.bootstrap_button = tk.Button(master=self, text="Bootstrap into existing network", font=Fonts.text_font,
+                                          command=self.parent.make_bootstrap_frame)
         self.bootstrap_button.pack(padx=50, pady=10)
 
-        self.create_new_network_button = ctk.CTkButton(master=self, text="Create new network", font=Fonts.text_font,
-                                                       command=self.parent.initialise_kademlia)
+        self.create_new_network_button = tk.Button(master=self, text="Create new network", font=Fonts.text_font,
+                                                   command=self.parent.initialise_kademlia)
         self.create_new_network_button.pack(padx=50, pady=10)
 
 
-class BootstrapFromJSONFrame(ctk.CTkFrame):
+class BootstrapFromJSONFrame(tk.Frame):
     def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
-        ctk.CTkFrame.__init__(self, parent, **kwargs)
-        self.configure(fg_color=fg_color)
+        tk.Frame.__init__(self, parent, **kwargs)
         self.parent = parent
 
-        self.title = ctk.CTkLabel(self, text="Bootstrap from Contact JSON", font=Fonts.title_font)
+        self.title = tk.Label(self, text="Bootstrap from Contact JSON", font=Fonts.title_font)
         self.title.grid(row=0, column=0, columnspan=2, padx=10, pady=20)
 
-        filename_label = ctk.CTkLabel(master=self, text="Filename:", font=Fonts.text_font)
+        filename_label = tk.Label(master=self, text="Filename:", font=Fonts.text_font)
         filename_label.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
 
-        self.filename_entry = ctk.CTkEntry(master=self, width=150, font=Fonts.text_font)
+        self.filename_entry = tk.Entry(master=self, width=15, font=Fonts.text_font)
         self.filename_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
 
-        self.back_button = ctk.CTkButton(master=self, text="Back", font=Fonts.text_font,
-                                         command=self.parent.make_join_dht_frame)
+        self.back_button = tk.Button(master=self, text="Back", font=Fonts.text_font,
+                                     command=self.parent.make_join_dht_frame)
         self.back_button.grid(row=2, column=0, columnspan=1, padx=10, pady=10)
 
-        self.load_button = ctk.CTkButton(master=self, text="Load", font=Fonts.text_font,
-                                         command=self.load_known_peer_json_for_bootstrap)
+        self.load_button = tk.Button(master=self, text="Load", font=Fonts.text_font,
+                                     command=self.load_known_peer_json_for_bootstrap)
         self.load_button.grid(row=2, column=1, columnspan=1, padx=10, pady=10)
 
     def load_known_peer_json_for_bootstrap(self):
@@ -620,44 +606,43 @@ class BootstrapFromJSONFrame(ctk.CTkFrame):
                 self.parent.make_network_frame()
 
 
-class BootstrapFrame(ctk.CTkFrame):
+class BootstrapFrame(tk.Frame):
     def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
-        
-        ctk.CTkFrame.__init__(self, parent, **kwargs)
-        self.configure(fg_color=fg_color)
+
+        tk.Frame.__init__(self, parent, **kwargs)
         self.parent = parent
 
-        self.title = ctk.CTkLabel(self, text="Bootstrap from known peer", font=Fonts.title_font)
+        self.title = tk.Label(self, text="Bootstrap from known peer", font=Fonts.title_font)
         self.title.grid(row=0, column=0, columnspan=2, padx=10, pady=20)
 
-        ip_text = ctk.CTkLabel(master=self, text="IP Address: ")
+        ip_text = tk.Label(master=self, text="IP Address: ")
         ip_text.grid(row=1, column=0, padx=5, pady=10, sticky="nsew")
-        
-        self.ip_entry = ctk.CTkEntry(master=self, width=150)
+
+        self.ip_entry = tk.Entry(master=self, width=15)
         self.ip_entry.grid(row=1, column=1, padx=5, pady=10, sticky="ew")
 
-        port_text = ctk.CTkLabel(master=self, text="Port: ")
+        port_text = tk.Label(master=self, text="Port: ")
         port_text.grid(row=2, column=0, padx=5, pady=10, sticky="nsew")
 
-        self.port_entry = ctk.CTkEntry(master=self, width=150)
+        self.port_entry = tk.Entry(master=self, width=15)
         self.port_entry.grid(row=2, column=1, padx=5, pady=10, sticky="ew")
 
-        id_text = ctk.CTkLabel(master=self, text="ID: ")
+        id_text = tk.Label(master=self, text="ID: ")
         id_text.grid(row=3, column=0, padx=5, pady=10, sticky="nsew")
 
-        self.id_entry = ctk.CTkEntry(master=self, width=150)
+        self.id_entry = tk.Entry(master=self, width=15)
         self.id_entry.grid(row=3, column=1, padx=5, pady=10, sticky="ew")
 
-        self.back_button = ctk.CTkButton(self, text="Back", font=Fonts.text_font,
-                                         command=self.parent.make_join_dht_frame)
+        self.back_button = tk.Button(self, text="Back", font=Fonts.text_font,
+                                     command=self.parent.make_join_dht_frame)
         self.back_button.grid(row=4, column=0, columnspan=1, padx=5, pady=10)
 
-        self.load_from_json_button = ctk.CTkButton(self, text="Load from file", font=Fonts.text_font,
-                                                   command=self.parent.make_bootstrap_from_json_frame)
+        self.load_from_json_button = tk.Button(self, text="Load from file", font=Fonts.text_font,
+                                               command=self.parent.make_bootstrap_from_json_frame)
         self.load_from_json_button.grid(row=4, column=1, columnspan=1, padx=5, pady=10)
 
-        self.connect_button = ctk.CTkButton(master=self, text="Connect", font=Fonts.text_font,
-                                            command=self.handle_bootstrap)
+        self.connect_button = tk.Button(master=self, text="Connect", font=Fonts.text_font,
+                                        command=self.handle_bootstrap)
         self.connect_button.grid(row=5, column=0, columnspan=2, padx=5, pady=10)
 
     def handle_bootstrap(self):
