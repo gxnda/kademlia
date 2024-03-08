@@ -103,8 +103,8 @@ class StatusWindow(ctk.CTk):
         self.copy_data = copy_data
         self.message = ctk.CTkLabel(self, text=message, font=Fonts.text_font)
         self.message.pack(padx=30, pady=20)
-        self.copy_button = ctk.CTkButton = ctk.CTkButton(self, text="Copy to clipboard", font=Fonts.text_font,
-                                                         command=self.copy)
+        self.copy_button = ctk.CTkButton(self, text="Copy to clipboard", font=Fonts.text_font,
+                                         command=self.copy)
         if copy_data:
             self.copy_button.pack(padx=30, pady=20)
 
@@ -137,14 +137,16 @@ class Settings(ctk.CTk):
             self.dht_export_file.grid(column=1, row=1, padx=10, pady=10)
             self.dht_export_file.insert("1", f"dht.pickle")
             print("CTK BUTTON TYPE", type(ctk.CTkButton))
-            self.export_dht_button = ctk.CTkButton(self, text="Export/Save DHT", font=Fonts.text_font, command=self.export_dht)
+            self.export_dht_button = ctk.CTkButton(self, text="Export/Save DHT", font=Fonts.text_font,
+                                                   command=self.export_dht)
             self.export_dht_button.grid(column=1, row=2, padx=10, pady=10)
 
             self.view_contact_button = ctk.CTkButton(self, text="View our contact", font=Fonts.text_font,
                                                      command=self.view_contact)
             self.view_contact_button.grid(column=0, row=2, padx=10, pady=10)
         else:
-            no_dht_label = ctk.CTkLabel(self, text="You have not made a DHT yet! You should not be able to access this.")
+            no_dht_label = ctk.CTkLabel(self,
+                                        text="You have not made a DHT yet! You should not be able to access this.")
             no_dht_label.grid(column=0, row=1, padx=10, pady=10)
 
     def show_error(self, error_message: str):
@@ -280,7 +282,6 @@ class MainGUI(ctk.CTk):
             settings_window.mainloop()
         else:
             pass
-
 
     def thread_open_settings(self):
         """
@@ -539,6 +540,7 @@ class JoinNetworkMenuFrame(ctk.CTkFrame):
           ├── Create new network
           └── Bootstrap into a new network
     """
+
     def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
         ctk.CTkFrame.__init__(self, parent, **kwargs)
 
@@ -622,7 +624,7 @@ class BootstrapFromJSONFrame(ctk.CTkFrame):
 
 class BootstrapFrame(ctk.CTkFrame):
     def __init__(self, parent: MainGUI, fg_color="transparent", **kwargs):
-        
+
         ctk.CTkFrame.__init__(self, parent, **kwargs)
         self.configure(fg_color=fg_color)
         self.parent = parent
@@ -632,7 +634,7 @@ class BootstrapFrame(ctk.CTkFrame):
 
         ip_text = ctk.CTkLabel(master=self, text="IP Address: ")
         ip_text.grid(row=1, column=0, padx=5, pady=10, sticky="nsew")
-        
+
         self.ip_entry = ctk.CTkEntry(master=self, width=150)
         self.ip_entry.grid(row=1, column=1, padx=5, pady=10, sticky="ew")
 
