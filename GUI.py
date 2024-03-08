@@ -102,8 +102,8 @@ class StatusWindow(tk.Tk):
         self.message = tk.Label(self, text=message, font=Fonts.text_font)
         self.message.pack(padx=30, pady=20)
         if copy_data:
-            self.copy_button = tk.Button = tk.Button(self, text="Copy to clipboard", font=Fonts.text_font,
-                                                     command=self.copy)
+            self.copy_button = tk.Button(self, text="Copy to clipboard", font=Fonts.text_font,
+                                         command=self.copy)
             self.copy_button.pack(padx=30, pady=20)
 
     def copy(self):
@@ -289,6 +289,7 @@ class MainGUI(tk.Tk):
         settings_thread.start()
 
     def add_settings_icon(self):
+        print("TK Button:", type(tk.Button))
         settings_button = tk.Button(self, text="Settings", command=self.open_settings, font=Fonts.text_font)
         settings_button.pack(side=tk.BOTTOM, anchor=tk.S, padx=10, pady=10)
 
