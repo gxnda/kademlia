@@ -449,7 +449,11 @@ class DownloadFrame(ctk.CTkFrame):
                 self.parent.show_error("File not found.")
             else:
                 val_bytes: bytes = val.encode("latin1")  # TODO: Add option for changing this in settings.
-                file_dict: dict = pickle.loads(val_bytes)
+
+                # "pickle.loads()" is very insecure and can lead to arbitrary code execution, the val received
+                #   could be maliciously crafted to allow for malicious code execution because it compiles and creates
+                #   a python object.
+                file_dict: dict = pickle.loads(val_bytes)  # TODO: Make secure.
                 filename: str = file_dict["filename"]
                 file_bytes: bytes = file_dict["file"]
                 del file_dict  # Free up memory.
