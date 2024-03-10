@@ -619,13 +619,14 @@ class BootstrapFromJSONFrame(ctk.CTkFrame):
                 self.parent.show_error("File to bootstrap from had no \nparameter 'port'.")
 
             if known_url and known_port and known_url:
-                BootstrapFrame.bootstrap(
+                success_bootstrapping: bool = BootstrapFrame.bootstrap(
                     parent=self.parent,
                     known_id=id.ID(known_id),
                     known_url=known_url,
                     known_port=known_port
                 )
-                self.parent.make_network_frame()
+                if success_bootstrapping:
+                    self.parent.make_network_frame()
 
 
 class BootstrapFrame(ctk.CTkFrame):
@@ -709,7 +710,7 @@ class BootstrapFrame(ctk.CTkFrame):
             self.bootstrap(self.parent, known_id, known_ip, known_port)
 
     @classmethod
-    def bootstrap(cls, parent: MainGUI, known_id: id.ID, known_url: str, known_port: int):
+    def bootstrap(cls, parent: MainGUI, known_id: id.ID, known_url: str, known_port: int) -> bool:
         """Attempts to bootstrap Kademlia connection from a known contact"""
         known_protocol = protocols.TCPProtocol(
             url=known_url, port=known_port
@@ -722,29 +723,32 @@ class BootstrapFrame(ctk.CTkFrame):
         print("[GUI] Bootstrapping from known contact")
         if not hasattr(parent, "dht"):
             parent.initialise_kademlia()
+            return True
 
         print("[GUI] Connecting to known peer's network...")
         try:
             parent.dht.bootstrap(known_contact)
             print("[GUI] Connected to known peer's network.")
+            return True
+
         except errors.RPCError as e:
             if e.timeout_error:
                 parent.show_error("Timeout error trying to contact known peer.")
-                return
+                return False
             elif e.id_mismatch_error:
                 parent.show_error("Random ID returned does not match what was sent.")
-                return
+                return False
             elif e.peer_error:
                 parent.show_error(f"Peer error: {e}")
-                return
+                return False
             elif e.protocol_error:
                 parent.show_error(f"Protocol error: {e}")
-                return
+                return False
         except Exception as e:
             parent.show_error(str(e))
             print(e)
             print(f"[ERROR] Error bootstrapping: {e}")
-            return
+            return False
 
 
 if __name__ == "__main__":
