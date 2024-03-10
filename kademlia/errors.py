@@ -112,8 +112,7 @@ class ValueCannotBeNoneError(Exception):
     """
     Raised when a value is None, when everything was meant to have gone OK.
     There is a risk of this being purposely triggered maliciously to shut down nodes on the network.
-    I'm not sure what to do in that situation.
-    TODO: Talk about this in the write-up.
+    I'm not sure what to do in that situation; this is an issue that should be discussed. TODO: Discuss.
     """
 
 

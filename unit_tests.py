@@ -421,26 +421,16 @@ class NodeLookupTests(unittest.TestCase):
             contact.protocol.node = node
             self.nodes.append(node)
 
-        # TODO: Remove shell loops, just keeping them atm bc its how it is in book.
-
         for n in self.nodes:
-            # fix protocols
-            n.our_contact.protocol = VirtualProtocol(n)
-
-        for n in self.nodes:
-            # our contacts
+            n.our_contact.protocol = VirtualProtocol(n)  # Fix up protocols
             self.router.node.bucket_list.add_contact(n.our_contact)
-
-        # let each peer know about all that are not themselves
-        for n in self.nodes:
-            for other_n in self.nodes:
+            for other_n in self.nodes:  # let each node know about each other node
                 if other_n != n:
                     n.bucket_list.add_contact(other_n.our_contact)
 
         # pick a random bucket
         key = ID.random_id()
         # take "A" contacts from a random KBucket
-        # TODO: Check this returns A contacts - also it could error if len(contacts) < A
         self.contacts_to_query: list[Contact] = \
             self.router.node.bucket_list.get_kbucket(key).contacts[:Constants.A]
 
@@ -665,7 +655,6 @@ class DHTTest(unittest.TestCase):
 
         # Ensures that all nodes are closer, because id.max ^ n < id.max when n > 0.
         # (the distance between a node and max id is always closer than the furthest possible)
-        # TODO: Why are there 6 arguments? im tired i sleep now
         dht = DHT(id=ID.max(), router=Router(), protocol=vp1, originator_storage=store1,
                   republish_storage=store1, cache_storage=VirtualStorage())
 
@@ -846,7 +835,6 @@ class DHTParallelTest(unittest.TestCase):
 
         # Ensures that all nodes are closer, because id.max ^ n < id.max when n > 0.
         # (the distance between a node and max id is always closer than the furthest possible)
-        # TODO: Why are there 6 arguments? im tired i sleep now
         dht = DHT(id=ID.max(), router=ParallelRouter(), storage_factory=lambda: store1, protocol=VirtualProtocol())
 
         vp1.node = dht._router.node
