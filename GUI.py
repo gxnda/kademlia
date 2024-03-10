@@ -448,6 +448,8 @@ class DownloadFrame(ctk.CTkFrame):
             if not found:
                 self.parent.show_error("File not found.")
             else:
+                # TODO: It might be a better idea to use JSON to send values.
+
                 val_bytes: bytes = val.encode("latin1")  # TODO: Add option for changing this in settings.
 
                 # "pickle.loads()" is very insecure and can lead to arbitrary code execution, the val received
