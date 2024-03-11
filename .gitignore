@@ -13,4 +13,5 @@ pyproject.toml
 .idea/workspace.xml
 /dht.pickle
 /our_contact.json
-misc.xml
+misc.xml!/.idea/misc.xml
+!/.idea/misc.xml
