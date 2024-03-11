@@ -10,7 +10,7 @@
         - unresponsive nodes should be evicted from the network
         - simple function to lookup nodes on the network
         - create method to find nodes on the network
-        - ID object which can be used interchangably with integers
+        - ID object which can be used interchangeably with integers
         - ability to send RPC requests to other nodes on the network
 - replace stored pickled objects as JSON dictionaries.
 
