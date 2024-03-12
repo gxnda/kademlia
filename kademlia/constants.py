@@ -16,6 +16,7 @@ class Constants:
     ORIGINATOR_REPUBLISH_INTERVAL = 24 * 60 * 60 * 1000  # every 24 hours in ms
     EXPIRATION_TIME_SEC = 24 * 60 * 60  # every 24 hours in seconds
     EVICTION_LIMIT = 5
+    MAX_PORT_RETRIES = 100
     TRY_CLOSEST_BUCKET = True
     DEBUG = True
 

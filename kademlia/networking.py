@@ -368,19 +368,3 @@ class TCPServer(BaseServer):
             server_address=server_address,
             request_handler_class=HTTPRequestHandler
         )
-
-
-def port_is_free(port: int) -> bool:
-    """
-    Returns if a port is free on localhost.
-    :param port: Port to be checked
-    :return: if it's free.
-    """
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        s.bind(('localhost', port))
-        return True
-    except OSError:
-        return False
-    finally:
-        s.close()

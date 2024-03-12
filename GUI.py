@@ -4,13 +4,13 @@ import re
 import threading
 import json
 from os.path import exists, isfile
-from random import randint
+import argparse
 
 import customtkinter as ctk
 from PIL import Image
 from requests import get
 
-from kademlia import dht, id, networking, protocols, node, contact, storage, routers, errors
+from kademlia import dht, id, networking, protocols, node, contact, storage, routers, errors, helpers
 from kademlia.constants import Constants
 
 """
@@ -32,7 +32,15 @@ open UserInterface(), then check if the user is in a network already or not
 - the k-buckets are stored in a JSON file, which is used to check this, 
 and if the user is not in a network, the user is prompted to join a network.
 """
-USE_GLOBAL_IP = True
+parser = argparse.ArgumentParser()
+parser.add_argument("--use_global_ip", action="store_true",
+                    help="If the clients global IP should be used by the P2P network.")
+parser.add_argument("--port", type=int, required=False, default=7124)
+
+args = parser.parse_args()
+
+USE_GLOBAL_IP = args.use_global_ip
+PORT = args.port
 
 
 class Fonts:
@@ -236,11 +244,10 @@ class MainGUI(ctk.CTk):
             our_ip = "127.0.0.1"
         print(f"[Initialisation] Our hostname is {our_ip}.")
 
-        valid_port = None
-        while not valid_port:  # TODO: This will be stuck in an infinite loop if all ports are full.
-            port = randint(5000, 35000)
-            if networking.port_is_free(port):
-                valid_port = port
+        if PORT:
+            valid_port = PORT
+        else:
+            valid_port = helpers.get_valid_port()
 
         print(f"[Initialisation] Port free at {valid_port}, creating our node here.")
 

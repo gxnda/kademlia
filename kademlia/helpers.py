@@ -1,7 +1,9 @@
 import os
 from hashlib import sha1
 import random
+import socket
 
+from kademlia.constants import Constants
 from kademlia.contact import Contact
 from kademlia.node import Node
 from kademlia.id import ID
@@ -67,6 +69,35 @@ def make_sure_filepath_exists(filename: str) -> None:
         print("[DEBUG] Path already existed.")
 
 
-# class ContactListAndError(TypedDict):
-#     contacts: list[Contact]
-#     error: RPCError
+def port_is_free(port: int) -> bool:
+    """
+    Returns if a port is free on localhost.
+    :param port: Port to be checked
+    :return: if it's free.
+    """
+
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.bind(('localhost', port))
+            return True
+    except (OSError, PermissionError):
+        return False
+
+
+def get_valid_port(default_tried=False,
+                   lower_bound=1024, upper_bound=65535) -> int:
+    """
+    Gets a valid port on localhost.
+    """
+    if lower_bound > upper_bound:
+        raise ValueError("Port lower bound cannot be greater than port upper bound.")
+
+    if not default_tried:
+        port = 7124  # Default port I wish to use.
+        default_tried = True
+    else:
+        port = random.randint(lower_bound, upper_bound)
+    if port_is_free(port):
+        return port
+    else:
+        return get_valid_port(default_tried=default_tried)
