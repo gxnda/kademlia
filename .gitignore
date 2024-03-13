@@ -15,3 +15,4 @@ pyproject.toml
 /our_contact.json
 misc.xml!/.idea/misc.xml
 !/.idea/misc.xml
+!/venv/
