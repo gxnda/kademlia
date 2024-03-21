@@ -1,3 +1,5 @@
+from typing import Optional
+
 import requests
 
 from kademlia import pickler
@@ -412,7 +414,7 @@ class TCPProtocol(IProtocol):
                 random_id=id.value
             ))
         )
-        print(f"http://{self.url}:{self.port}/find_node")
+        # print(f"http://{self.url}:{self.port}/find_node")
 
         ret = None
         timeout_error = False
@@ -562,10 +564,10 @@ class TCPProtocol(IProtocol):
 
         timeout_error = False
         error = None
-        ret = None
+        ret: Optional[requests.Response] = None
         try:
             print("[Client] Sending Ping RPC...")
-            ret: requests.Response = requests.post(
+            ret = requests.post(
                 url=f"http://{self.url}:{self.port}/ping",
                 data=encoded_data,
                 timeout=Constants.REQUEST_TIMEOUT
@@ -582,8 +584,6 @@ class TCPProtocol(IProtocol):
             # request timed out.
             timeout_error = False
             error = e
-
-        ret_base_response = None
 
         formatted_response = None
         if ret:

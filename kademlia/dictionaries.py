@@ -81,6 +81,7 @@ class StoreSubnetRequest(StoreRequest, ITCPSubnet, TypedDict):
 class CommonRequest(TypedDict):
     """
     This includes all possible headers that could be passed.
+    Protocol is type IProtocol, it cannot be type hinted as that because of circular imports.
     """
     protocol: any  # IProtocol
     protocol_name: str

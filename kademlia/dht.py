@@ -194,7 +194,6 @@ class DHT:
 
                         if store_to:
                             separating_nodes: int = self._get_separating_nodes_count(self.our_contact, store_to)
-                            print("Separating nodes:", separating_nodes)  # TODO: remove
                             exp_time_sec: int = Constants.EXPIRATION_TIME_SEC // (2 ** separating_nodes)
                             error: RPCError = store_to.protocol.store(self.node.our_contact, key, lookup["val"],
                                                                       exp_time_sec=exp_time_sec)
@@ -549,15 +548,3 @@ class DHT:
         if contact is not None:
             self.pending_contacts.remove(contact)
             bucket.add_contact(contact)
-
-# class DHTSubclass(DHT):
-#     def __init__(self):
-#         super().__init__()
-#
-#     # @override
-#     def expire_keys_elapsed(self, sender: object, e) -> None:
-#         """
-#         Allows for never expiring republished key values.
-#         """
-#         self.remove_expired_data(self.cache_storage)
-#         # self.remove_expired_data(self.republish_storage)

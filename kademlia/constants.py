@@ -18,9 +18,10 @@ class Constants:
     EVICTION_LIMIT = 5
     MAX_PORT_RETRIES = 100
     TRY_CLOSEST_BUCKET = True
-    DEBUG = True
-
     DHT_SERIALISED_SUFFIX = "dht"
+    PICKLE_ENCODING = "latin1"
+
+    DEBUG = True
 
     if DEBUG:
         A: int = 3

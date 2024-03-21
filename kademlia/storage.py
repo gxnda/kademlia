@@ -4,6 +4,7 @@ import json
 from typing import Optional
 
 from kademlia import pickler
+from kademlia.constants import Constants
 from kademlia.dictionaries import StoreValue
 from kademlia.id import ID
 from kademlia.interfaces import IStorage
@@ -92,7 +93,8 @@ class VirtualStorage(IStorage):
 
     def try_get_value(self, key: ID) -> tuple[bool, str | None]:
         """
-        Tries to get a given value from a key-value pair, given the key. Returns True | False, and the value if it was found.
+        Tries to get a given value from a key-value pair, given the key. Returns True | False,
+        and the value if it was found.
         :param key:
         :return:
         """
@@ -327,7 +329,7 @@ class SecondaryJSONStorage(IStorage):
             file_data = f.read()
         data_dict = {"filename": filename, "file_data": file_data}
         encoded_data: bytes = pickler.plain_encode_data(data=data_dict)
-        encoded_data_str = encoded_data.decode("latin1")
+        encoded_data_str = encoded_data.decode(Constants.PICKLE_ENCODING)
         self.set(
             key=key,
             value=encoded_data_str,

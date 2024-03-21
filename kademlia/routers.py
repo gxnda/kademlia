@@ -193,9 +193,6 @@ class BaseRouter:
 
 
 class Router(BaseRouter):
-    """
-    TODO: Talk about what this does.
-    """
 
     def __init__(self, node: Node = None) -> None:
         super().__init__(node)

@@ -157,9 +157,7 @@ class BucketList:
         the number of bits shared in the prefix of the contacts in the bucket
         reaches the threshold b, which the spec says should be 5.
         """
-        # with self.lock:
-        # TODO: What is self.node?
-
+        # Locking might be useful here?
         return (kbucket.is_in_range(self.our_id)
                 or (kbucket.depth() % Constants.B != 0))
 
