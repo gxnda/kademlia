@@ -754,7 +754,6 @@ class BootstrapFrame(ctk.CTkFrame):
                 return False
         except Exception as e:
             parent.show_error(str(e))
-            print(e)
             print(f"[ERROR] Error bootstrapping: {e}")
             return False
 
