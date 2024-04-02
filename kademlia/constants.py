@@ -18,7 +18,7 @@ class Constants:
     EVICTION_LIMIT = 5
     MAX_PORT_RETRIES = 100
     TRY_CLOSEST_BUCKET = True
-    DEBUG = True
+    DEBUG = False
 
     DHT_SERIALISED_SUFFIX = "dht"
 

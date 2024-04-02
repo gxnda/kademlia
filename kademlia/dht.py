@@ -152,7 +152,6 @@ class DHT:
         :param key: Key to search for value pair.
         :return: Found: bool (If it is found or not), contacts: list[Contact], val: str | None (value returned)
         """
-        print("touch bucket with key")
         self.touch_bucket_with_key(key)
         contacts_queried: list[Contact] = []
 

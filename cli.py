@@ -14,12 +14,15 @@ from kademlia.constants import Constants
 parser = argparse.ArgumentParser()
 parser.add_argument("--use_global_ip", action="store_true",
                     help="If the clients global IP should be used by the P2P network.")
+parser.add_argument("--debug", action="store_true",
+                    help="If the clients global IP should be used by the P2P network.")
 parser.add_argument("--port", type=int, required=False, default=7124)
 
 args = parser.parse_args()
 
 USE_GLOBAL_IP = args.use_global_ip
 PORT = args.port
+Constants.DEBUG = args.debug
 
 
 class GenericMenu:
