@@ -4,6 +4,7 @@ import json
 from typing import Optional
 
 from kademlia import pickler
+from kademlia.constants import Constants
 from kademlia.dictionaries import StoreValue
 from kademlia.id import ID
 from kademlia.interfaces import IStorage
@@ -291,10 +292,12 @@ class SecondaryJSONStorage(IStorage):
     def try_get_value(self, key: ID) -> tuple[bool, int | str]:
 
         with open(self.filename, "r") as f:
-            print(f"Try get value at {self.filename}")
+            if Constants.DEBUG:
+                print(f"[DEBUG] Try get value at {self.filename}")
             try:
-                f.seek(0)
-                print("File:", f.read())
+                if Constants.DEBUG:
+                    f.seek(0)
+                    print(f"[DEBUG] File at {self.filename}: {f.read()}")
                 f.seek(0)
                 # Key is a string because JSON library stores integers at strings
                 json_data: dict[str,  StoreValue] = json.load(f)
@@ -315,7 +318,7 @@ class SecondaryJSONStorage(IStorage):
 
     def set_file(self, key: ID, filename: str, expiration_time_sec: int = 0) -> None:
         """
-        Adds a file to storage file, it does this by loading ALL of the file to be added to memory,
+        Adds a file to storage file, it does this by loading ALL the file to be added to memory,
         and then pasting it into the storage file ALSO loaded into memory D:
         :param key:
         :param filename:

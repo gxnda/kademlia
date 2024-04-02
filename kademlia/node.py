@@ -116,13 +116,16 @@ class Node:
         self.send_key_values_if_new_contact(sender)
 
         if self.storage.contains(key):
-            print(f"[DEBUG] Value in self.storage of {self.our_contact.id}.")
+            if Constants.DEBUG:
+                print(f"[DEBUG] Value in self.storage of {self.our_contact.id}.")
             return None, self.storage.get(key)
         elif self.cache_storage.contains(key):
-            print(f"[DEBUG] Value in self.cache_storage of {self.our_contact.id}.")
+            if Constants.DEBUG:
+                print(f"[DEBUG] Value in self.cache_storage of {self.our_contact.id}.")
             return None, self.cache_storage.get(key)
         else:
-            print("[DEBUG] Value not in storage, getting close contacts.")
+            if Constants.DEBUG:
+                print("[DEBUG] Value not in storage, getting close contacts.")
             return self.bucket_list.get_close_contacts(key, sender.id), None
 
     def send_key_values_if_new_contact(self, sender: Contact) -> None:

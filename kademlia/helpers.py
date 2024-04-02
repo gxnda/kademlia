@@ -53,20 +53,25 @@ def convert_file_to_key(filename: str) -> ID:
 
 def make_sure_filepath_exists(filename: str) -> None:
     if os.path.isabs(filename):
-        print(f"[DEBUG] Path {filename} is absolute.")
+        if Constants.DEBUG:
+            print(f"[DEBUG] Path {filename} is absolute.")
         path = filename
     else:
-        print(f"[DEBUG] Path {filename} is not absolute.")
+        if Constants.DEBUG:
+            print(f"[DEBUG] Path {filename} is not absolute.")
         path = os.path.join(os.getcwd(), filename)
-        print(f"[DEBUG] Absolute version is {path}")
+        if Constants.DEBUG:
+            print(f"[DEBUG] Absolute version is {path}")
     if not os.path.exists(path):
-        print(f"[DEBUG] Path does not exist.")
+        if Constants.DEBUG:
+            print(f"[DEBUG] Path does not exist.")
         dirname = os.path.dirname(path)
         if dirname:
             if not os.path.exists(dirname):
                 os.mkdir(dirname)
     else:
-        print("[DEBUG] Path already existed.")
+        if Constants.DEBUG:
+            print("[DEBUG] Path already existed.")
 
 
 def port_is_free(port: int) -> bool:

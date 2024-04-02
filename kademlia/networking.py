@@ -16,7 +16,7 @@ from kademlia.protocols import TCPProtocol
 
 class BaseServer(ThreadingHTTPServer):
     def __init__(self, server_address: tuple[str, int], request_handler_class):
-        print(f"server address: {server_address}")
+        print(f"[Server] Server socket address: {server_address}")
         ThreadingHTTPServer.__init__(
             self,
             server_address=server_address,
