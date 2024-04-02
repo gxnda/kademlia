@@ -26,4 +26,4 @@ EXPOSE $PORT
 RUN pip install -r requirements.txt
 
 # Run the application
-CMD python3 GUI.py --port $PORT
+CMD python3 cli.py --port $PORT
