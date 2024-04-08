@@ -3,11 +3,11 @@ from datetime import datetime
 import json
 from typing import Optional
 
-from kademlia import pickler
-from kademlia.constants import Constants
-from kademlia.dictionaries import StoreValue
-from kademlia.id import ID
-from kademlia.interfaces import IStorage
+from kademlia_dht import pickler
+from kademlia_dht.constants import Constants
+from kademlia_dht.dictionaries import StoreValue
+from kademlia_dht.id import ID
+from kademlia_dht.interfaces import IStorage
 
 
 class VirtualStorage(IStorage):

@@ -3,11 +3,11 @@ from hashlib import sha1
 import random
 import socket
 
-from kademlia.constants import Constants
-from kademlia.contact import Contact
-from kademlia.node import Node
-from kademlia.id import ID
-from kademlia.storage import VirtualStorage
+from kademlia_dht.constants import Constants
+from kademlia_dht.contact import Contact
+from kademlia_dht.node import Node
+from kademlia_dht.id import ID
+from kademlia_dht.storage import VirtualStorage
 
 
 def empty_node():

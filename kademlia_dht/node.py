@@ -1,11 +1,11 @@
-from kademlia.buckets import BucketList
-from kademlia.constants import Constants
-from kademlia.contact import Contact
-from kademlia.dictionaries import CommonRequest
-from kademlia.errors import RPCError, SenderIsSelfError, SendingQueryToSelfError
-from kademlia.id import ID
-from kademlia.interfaces import IProtocol, IStorage
-from kademlia.storage import VirtualStorage
+from kademlia_dht.buckets import BucketList
+from kademlia_dht.constants import Constants
+from kademlia_dht.contact import Contact
+from kademlia_dht.dictionaries import CommonRequest
+from kademlia_dht.errors import RPCError, SenderIsSelfError, SendingQueryToSelfError
+from kademlia_dht.id import ID
+from kademlia_dht.interfaces import IProtocol, IStorage
+from kademlia_dht.storage import VirtualStorage
 
 
 class Node:

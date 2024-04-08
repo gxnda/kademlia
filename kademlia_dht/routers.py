@@ -4,14 +4,14 @@ from datetime import datetime
 from time import sleep
 from typing import Callable, Optional
 
-import kademlia.my_queues as my_queues
-from kademlia.buckets import KBucket
-from kademlia.constants import Constants
-from kademlia.contact import Contact
-from kademlia.dictionaries import ContactQueueItem, FindResult
-from kademlia.errors import AllKBucketsAreEmptyError, ValueCannotBeNoneError
-from kademlia.id import ID
-from kademlia.node import Node
+import kademlia_dht.my_queues as my_queues
+from kademlia_dht.buckets import KBucket
+from kademlia_dht.constants import Constants
+from kademlia_dht.contact import Contact
+from kademlia_dht.dictionaries import ContactQueueItem, FindResult
+from kademlia_dht.errors import AllKBucketsAreEmptyError, ValueCannotBeNoneError
+from kademlia_dht.id import ID
+from kademlia_dht.node import Node
 
 
 class BaseRouter:

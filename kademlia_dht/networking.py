@@ -4,14 +4,14 @@ from time import sleep
 from typing import Optional, TypedDict, Callable
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-import kademlia.pickler as pickler
-from kademlia.constants import Constants
-from kademlia.dictionaries import PingRequest, StoreRequest, FindNodeRequest, FindValueRequest, ErrorResponse, \
+import kademlia_dht.pickler as pickler
+from kademlia_dht.constants import Constants
+from kademlia_dht.dictionaries import PingRequest, StoreRequest, FindNodeRequest, FindValueRequest, ErrorResponse, \
     CommonRequest, PingSubnetRequest, StoreSubnetRequest, FindNodeSubnetRequest, FindValueSubnetRequest
-from kademlia.errors import IncorrectProtocolError
-from kademlia.id import ID
-from kademlia.node import Node
-from kademlia.protocols import TCPProtocol
+from kademlia_dht.errors import IncorrectProtocolError
+from kademlia_dht.id import ID
+from kademlia_dht.node import Node
+from kademlia_dht.protocols import TCPProtocol
 
 
 class BaseServer(ThreadingHTTPServer):

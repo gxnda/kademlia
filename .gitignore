@@ -8,7 +8,7 @@ venv/
 poetry.lock
 pyproject.toml
 .idea
-/kademlia/dht.pickle
+/kademlia_dht/dht.pickle
 .idea/misc.xml
 .idea/workspace.xml
 /dht.pickle

@@ -1,16 +1,16 @@
 import requests
 
-from kademlia import pickler
-from kademlia.constants import Constants
-from kademlia.contact import Contact
-from kademlia.dictionaries import (BaseResponse, ErrorResponse, FindNodeSubnetRequest,
-                                   FindValueSubnetRequest, PingSubnetRequest, StoreSubnetRequest, FindNodeRequest,
-                                   FindValueRequest, PingRequest, StoreRequest)
-from kademlia.errors import RPCError
-from kademlia.id import ID
-from kademlia.interfaces import IProtocol
-from kademlia.node import Node
-from kademlia.pickler import encode_data
+from kademlia_dht import pickler
+from kademlia_dht.constants import Constants
+from kademlia_dht.contact import Contact
+from kademlia_dht.dictionaries import (BaseResponse, ErrorResponse, FindNodeSubnetRequest,
+                                       FindValueSubnetRequest, PingSubnetRequest, StoreSubnetRequest, FindNodeRequest,
+                                       FindValueRequest, PingRequest, StoreRequest)
+from kademlia_dht.errors import RPCError
+from kademlia_dht.id import ID
+from kademlia_dht.interfaces import IProtocol
+from kademlia_dht.node import Node
+from kademlia_dht.pickler import encode_data
 
 
 def get_rpc_error(id: ID,

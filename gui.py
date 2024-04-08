@@ -10,8 +10,8 @@ import customtkinter as ctk
 from PIL import Image
 from requests import get
 
-from kademlia import dht, id, networking, protocols, node, contact, storage, routers, errors, helpers, pickler
-from kademlia.constants import Constants
+from kademlia_dht import dht, id, networking, protocols, node, contact, storage, routers, errors, helpers, pickler
+from kademlia_dht.constants import Constants
 
 """
 ├── User Interface

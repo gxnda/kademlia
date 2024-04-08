@@ -1,7 +1,7 @@
 import pickle
 
-from kademlia.constants import Constants
-from kademlia.errors import DataDecodingError
+from kademlia_dht.constants import Constants
+from kademlia_dht.errors import DataDecodingError
 
 
 def encode_data(data: dict) -> bytes:

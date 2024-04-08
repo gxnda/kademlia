@@ -8,8 +8,8 @@ from typing import Callable
 
 from requests import get
 
-from kademlia import dht, contact, protocols, storage, networking, routers, node, helpers, id, pickler
-from kademlia.constants import Constants
+from kademlia_dht import dht, contact, protocols, storage, networking, routers, node, helpers, id, pickler
+from kademlia_dht.constants import Constants
 
 
 parser = argparse.ArgumentParser()

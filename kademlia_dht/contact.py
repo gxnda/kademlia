@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import Optional
 
-from kademlia.id import ID
-from kademlia.interfaces import IProtocol
-from kademlia.constants import Constants
+from kademlia_dht.id import ID
+from kademlia_dht.interfaces import IProtocol
+from kademlia_dht.constants import Constants
 
 
 class Contact:

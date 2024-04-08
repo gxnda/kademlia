@@ -4,16 +4,16 @@ from typing import Callable, Optional
 
 import dill
 
-from kademlia import helpers
-from kademlia.buckets import KBucket
-from kademlia.constants import Constants
-from kademlia.contact import Contact
-from kademlia.dictionaries import FindResult
-from kademlia.errors import BucketDoesNotContainContactToEvictError, RPCError
-from kademlia.id import ID
-from kademlia.interfaces import IProtocol, IStorage
-from kademlia.node import Node
-from kademlia.routers import BaseRouter
+from kademlia_dht import helpers
+from kademlia_dht.buckets import KBucket
+from kademlia_dht.constants import Constants
+from kademlia_dht.contact import Contact
+from kademlia_dht.dictionaries import FindResult
+from kademlia_dht.errors import BucketDoesNotContainContactToEvictError, RPCError
+from kademlia_dht.id import ID
+from kademlia_dht.interfaces import IProtocol, IStorage
+from kademlia_dht.node import Node
+from kademlia_dht.routers import BaseRouter
 
 
 class DHT:

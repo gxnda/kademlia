@@ -4,17 +4,20 @@ import random
 import shutil
 import unittest
 
-from kademlia.buckets import BucketList, KBucket
-from kademlia.constants import Constants
-from kademlia.contact import Contact
-from kademlia.dht import DHT
-from kademlia.errors import RPCError, TooManyContactsError
-from kademlia.id import ID
-from kademlia.networking import TCPSubnetServer
-from kademlia.node import Node
-from kademlia.protocols import TCPSubnetProtocol, VirtualProtocol
-from kademlia.routers import ParallelRouter, Router
-from kademlia.storage import VirtualStorage, SecondaryJSONStorage
+from kademlia_dht.buckets import BucketList, KBucket
+from kademlia_dht.constants import Constants
+from kademlia_dht.contact import Contact
+from kademlia_dht.dht import DHT
+from kademlia_dht.errors import RPCError, TooManyContactsError
+from kademlia_dht.id import ID
+from kademlia_dht.networking import TCPSubnetServer
+from kademlia_dht.node import Node
+from kademlia_dht.protocols import TCPSubnetProtocol, VirtualProtocol
+from kademlia_dht.routers import ParallelRouter, Router
+from kademlia_dht.storage import VirtualStorage, SecondaryJSONStorage
+
+
+Constants.DEBUG = True
 
 
 def setup_split_failure(bucket_list=None):
@@ -1332,9 +1335,9 @@ class DHTSerialisationTests(unittest.TestCase):
             router=Router(),
             storage_factory=VirtualStorage
         )
-        dht.save("kademlia/dht.pickle")
+        dht.save("kademlia_dht/dht.pickle")
 
-        new_dht = DHT.load("kademlia/dht.pickle")
+        new_dht = DHT.load("kademlia_dht/dht.pickle")
 
         self.assertTrue(
             type(dht) == type(new_dht),
@@ -1359,9 +1362,9 @@ class DHTSerialisationTests(unittest.TestCase):
         )
         dht._router.node = node
 
-        dht.save("kademlia/dht.pickle")
+        dht.save("kademlia_dht/dht.pickle")
 
-        new_dht = DHT.load("kademlia/dht.pickle")
+        new_dht = DHT.load("kademlia_dht/dht.pickle")
 
         self.assertTrue(
             type(dht) == type(new_dht),
