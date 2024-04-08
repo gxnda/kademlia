@@ -11,6 +11,7 @@ from requests import get
 from kademlia import dht, contact, protocols, storage, networking, routers, node, helpers, id
 from kademlia.constants import Constants
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--use_global_ip", action="store_true",
                     help="If the clients global IP should be used by the P2P network.")
@@ -26,7 +27,7 @@ Constants.DEBUG = args.debug
 
 
 class GenericMenu:
-    def __init__(self, title: str="Generic Menu", parent=None, hash_table: dht.DHT | None = None):
+    def __init__(self, title: str = "Generic Menu", parent=None, hash_table: dht.DHT | None = None):
         self.parent: GenericMenu | None = parent
         self.title = title
         self.__options: list[dict] = []
@@ -310,7 +311,7 @@ class UploadMenu(GenericMenu):
 
                 # TODO: Make a function to do this.
                 # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
-                val: str = pickle.dumps({"filename": filename, "file": file_contents}).decode("latin1")
+                val: str = pickle.dumps({"filename": filename, "file": file_contents}).decode(Constants.PICKLE_ENCODING)
                 del file_contents  # free up memory, file_contents could be pretty big.
 
                 id_to_store_to = id.ID.random_id()
@@ -350,7 +351,7 @@ class DownloadMenu(GenericMenu):
             print("[ERROR] File not found.")
         else:
             # TODO: It might be a better idea to use JSON to send values.
-            val_bytes: bytes = val.encode("latin1")  # TODO: Add option for changing this in settings.
+            val_bytes: bytes = val.encode(Constants.PICKLE_ENCODING)  # TODO: Add option for changing this in settings.
 
             # "pickle.loads()" is very insecure and can lead to arbitrary code execution, the val received
             #   could be maliciously crafted to allow for malicious code execution because it compiles and creates

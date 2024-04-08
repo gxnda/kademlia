@@ -21,6 +21,7 @@ class Constants:
     DEBUG = False
 
     DHT_SERIALISED_SUFFIX = "dht"
+    PICKLE_ENCODING = "latin1"
 
     if DEBUG:
         A: int = 3

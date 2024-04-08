@@ -330,7 +330,7 @@ class SecondaryJSONStorage(IStorage):
             file_data = f.read()
         data_dict = {"filename": filename, "file_data": file_data}
         encoded_data: bytes = pickler.plain_encode_data(data=data_dict)
-        encoded_data_str = encoded_data.decode("latin1")
+        encoded_data_str = encoded_data.decode(Constants.PICKLE_ENCODING)
         self.set(
             key=key,
             value=encoded_data_str,

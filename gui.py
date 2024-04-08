@@ -410,7 +410,7 @@ class UploadFrame(ctk.CTkFrame):
                 with open(file_to_upload, "rb") as f:
                     file_contents: bytes = f.read()
                 # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
-                val: str = pickle.dumps({"filename": filename, "file": file_contents}).decode("latin1")
+                val: str = pickle.dumps({"filename": filename, "file": file_contents}).decode(Constants.PICKLE_ENCODING)
                 id_to_store_to = id.ID.random_id()
                 self.parent.dht.store(id_to_store_to, val)
                 self.parent.show_status(f"Stored file at {id_to_store_to}.", copy_data=str(id_to_store_to))
@@ -460,7 +460,7 @@ class DownloadFrame(ctk.CTkFrame):
             else:
                 # TODO: It might be a better idea to use JSON to send values.
 
-                val_bytes: bytes = val.encode("latin1")  # TODO: Add option for changing this in settings.
+                val_bytes: bytes = val.encode(Constants.PICKLE_ENCODING)
 
                 # "pickle.loads()" is very insecure and can lead to arbitrary code execution, the val received
                 #   could be maliciously crafted to allow for malicious code execution because it compiles and creates
