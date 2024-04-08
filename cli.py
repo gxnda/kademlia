@@ -8,7 +8,7 @@ from typing import Callable
 
 from requests import get
 
-from kademlia import dht, contact, protocols, storage, networking, routers, node, helpers, id
+from kademlia import dht, contact, protocols, storage, networking, routers, node, helpers, id, pickler
 from kademlia.constants import Constants
 
 
@@ -318,7 +318,7 @@ class UploadMenu(GenericMenu):
 
                 # TODO: Make a function to do this.
                 # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
-                val: str = pickle.dumps({"filename": filename, "file": file_contents}).decode(Constants.PICKLE_ENCODING)
+                val: str = pickler.encode_dict_as_str({"filename": filename, "file": file_contents})
                 del file_contents  # free up memory, file_contents could be pretty big.
 
                 id_to_store_to = id.ID.random_id()

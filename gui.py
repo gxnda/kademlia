@@ -10,7 +10,7 @@ import customtkinter as ctk
 from PIL import Image
 from requests import get
 
-from kademlia import dht, id, networking, protocols, node, contact, storage, routers, errors, helpers
+from kademlia import dht, id, networking, protocols, node, contact, storage, routers, errors, helpers, pickler
 from kademlia.constants import Constants
 
 """
@@ -417,7 +417,7 @@ class UploadFrame(ctk.CTkFrame):
                 with open(file_to_upload, "rb") as f:
                     file_contents: bytes = f.read()
                 # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
-                val: str = pickle.dumps({"filename": filename, "file": file_contents}).decode(Constants.PICKLE_ENCODING)
+                val: str = pickler.encode_dict_as_str({"filename": filename, "file": file_contents})
                 id_to_store_to = id.ID.random_id()
                 self.parent.dht.store(id_to_store_to, val)
                 self.parent.show_status(f"Stored file at {id_to_store_to}.", copy_data=str(id_to_store_to))

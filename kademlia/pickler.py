@@ -1,5 +1,6 @@
 import pickle
 
+from kademlia.constants import Constants
 from kademlia.errors import DataDecodingError
 
 
@@ -51,6 +52,10 @@ def plain_decode_data(encoded_data: bytes) -> dict:
     except Exception as error:
         raise DataDecodingError("Error decoding data.") from error
     return decoded_data
+
+
+def encode_dict_as_str(data: dict) -> str:
+    return pickle.dumps(data).decode(Constants.PICKLE_ENCODING)
 
 
 if __name__ == "__main__":
