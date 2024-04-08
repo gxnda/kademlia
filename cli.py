@@ -300,6 +300,13 @@ class UploadMenu(GenericMenu):
             self.handle_upload()
 
     def handle_upload(self):
+        """
+        Stores a file on our system on the network.
+        This is stored by storing key: Random ID, value: Pickled dictionary
+        {"filename": filename, "file": file_contents}
+        The pickled dictionary is decoded using Constants.PICKLE_ENCODING (default: "latin1"), because the
+        value sent must be a string.
+        """
         file_to_upload = self.file_to_upload
         if isfile(file_to_upload):
             filename = os.path.basename(file_to_upload)

@@ -401,6 +401,13 @@ class UploadFrame(ctk.CTkFrame):
         self.upload_button.grid(column=1, row=2, columnspan=1, padx=20, pady=10)
 
     def handle_upload(self):
+        """
+        Stores a file on our system on the network.
+        This is stored by storing key: Random ID, value: Pickled dictionary
+        {"filename": filename, "file": file_contents}
+        The pickled dictionary is decoded using Constants.PICKLE_ENCODING (default: "latin1"), because the
+        value sent must be a string.
+        """
         file_to_upload = self.enter_file_entry.get().strip("\n")
         if isfile(file_to_upload):
             filename = os.path.basename(file_to_upload)
