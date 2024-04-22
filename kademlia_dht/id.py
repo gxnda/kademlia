@@ -39,14 +39,6 @@ class ID:
         padded_binary = number_of_zeroes_to_add * "0" + binary
         return padded_binary
 
-    # def set_bit(self, bit: int) -> None:
-    #     """
-    #     Sets a given bit to 1, Little endian. (set_bit(0) sets smallest bit to 0)
-    #     :param bit: bit to be set.
-    #     :return: Nothing
-    #     """
-    #     self.little_endian_bytes()[bit] = "1"
-
     def big_endian_bytes(self) -> list[str]:
         """
         Returns the padded ID in big-endian binary - largest bit is at index 0.
