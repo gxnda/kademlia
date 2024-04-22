@@ -1,6 +1,6 @@
+import json
 import os
 from datetime import datetime
-import json
 from typing import Optional
 
 from kademlia_dht import pickler
@@ -300,7 +300,7 @@ class SecondaryJSONStorage(IStorage):
                     print(f"[DEBUG] File at {self.filename}: {f.read()}")
                 f.seek(0)
                 # Key is a string because JSON library stores integers at strings
-                json_data: dict[str,  StoreValue] = json.load(f)
+                json_data: dict[str, StoreValue] = json.load(f)
                 print(json_data)
             except json.JSONDecodeError as e:
                 print(e)

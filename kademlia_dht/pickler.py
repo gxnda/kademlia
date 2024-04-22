@@ -59,7 +59,6 @@ def encode_dict_as_str(data: dict) -> str:
 
 
 if __name__ == "__main__":
-    
     class MyClass:
         def __init__(self, defined):
             self.static_attr = "static"
@@ -70,10 +69,10 @@ if __name__ == "__main__":
         def method(self):
             return self.__private_attr, self.defined_attr
 
+
     my_dict = {"a": 1, "b": 27, "c": [1, 2, 3, MyClass("defined in dict")]}
     print(my_dict)
     enc = encode_data(my_dict)
     dec = decode_data(enc)
     print(dec)
     print(dec["c"][3].method())
-    

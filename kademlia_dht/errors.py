@@ -1,5 +1,3 @@
-
-
 class DataDecodingError(Exception):
     pass
 

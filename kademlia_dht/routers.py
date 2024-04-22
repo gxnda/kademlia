@@ -416,12 +416,12 @@ class ParallelRouter(BaseRouter):
             item: ContactQueueItem = self.__contact_queue.dequeue()
             if item:
                 found, val, found_by, item["closer_contacts"], item["further_contacts"] = self.get_closer_nodes(
-                        item["key"],
-                        item["contact"],
-                        item["rpc_call"],
-                        item["closer_contacts"],
-                        item["further_contacts"]
-                    )
+                    item["key"],
+                    item["contact"],
+                    item["rpc_call"],
+                    item["closer_contacts"],
+                    item["further_contacts"]
+                )
                 if val or found_by:
                     if not self.__stop_work:
                         # Possible multiple "found"
@@ -522,7 +522,8 @@ class ParallelRouter(BaseRouter):
         else:
             # For unit testing, this is a bad way to get a list of close contacts with virtual nodes
             # because we're always going to get the closest nodes right at the get go.
-            all_nodes: list[Contact] = self.node.bucket_list.get_close_contacts(key, self.node.our_contact.id)[0:Constants.K]
+            all_nodes: list[Contact] = self.node.bucket_list.get_close_contacts(key, self.node.our_contact.id)[
+                                       0:Constants.K]
 
         nodes_to_query: list[Contact] = all_nodes[0:Constants.A]
         # Also not explicitly in specification:
@@ -619,7 +620,6 @@ class ParallelRouter(BaseRouter):
                         )
                 self.set_query_time()
 
-
         self._stop_remaining_work()
         return FindResult(
             found=False,
@@ -627,4 +627,3 @@ class ParallelRouter(BaseRouter):
             found_by=None,
             val=None
         )
-

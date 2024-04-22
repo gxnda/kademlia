@@ -107,7 +107,7 @@ class ID:
         Returns max ID.
         :return: max ID.
         """
-        return ID(2**160 - 1)
+        return ID(2 ** 160 - 1)
 
     @classmethod
     def mid(cls):
@@ -115,7 +115,7 @@ class ID:
         returns middle of the road ID
         :return: middle ID.
         """
-        return ID(2**159 - 1)  # Should this be  ID(2**159)? But then ID(1) ^ ID.mid() > ID.mid() ^ ID.max()
+        return ID(2 ** 159 - 1)  # Should this be  ID(2**159)? But then ID(1) ^ ID.mid() > ID.mid() ^ ID.max()
 
     @classmethod
     def min(cls):
@@ -138,7 +138,7 @@ class ID:
         return ID(bucket.low() + random.randint(0, bucket.high() - bucket.low()))
 
     @classmethod
-    def random_id(cls, low=0, high=2**160, seed=None):
+    def random_id(cls, low=0, high=2 ** 160, seed=None):
         """
         Generates a random ID, including both endpoints.
 

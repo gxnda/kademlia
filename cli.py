@@ -11,7 +11,6 @@ from requests import get
 from kademlia_dht import dht, contact, protocols, storage, networking, routers, node, helpers, id, pickler
 from kademlia_dht.constants import Constants
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--use_global_ip", action="store_true",
                     help="If the clients global IP should be used by the P2P network.")
@@ -65,19 +64,19 @@ class GenericMenu:
         else:
             print("Input was not valid, please try again.")
             return self.get_input(prompt, regex)
-    
+
     def display(self) -> None:
 
         if self.__info or self.__options:
             print("\n--------", self.title, "--------\n")
-        
+
         if self.__info:
             for line in self.__info:
                 print(line)
-                
+
         if self.__info and self.__options:
             print("\n\n")
-            
+
         if self.__options:
             for i in range(len(self.__options)):
                 print(f"{i + 1}) {self.__options[i]['name']}")
@@ -101,7 +100,7 @@ class GenericMenu:
 
     def __call_choice(self, choice: int) -> None:
         self.__options[choice - 1]["command"]()
-    
+
     def display_all(self) -> None:
         self.display()
         if self.__options:

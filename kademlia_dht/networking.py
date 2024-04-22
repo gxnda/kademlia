@@ -1,8 +1,7 @@
-import socket
 import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from time import sleep
 from typing import Optional, TypedDict, Callable
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import kademlia_dht.pickler as pickler
 from kademlia_dht.constants import Constants

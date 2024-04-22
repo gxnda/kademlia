@@ -1,12 +1,12 @@
 import os
-from hashlib import sha1
 import random
 import socket
+from hashlib import sha1
 
 from kademlia_dht.constants import Constants
 from kademlia_dht.contact import Contact
-from kademlia_dht.node import Node
 from kademlia_dht.id import ID
+from kademlia_dht.node import Node
 from kademlia_dht.storage import VirtualStorage
 
 

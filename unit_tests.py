@@ -16,7 +16,6 @@ from kademlia_dht.protocols import TCPSubnetProtocol, VirtualProtocol
 from kademlia_dht.routers import ParallelRouter, Router
 from kademlia_dht.storage import VirtualStorage, SecondaryJSONStorage
 
-
 Constants.DEBUG = True
 
 
@@ -474,7 +473,8 @@ class NodeLookupTests(unittest.TestCase):
 
             for close_contact_of_contacted_node in close_contacts_of_contacted_node:
                 # Which of these contacts are closer?
-                if (close_contact_of_contacted_node.id.value ^ key.value < distance and close_contact_of_contacted_node.id.value not in
+                if (
+                        close_contact_of_contacted_node.id.value ^ key.value < distance and close_contact_of_contacted_node.id.value not in
                         [c.id.value for c in closer]):
                     closer.append(close_contact_of_contacted_node)
 
@@ -1673,9 +1673,6 @@ class IDIntegerTests(unittest.TestCase):
         self.assertTrue(ID(1) >= 0)
         self.assertTrue(ID(100) >= 100)
         self.assertTrue(ID(2 ** 160 - 1) >= 1)
-
-
-
 
 
 if __name__ == '__main__':

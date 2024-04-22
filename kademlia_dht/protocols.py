@@ -273,10 +273,10 @@ class TCPSubnetProtocol(IProtocol):
                     )
             else:
                 return [c for c in contacts if c.protocol is not None], "", get_rpc_error(
-                        random_id, ret_decoded, timeout_error, ErrorResponse(
-                            random_id=random_id.value,
-                            error_message=str(error))
-                    )
+                    random_id, ret_decoded, timeout_error, ErrorResponse(
+                        random_id=random_id.value,
+                        error_message=str(error))
+                )
         except Exception as e:
             rpc_error = RPCError(str(e))
             rpc_error.protocol_error = True
@@ -541,10 +541,10 @@ class TCPProtocol(IProtocol):
                     )
             else:
                 return [c for c in contacts if c.protocol is not None], "", get_rpc_error(
-                        random_id, ret_decoded, timeout_error, ErrorResponse(
-                            random_id=random_id.value,
-                            error_message=str(error))
-                    )
+                    random_id, ret_decoded, timeout_error, ErrorResponse(
+                        random_id=random_id.value,
+                        error_message=str(error))
+                )
         except Exception as e:
             rpc_error = RPCError(str(e))
             rpc_error.protocol_error = True

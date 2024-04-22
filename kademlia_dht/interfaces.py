@@ -96,6 +96,7 @@ class IProtocol:
     """
     Interface for all protocols to follow.
     """
+
     def __init__(self):
         self.node = None
 

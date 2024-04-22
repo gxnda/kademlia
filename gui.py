@@ -1,10 +1,10 @@
+import argparse
+import json
 import os
 import pickle
 import re
 import threading
-import json
 from os.path import exists, isfile
-import argparse
 
 import customtkinter as ctk
 from PIL import Image
