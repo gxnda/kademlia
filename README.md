@@ -6,3 +6,16 @@ It is mostly an interpretation of "The Kademlia Protocol Succinctly" by Marc Cli
 (The implementation is in Python, rather than C#).
 
 This mostly serves as an introduction to peer-to-peer systems for me. 
+
+
+# Tasks
+
+- [x] Make Kademlia implementation
+- [x] Make GUI
+- [x] Make CLI
+
+- [ ] Make all unit tests pass
+- [ ] Add more unit tests for the CLI for input validation
+- [ ] Add encryption
+- [ ] Make it more usable
+- [ ] Create more scalable storage (databases, etc)
