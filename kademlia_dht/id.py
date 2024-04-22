@@ -11,7 +11,7 @@ class ID:
         Kademlia node ID: This is an integer from 0 to 2^160 - 1
 
         Args:
-            value: (int) ID denary value
+            value: (int) ID decimal value
         """
 
         self.MAX_ID = 2 ** Constants.ID_LENGTH_BITS

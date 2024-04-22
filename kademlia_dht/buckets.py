@@ -3,8 +3,8 @@ from os.path import commonprefix
 
 from kademlia_dht.constants import Constants
 from kademlia_dht.contact import Contact
-from kademlia_dht.errors import BucketDoesNotContainContactToEvictError, OurNodeCannotBeAContactError, OutOfRangeError, \
-    RPCError, TooManyContactsError
+from kademlia_dht.errors import (BucketDoesNotContainContactToEvictError, OurNodeCannotBeAContactError,
+                                 OutOfRangeError, RPCError, TooManyContactsError)
 from kademlia_dht.id import ID
 
 
@@ -95,7 +95,7 @@ class KBucket:
         Splits KBucket in half, returns tuple of type (KBucket, KBucket).
         """
         # This doesn't work when all contacts are bunched towards one side of the KBucket.
-        # It's in the spec so I'm keeping it, it also means it stays nice and neat
+        # It's in the spec, so I'm keeping it, it also means it stays nice and neat
 
         midpoint: int = (self._low + self._high) // 2  # This will always be an integer, but // is faster than /.
 

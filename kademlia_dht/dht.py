@@ -42,7 +42,7 @@ class DHT:
 
          - When storing a value, use the lookup algorithm to find other closer peers to
          propagate the key-value.
-         - When looking up a value, if our peer doesn’t have the value, we again use the
+         - When looking up a value, if our peer doesn't have the value, we again use the
          lookup algorithm to find other closer nodes that might have the value.
          - A bootstrapping method that registers our peer with another peer and
          initializes our bucket list with that peer’s closest contacts.
@@ -336,7 +336,7 @@ class DHT:
         """
         Replicate key values if the key value hasn't been touched within
         the republish interval. Also don't do a FindNode lookup if the
-        bucket containing the key has been refresed within the refresh
+        bucket containing the key has been refreshed within the refresh
         interval.
         """
         now: datetime = datetime.now()
@@ -447,7 +447,7 @@ class DHT:
         """
         The contact that did not respond (or had an error) gets "n"
         tries before being evicted and replaced with the most recently
-        seen contact that wants to got into the non-responding contact's
+        seen contact that wants to go into the non-responding contact's
         K-Bucket
 
         :param to_evict: The contact that didn't respond.
@@ -456,7 +456,7 @@ class DHT:
         """
         # Non-concurrent list needs locking
         # lock(pending_contacts)
-        # add only if its a new pending contact.
+        # add only if it's a new pending contact.
         if to_replace.id not in [c.id for c in self.pending_contacts]:
             self.pending_contacts.append(to_replace)
 
