@@ -13,6 +13,9 @@ from kademlia_dht.node import Node
 from kademlia_dht.pickler import encode_data
 
 
+from tqdm import tqdm
+
+
 def get_rpc_error(id: ID,
                   ret: BaseResponse | None,
                   timeout_error: bool,
@@ -230,11 +233,25 @@ class TCPSubnetProtocol(IProtocol):
             ret = requests.post(
                 url=f"http://{self.url}:{self.port}/find_value",
                 data=encoded_data,
-                timeout=Constants.REQUEST_TIMEOUT
+                timeout=Constants.REQUEST_TIMEOUT,
+                stream=True
             )
             print("[Client] Completed POST")
             timeout_error = False
             error = None
+            if ret:
+                total_size = int(ret.headers.get('Content-Length', 0))
+                block_size = 1024  # 1 Kilobyte
+                progress_bar = tqdm(total=total_size, unit='iB', unit_scale=True)
+
+                encoded_data = b''
+                for chunk in ret.iter_content(chunk_size=block_size):
+                    if chunk:
+                        print("chunk")
+                        encoded_data += chunk
+                        progress_bar.update(len(chunk))
+
+                # progress_bar.close()
 
         except requests.Timeout as t:
             print("Timeout error", t)
@@ -249,7 +266,6 @@ class TCPSubnetProtocol(IProtocol):
 
         ret_decoded = None
         if ret:
-            encoded_data = ret.content
             ret_decoded = pickler.decode_data(encoded_data)
 
         try:
@@ -492,17 +508,33 @@ class TCPProtocol(IProtocol):
             ))
         )
 
-        ret = None
         try:
             print("[Client] Sending POST")
             ret = requests.post(
                 url=f"http://{self.url}:{self.port}/find_value",
                 data=encoded_data,
-                timeout=Constants.REQUEST_TIMEOUT
+                timeout=Constants.REQUEST_TIMEOUT,
+                stream=True
             )
             print("[Client] Completed POST")
             timeout_error = False
             error = None
+
+            ret_decoded = None
+            if ret:
+                total_size = int(ret.headers.get('Content-Length', 0))
+                block_size = 1024  # 1 Kilobyte
+                progress_bar = tqdm(total=total_size, unit='iB', unit_scale=True)
+
+                encoded_data = b''
+                for chunk in ret.iter_content(chunk_size=block_size):
+                    if chunk:
+                        encoded_data += chunk
+                        progress_bar.update(len(chunk))
+
+                progress_bar.close()
+                ret_decoded = pickler.decode_data(encoded_data)
+
 
         except requests.Timeout as t:
             print("Timeout error", t)
@@ -514,11 +546,6 @@ class TCPProtocol(IProtocol):
             # request timed out.
             timeout_error = False
             error = e
-
-        ret_decoded = None
-        if ret:
-            encoded_data = ret.content
-            ret_decoded = pickler.decode_data(encoded_data)
 
         try:
             contacts = []
