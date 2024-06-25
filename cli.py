@@ -159,6 +159,9 @@ class Settings(GenericMenu):
         else:
             self.add_info("You have not made a DHT yet; you shouldn't be able to access this!")
 
+        # Go back
+        self.add_option("Back", parent.display_all)
+
     def open_contact_viewer(self):
         our_contact: contact.Contact = self.dht.our_contact
         our_id: int = our_contact.id.value
@@ -272,11 +275,19 @@ class BootstrapMenu(GenericMenu):
 
 
 class MainNetworkMenu(GenericMenu):
-    def __init__(self, parent: GenericMenu):
+    def __init__(self, parent: GenericMenu, has_settings=True):
         GenericMenu.__init__(self, parent=parent, title="Kademlia")
 
         self.add_option(name="Download", command=self.make_download_menu)
         self.add_option(name="Upload", command=self.make_upload_menu)
+
+        if has_settings:
+            self.add_option(name="Settings", command=self.open_settings)
+
+    def open_settings(self):
+        current_window = self
+        menu = Settings(parent=current_window)
+        menu.display_all()
 
     def make_download_menu(self):
         menu = DownloadMenu(parent=self)
