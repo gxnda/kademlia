@@ -363,11 +363,23 @@ class DownloadMenu(GenericMenu):
             #   could be maliciously crafted to allow for malicious code execution because it compiles and creates
             #   a python object.
             file_dict: dict = pickle.loads(val_bytes)  # TODO: Make secure.
+            if not isinstance(file_dict, dict):
+                assert TypeError("The file downloaded is formatted incorrectly.")
+
             filename: str = file_dict["filename"]
+            if not isinstance(filename, str):
+                assert TypeError("The file downloaded is formatted incorrectly.")
+
             file_bytes: bytes = file_dict["file"]
+            if not isinstance(file_bytes, bytes):
+                assert TypeError("The file downloaded is formatted incorrectly.")
+
             del file_dict  # Free up memory.
 
+            # get current working directory
             cwd = os.getcwd()  # TODO: Add option to change where it is installed to.
+
+            install_directory = cwd  # writes the file to the current working directory
             with open(os.path.join(cwd, filename), "wb") as f:
                 f.write(file_bytes)
 
