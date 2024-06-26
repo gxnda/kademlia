@@ -1,5 +1,5 @@
-import argparse
 import json
+import logging
 import os
 import pickle
 import re
@@ -8,21 +8,16 @@ from typing import Callable
 
 from requests import get
 
+import ui_helpers
 from kademlia_dht import dht, contact, protocols, storage, networking, routers, node, helpers, id, pickler
 from kademlia_dht.constants import Constants
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--use_global_ip", action="store_true",
-                    help="If the clients global IP should be used by the P2P network.")
-parser.add_argument("--debug", action="store_true",
-                    help="If the clients global IP should be used by the P2P network.")
-parser.add_argument("--port", type=int, required=False, default=7124)
 
-args = parser.parse_args()
+USE_GLOBAL_IP, PORT, verbose = ui_helpers.handle_terminal()
+Constants.DEBUG = verbose  # TODO: Remove - constants.DEBUG should be deprecated once logging is done.
 
-USE_GLOBAL_IP = args.use_global_ip
-PORT = args.port
-Constants.DEBUG = args.debug
+logger: logging.Logger = ui_helpers.create_logger(verbose)
+print(__name__)
 
 
 class GenericMenu:
@@ -40,7 +35,7 @@ class GenericMenu:
         if self.parent:
             self.parent.display_all()
         else:
-            print("Error: No parent to go back to - orphan window.")
+            logger.info("Error: No parent to go back to - orphan window.")
             self.display_all()
 
     def add_option(self, name: str, command: Callable, description: str = "") -> None:
@@ -62,20 +57,20 @@ class GenericMenu:
         elif re.match(user_input, regex):
             return user_input
         else:
-            print("Input was not valid, please try again.")
+            logger.warning("Input was not valid, please try again.")
             return self.get_input(prompt, regex)
 
     def display(self) -> None:
 
         if self.__info or self.__options:
-            print("\n--------", self.title, "--------\n")
+            print("\n\n--------", self.title, "--------\n")
 
         if self.__info:
             for line in self.__info:
                 print(line)
 
         if self.__info and self.__options:
-            print("\n\n")
+            print("\n")
 
         if self.__options:
             for i in range(len(self.__options)):
@@ -86,6 +81,7 @@ class GenericMenu:
     def __get_choice(self) -> int:
         if self.__options:
             choice = input("Choice: ")
+
             if choice.isnumeric():
                 if int(choice) - 1 in range(len(self.__options)):
                     return int(choice)
@@ -138,16 +134,15 @@ class ContactViewer(GenericMenu):
         if not filename:
             filename = "our_contact.json"
 
-        print("Exporting our contact...")
+        logger.info("Exporting our contact...")
         try:
             with open(filename, "w") as f:
                 json.dump(contact_dict, f)
-        except OSError as e:
-            print(e)  # TODO: Remove.
-            print(f"Invalid filename \"{filename}\", please try again.")
+        except OSError:
+            logger.error(f"Invalid filename \"{filename}\", please try again.")
             self.export_contact()
 
-        print(f"Exported our contact to {filename}.")
+        logger.info(f"Successfully exported our contact to {filename}.")
 
 
 class Settings(GenericMenu):
@@ -213,21 +208,21 @@ class JoinNetworkMenu(GenericMenu):
 
                 :return:
                 """
-        print("[Initialisation] Initialising Kademlia.")
+        logger.info("Initialising Kademlia.")
 
         our_id = id.ID.random_id()
         if USE_GLOBAL_IP:  # Port forwarding is required.
             our_ip = get('https://api.ipify.org').content.decode('utf8')
         else:
             our_ip = "127.0.0.1"
-        print(f"[Initialisation] Our hostname is {our_ip}.")
+        logger.info(f"Our hostname is {our_ip}.")
 
         if PORT:
             valid_port = PORT
         else:
             valid_port = helpers.get_valid_port()
 
-        print(f"[Initialisation] Port free at {valid_port}, creating our node here.")
+        logger.info(f"Port free at {valid_port}, creating our node here.")
 
         protocol = protocols.TCPProtocol(
             url=our_ip, port=valid_port
@@ -244,7 +239,8 @@ class JoinNetworkMenu(GenericMenu):
 
         # Make directory of our_id at current working directory.
         create_dir_at = os.path.join(os.getcwd(), str(our_id.value))
-        print("[GUI] Making directory at", create_dir_at)
+        logger.info(f"Making directory at {create_dir_at}")
+
         if not exists(create_dir_at):
             os.mkdir(create_dir_at)
         self.dht: dht.DHT = dht.DHT(
@@ -321,7 +317,7 @@ class UploadMenu(GenericMenu):
         if isfile(file_to_upload):
             filename = os.path.basename(file_to_upload)
             if not filename:  # os.path.basename returns "" on file paths ending in "/"
-                print("[ERROR] File to upload must not be a directory.")
+                logger.error("File to upload must not be a directory.")
             else:
                 with open(file_to_upload, "rb") as f:
                     file_contents: bytes = f.read()
@@ -333,9 +329,9 @@ class UploadMenu(GenericMenu):
 
                 id_to_store_to = id.ID.random_id()
                 self.parent.dht.store(id_to_store_to, val)
-                print("[STATUS] Stored file at {id_to_store_to}.")
+                logger.info(f"Stored file at {id_to_store_to}.")
         else:
-            print(f"[ERROR] Path not found: {file_to_upload}")
+            logger.error(f"Path not found: {file_to_upload}")
 
 
 class DownloadMenu(GenericMenu):
@@ -350,11 +346,11 @@ class DownloadMenu(GenericMenu):
                 self.go_back()
             else:
                 if not user_input:
-                    print("[ERROR] ID must not be empty, please try again.")
+                    logger.error("ID must not be empty, please try again.")
                 elif not user_input.isnumeric():
-                    print("[ERROR] ID was not a number, please try again.")
+                    logger.error("ID was not a number, please try again.")
                 elif not 0 <= int(user_input) < 2 ** Constants.ID_LENGTH_BITS:
-                    print("[ERROR] ID out of range, please try again.")
+                    logger.error("ID out of range, please try again.")
                 else:
                     valid = True
                     self.id_to_download = user_input
@@ -365,7 +361,8 @@ class DownloadMenu(GenericMenu):
         found, contacts, val = self.parent.dht.find_value(key=id_to_download)
         # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
         if not found:
-            print("[ERROR] File not found.")
+            logger.error("File not found on the network.")
+            self.go_back()
         else:
             # TODO: It might be a better idea to use JSON to send values.
             val_bytes: bytes = val.encode(Constants.PICKLE_ENCODING)  # TODO: Add option for changing this in settings.
@@ -394,7 +391,7 @@ class DownloadMenu(GenericMenu):
             with open(os.path.join(cwd, filename), "wb") as f:
                 f.write(file_bytes)
 
-            print("[STATUS] File downloaded to {os.path.join(cwd, filename)}.")
+            logger.info(f"File downloaded to {os.path.join(cwd, filename)}.")
 
 
 if __name__ == "__main__":

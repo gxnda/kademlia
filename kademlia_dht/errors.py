@@ -1,3 +1,8 @@
+import logging
+
+logger = logging.getLogger("__main__")
+
+
 class DataDecodingError(Exception):
     pass
 
@@ -76,7 +81,6 @@ class RPCError(Exception):
         Returns True if any type of error is true, else False.
         :return:
         """
-        print(self.timeout_error, self.protocol_error, self.id_mismatch_error, self.peer_error)
         return self.timeout_error or \
             self.protocol_error or \
             self.id_mismatch_error or \

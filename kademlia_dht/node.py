@@ -1,3 +1,5 @@
+import logging
+
 from kademlia_dht.buckets import BucketList
 from kademlia_dht.constants import Constants
 from kademlia_dht.contact import Contact
@@ -6,6 +8,8 @@ from kademlia_dht.errors import RPCError, SenderIsSelfError, SendingQueryToSelfE
 from kademlia_dht.id import ID
 from kademlia_dht.interfaces import IProtocol, IStorage
 from kademlia_dht.storage import VirtualStorage
+
+logger = logging.getLogger("__main__")
 
 
 class Node:
@@ -97,10 +101,8 @@ class Node:
         self.bucket_list.add_contact(sender)
 
         # actually finding nodes
-        # print([len(b.contacts) for b in self.bucket_list.buckets])
         contacts = self.bucket_list.get_close_contacts(key=key,
                                                        exclude=sender.id)
-        # print(f"contacts: {contacts}")
         return contacts, None
 
     def find_value(self, key: ID, sender: Contact) \
@@ -116,16 +118,15 @@ class Node:
         self.send_key_values_if_new_contact(sender)
 
         if self.storage.contains(key):
-            if Constants.DEBUG:
-                print(f"[DEBUG] Value in self.storage of {self.our_contact.id}.")
+            logger.debug(f" Value in self.storage of {self.our_contact.id}.")
             return None, self.storage.get(key)
         elif self.cache_storage.contains(key):
             if Constants.DEBUG:
-                print(f"[DEBUG] Value in self.cache_storage of {self.our_contact.id}.")
+                logger.debug(f"Value in self.cache_storage of {self.our_contact.id}.")
             return None, self.cache_storage.get(key)
         else:
             if Constants.DEBUG:
-                print("[DEBUG] Value not in storage, getting close contacts.")
+                logger.debug("Value not in storage, getting close contacts.")
             return self.bucket_list.get_close_contacts(key, sender.id), None
 
     def send_key_values_if_new_contact(self, sender: Contact) -> None:
@@ -137,16 +138,15 @@ class Node:
         node should store. Any node learning of a new node therefore
         issues STORE RPCs to transfer relevant key-value pairs to the
         new node. To avoid redundant STORE RPCs, however, a node only
-        transfers a key-value pair if it’s own ID is closer to the key
+        transfers a key-value pair if its own ID is closer to the key
         than are the IDs of other nodes."
 
         For a new contact, we store values to that contact whose keys
         XOR our_contact are less than the stored keys XOR other_contacts.
         """
-        # print("send key values if new contact")
         if self._is_new_contact(sender):
             # with self.bucket_list.lock:
-            # Clone so we can release the lock.
+            # Clone, so we can release the lock.
             contacts: list[Contact] = self.bucket_list.contacts()
             if len(contacts) > 0:
                 # and our distance to the key < any other contact's distance
@@ -157,7 +157,7 @@ class Node:
                     # If our contact is closer, store the contact on its
                     # node.
                     if (self.our_contact.id ^ k) < distance:
-                        print(sender.protocol)
+                        logger.debug(f"Protocol used by sender: {sender.protocol}")
                         error: RPCError | None = sender.protocol.store(
                             sender=self.our_contact,
                             key=ID(k),
@@ -195,7 +195,7 @@ class Node:
     # Server entry points
 
     def server_ping(self, request: CommonRequest) -> dict:
-        print("[Server] Ping called")
+        logger.info("[Server] Ping called")
         protocol: IProtocol = request["protocol"]
         self.ping(
             Contact(
@@ -206,7 +206,7 @@ class Node:
         return {"random_id": request["random_id"]}
 
     def server_store(self, request: CommonRequest) -> dict:
-        print("[Server] Server store called.")
+        logger.info("[Server] Server store called.")
         protocol: IProtocol = request["protocol"]
         self.store(
             sender=Contact(
@@ -221,7 +221,7 @@ class Node:
         return {"random_id": request["random_id"]}
 
     def server_find_node(self, request: CommonRequest) -> dict:
-        print("[Server] Find node called")
+        logger.info("[Server] Find node called")
         protocol: IProtocol = request["protocol"]
 
         contacts, val = self.find_node(
@@ -245,9 +245,8 @@ class Node:
         return {"contacts": contact_dict, "random_id": request["random_id"]}
 
     def server_find_value(self, request: CommonRequest) -> dict:
-        print("[Server] Find Value called")
+        logger.info("[Server] Find Value called")
         protocol: IProtocol = request["protocol"]
-        print(protocol)
         contacts, val = self.find_value(
             sender=Contact(
                 protocol=protocol,
@@ -255,7 +254,6 @@ class Node:
             ),
             key=ID(request["key"])
         )
-        print(contacts, val)
         contact_dict: list[dict] = []
         if contacts:
             for c in contacts:

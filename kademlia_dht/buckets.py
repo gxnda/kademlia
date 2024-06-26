@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from os.path import commonprefix
 
@@ -6,6 +7,9 @@ from kademlia_dht.contact import Contact
 from kademlia_dht.errors import (BucketDoesNotContainContactToEvictError, OurNodeCannotBeAContactError,
                                  OutOfRangeError, RPCError, TooManyContactsError)
 from kademlia_dht.id import ID
+
+
+logger = logging.getLogger("__main__")
 
 
 class KBucket:
@@ -68,7 +72,7 @@ class KBucket:
         elif contact not in self.contacts:
             self.contacts.append(contact)
         else:
-            print("[Client] Contact already in KBucket.")
+            logger.info("[Client] Contact already in KBucket.")
 
     def depth(self) -> int:
         """
@@ -87,7 +91,6 @@ class KBucket:
         contacts in the kbucket. This does not "0b" before the binary.
         """
         shared_bits = commonprefix([i.id.bin() for i in self.contacts])
-        # print("shared bits", shared_bits)
         return shared_bits
 
     def split(self) -> tuple:
@@ -209,51 +212,48 @@ class BucketList:
 
         contact.touch()  # Update the time last seen to now
 
-        # print("[Client] Add contact called.")
+        logger.debug("[Client] Add contact called.")
         # with self.lock:
         kbucket: KBucket = self.get_kbucket(contact.id)
         if kbucket.contains(contact.id):
-            print("[Client] Contact already in KBucket.")
+            logger.debug("[Client] Contact already in KBucket.")
             # replace contact, then touch it
             kbucket.replace_contact(contact)
         elif kbucket.is_full():
-            print("[Client] Kbucket is full.")
+            logger.debug("[Client] Kbucket is full.")
             if self.can_split(kbucket):
-                print("[Client] Splitting!")
+                logger.debug("[Client] Splitting!")
                 # Split then try again
                 k1, k2 = kbucket.split()
-                # print(f"K1: {len(k1.contacts)}, K2: {len(k2.contacts)}, Buckets: {self.buckets}")
                 index: int = self._get_kbucket_index(contact.id)
 
                 # adds the two buckets to 2 separate buckets.
                 self.buckets[index] = k1  # Replaces original KBucket
                 self.buckets.insert(index + 1, k2)  # Adds a new one after it
-                # print(self.buckets)
                 self.add_contact(
                     contact
                 )  # Unless k <= 0, This should never cause a recursive loop
             else:
-                print("[Client] Cannot split")
+                logger.debug("[Client] Cannot split")
                 last_seen_contact: Contact = sorted(
                     kbucket.contacts, key=lambda c: c.last_seen)[0]
                 error: RPCError | None = last_seen_contact.protocol.ping(
                     self.our_contact)
                 if error:
                     # Unresponsive
-                    print("[Client] Node is unresponsive")
+                    logger.info(f"[Client] Node with id \"{last_seen_contact.id}\" is unresponsive")
                     if self.dht:  # tests may not initialise a DHT
-                        print("[Client] Delaying eviction")
+                        logger.debug("[Client] Delaying eviction")
                         self.dht.delay_eviction(last_seen_contact, contact)
                 else:
                     # still can't add the contact ,so put it into the pending list
-                    print("[Client] Node is responsive.")
+                    logger.debug("[Client] Node is responsive.")
                     if self.dht:
-                        print("[Client] Adding node to DHT pending...")
+                        logger.debug("[Client] Adding node to DHT pending...")
                         self.dht.add_to_pending(contact)
 
         else:
             # Bucket is not full, nothing special happens.
-            # print("[Client] Adding contact to bucket")
             kbucket.add_contact(contact)
 
     def get_close_contacts(self, key: ID, exclude: ID) -> list[Contact]:
@@ -264,19 +264,13 @@ class BucketList:
         :param exclude: The ID to exclude (the requesters ID).
         :return: List of K contacts sorted by distance.
         """
-        # print(key, exclude)
         # with self.lock:
         contacts = []
-        # print(self.buckets)
         for bucket in self.buckets:
-            # print(bucket.contacts)
             for contact in bucket.contacts:
-                # print(contact.id.value)
-                # print(f"Exclude: {exclude}")
 
                 if contact.id != exclude:
                     contacts.append(contact)
-        # print(contacts)
         contacts = sorted(contacts, key=lambda c: c.id ^ key)[:Constants.K]
         if len(contacts) > Constants.K and Constants.DEBUG:
             raise ValueError(

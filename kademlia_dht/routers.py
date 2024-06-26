@@ -1,3 +1,4 @@
+import logging
 import threading
 from abc import abstractmethod
 from datetime import datetime
@@ -12,6 +13,9 @@ from kademlia_dht.dictionaries import ContactQueueItem, FindResult
 from kademlia_dht.errors import AllKBucketsAreEmptyError, ValueCannotBeNoneError
 from kademlia_dht.id import ID
 from kademlia_dht.node import Node
+
+
+logger = logging.getLogger("__main__")
 
 
 class BaseRouter:
@@ -71,7 +75,7 @@ class BaseRouter:
         if self.dht:
             self.dht.handle_error(error, contact)
         else:
-            print("[Client] Router: No DHT to handle possible error.\nError:", error)
+            logger.error(f"Router: No DHT to handle possible error.\nError: {error}")
 
         if not error or not error.has_error():
             if other_contacts is not None:

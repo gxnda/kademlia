@@ -1,3 +1,4 @@
+import logging
 import math
 import os
 import random
@@ -17,6 +18,9 @@ from kademlia_dht.routers import ParallelRouter, Router
 from kademlia_dht.storage import VirtualStorage, SecondaryJSONStorage
 
 Constants.DEBUG = True
+
+
+logger = logging.getLogger("__main__")
 
 
 def setup_split_failure(bucket_list=None):

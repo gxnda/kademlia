@@ -1,15 +1,18 @@
 import argparse
 import json
+import logging
 import os
 import pickle
 import re
 import threading
 from os.path import exists, isfile
+from sys import stdout
 
 import customtkinter as ctk
 from PIL import Image
 from requests import get
 
+import ui_helpers
 from kademlia_dht import dht, id, networking, protocols, node, contact, storage, routers, errors, helpers, pickler
 from kademlia_dht.constants import Constants
 
@@ -32,18 +35,12 @@ open UserInterface(), then check if the user is in a network already or not
 - the k-buckets are stored in a JSON file, which is used to check this, 
 and if the user is not in a network, the user is prompted to join a network.
 """
-parser = argparse.ArgumentParser()
-parser.add_argument("--use_global_ip", action="store_true",
-                    help="If the clients global IP should be used by the P2P network.")
-parser.add_argument("--debug", action="store_true",
-                    help="If the clients global IP should be used by the P2P network.")
-parser.add_argument("--port", type=int, required=False, default=7124)
 
-args = parser.parse_args()
 
-USE_GLOBAL_IP = args.use_global_ip
-PORT = args.port
-Constants.DEBUG = args.debug
+USE_GLOBAL_IP, PORT, verbose = ui_helpers.handle_terminal()
+Constants.DEBUG = verbose  # TODO: Remove - constants.DEBUG should be deprecated once logging is done.
+
+logger: logging.Logger = ui_helpers.create_logger(verbose)
 
 
 class Fonts:
@@ -81,7 +78,8 @@ class ContactViewer(ctk.CTk):
         self.export_button.pack(padx=20, pady=10)
 
     def show_error(self, error_message: str):
-        print(f"[Error] {error_message}")
+        logger.error(f"[Error] {error_message}")
+
         error_window = ErrorWindow(error_message)
         error_window.mainloop()
 
@@ -92,13 +90,13 @@ class ContactViewer(ctk.CTk):
             "protocol_type": str(self.protocol_type),
             "id": self.id
         }
-        print("[Status] Exporting our contact...")
+        logger.info(f"Exporting our contact...")
         with open(filename, "w") as f:
             json.dump(contact_dict, f)
         self.show_status(f"Exported our contact to {filename}.")
 
     def show_status(self, message: str):
-        print(f"[Status] {message}")
+        logger.info(message)
         status_window = StatusWindow(message)
         status_window.mainloop()
 
@@ -120,7 +118,7 @@ class StatusWindow(ctk.CTk):
             self.copy_button.pack(padx=30, pady=20)
 
     def copy(self):
-        print(f"[GUI] Copying data to clipboard: {self.copy_data}")
+        logger.info(f"Copying data to clipboard: {self.copy_data}")
         self.clipboard_clear()
         self.clipboard_append(self.copy_data)
         self.update()
@@ -147,7 +145,6 @@ class Settings(ctk.CTk):
             self.dht_export_file = ctk.CTkEntry(self, width=200, height=20, font=Fonts.text_font)
             self.dht_export_file.grid(column=1, row=1, padx=10, pady=10)
             self.dht_export_file.insert("1", f"dht.pickle")
-            print("CTK BUTTON TYPE", type(ctk.CTkButton))
             self.export_dht_button = ctk.CTkButton(self, text="Export/Save DHT", font=Fonts.text_font,
                                                    command=self.export_dht)
             self.export_dht_button.grid(column=1, row=2, padx=10, pady=10)
@@ -161,12 +158,12 @@ class Settings(ctk.CTk):
             no_dht_label.grid(column=0, row=1, padx=10, pady=10)
 
     def show_error(self, error_message: str):
-        print(f"[Error] {error_message}")
+        logger.error(error_message)
         error_window = ErrorWindow(error_message)
         error_window.mainloop()
 
     def show_status(self, message: str):
-        print(f"[Status] {message}")
+        logger.info(message)
         status_window = StatusWindow(message)
         status_window.mainloop()
 
@@ -238,21 +235,21 @@ class MainGUI(ctk.CTk):
 
         :return:
         """
-        print("[Initialisation] Initialising Kademlia.")
+        logger.info("Initialising Kademlia.")
 
         our_id = id.ID.random_id()
         if USE_GLOBAL_IP:  # Port forwarding is required.
             our_ip = get('https://api.ipify.org').content.decode('utf8')
         else:
             our_ip = "127.0.0.1"
-        print(f"[Initialisation] Our hostname is {our_ip}.")
+        logger.info(f"Our hostname is {our_ip}.")
 
         if PORT:
             valid_port = PORT
         else:
             valid_port = helpers.get_valid_port()
 
-        print(f"[Initialisation] Port free at {valid_port}, creating our node here.")
+        logger.info(f"Port free at {valid_port}, creating our node here.")
 
         protocol = protocols.TCPProtocol(
             url=our_ip, port=valid_port
@@ -269,7 +266,7 @@ class MainGUI(ctk.CTk):
 
         # Make directory of our_id at current working directory.
         create_dir_at = os.path.join(os.getcwd(), str(our_id.value))
-        print("[GUI] Making directory at", create_dir_at)
+        logger.info(f"Making directory at {create_dir_at}")
         if not exists(create_dir_at):
             os.mkdir(create_dir_at)
         self.dht: dht.DHT = dht.DHT(
@@ -356,13 +353,13 @@ class MainGUI(ctk.CTk):
 
     @classmethod
     def show_error(cls, error_message: str):
-        print(f"[Error] {error_message}")
+        logger.error(error_message)
         error_window = ErrorWindow(error_message)
         error_window.mainloop()
 
     @classmethod
     def show_status(cls, message: str, copy_data=None):
-        print(f"[Status] {message}")
+        logger.info(message)
         status_window = StatusWindow(message, copy_data)
         status_window.mainloop()
 
@@ -459,7 +456,6 @@ class DownloadFrame(ctk.CTkFrame):
             self.parent.show_error("ID out of range.")
         else:
             id_to_download: id.ID = id.ID(int(id_from_entry))
-            print("calling find value")
             found, contacts, val = self.parent.dht.find_value(key=id_to_download)
             # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
             if not found:
@@ -737,15 +733,15 @@ class BootstrapFrame(ctk.CTkFrame):
             id=known_id,
             protocol=known_protocol
         )
-        print("[GUI] Bootstrapping from known contact")
+        logger.debug("Bootstrapping from known contact")
         if not hasattr(parent, "dht"):
             parent.initialise_kademlia()
             return True
 
-        print("[GUI] Connecting to known peer's network...")
+        logger.info("Attempting to connect to known peer's network...")
         try:
             parent.dht.bootstrap(known_contact)
-            print("[GUI] Connected to known peer's network.")
+            logger.info("Connected to known peer's network.")
             return True
 
         except errors.RPCError as e:
@@ -763,13 +759,11 @@ class BootstrapFrame(ctk.CTkFrame):
                 return False
         except Exception as e:
             parent.show_error(str(e))
-            print(e)
-            print(f"[ERROR] Error bootstrapping: {e}")
             return False
 
 
 if __name__ == "__main__":
     app = MainGUI("dark")  # can also be light
     app.mainloop()
-    print("Done!")
+    logger.info("Done!")
     exit(0)

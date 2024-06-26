@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from datetime import datetime
 from typing import Optional
@@ -8,6 +9,9 @@ from kademlia_dht.constants import Constants
 from kademlia_dht.dictionaries import StoreValue
 from kademlia_dht.id import ID
 from kademlia_dht.interfaces import IStorage
+
+
+logger = logging.getLogger("__main__")
 
 
 class VirtualStorage(IStorage):
@@ -141,7 +145,7 @@ class SecondaryJSONStorage(IStorage):
         """
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
         with open(self.filename, "r") as f:
-            print(f"Set at {self.filename}.")
+            logger.info(f"Set at {self.filename}.")
             try:
                 json_data: dict = json.load(f)
             except json.JSONDecodeError:
@@ -154,12 +158,11 @@ class SecondaryJSONStorage(IStorage):
         )
         if key.value in json_data:
             json_data.pop(key.value)
+
         if str(key.value) in json_data:
             json_data.pop(str(key.value))
 
-            print(json_data)
         json_data[key.value] = to_store
-        print(json_data)
 
         with open(self.filename, "w") as f:
             json.dump(json_data, f)
@@ -171,12 +174,12 @@ class SecondaryJSONStorage(IStorage):
         :return:
         """
         with open(self.filename, "r") as f:
-            print(f"Contains at {self.filename}")
+            logger.debug(f"Contains key \"{key}\" at {self.filename}")
             f.seek(0)
             try:
                 json_data: dict[int, StoreValue] = json.load(f)
             except json.JSONDecodeError as e:
-                print(e)
+                logger.error(f"JSON decoding error in 'contains' for {self.filename}: {e}")
                 json_data = {}
 
         if isinstance(key, ID):
@@ -191,11 +194,11 @@ class SecondaryJSONStorage(IStorage):
         :return:
         """
         with open(self.filename, "r") as f:
-            print(f"Get timestamp at {self.filename}")
+            logger.debug(f"Get timestamp at {self.filename}")
             try:
                 json_data: dict[int, StoreValue] = json.load(f)
             except json.JSONDecodeError as e:
-                print(e)
+                logger.error(f"JSON decoding error in 'get_timestamp' for {self.filename}: {e}")
                 json_data = {}
         if isinstance(key, ID):
             return datetime.fromisoformat(json_data[key.value]["republish_timestamp"])
@@ -210,13 +213,9 @@ class SecondaryJSONStorage(IStorage):
         """
         with open(self.filename, "r") as f:
             f.seek(0)
-            print(f"Get at {self.filename}")
-            # try:
+            logger.debug(f"Get at {self.filename}")
             json_data: dict = json.load(f)
-            print("fdata", json_data)
-            # except json.JSONDecodeError as e:
-            #     print(e)
-            #    json_data = {}
+            logger.debug("fdata", json_data)
         if isinstance(key, ID):
             return json_data[str(key.value)]["value"]
         elif isinstance(key, int):
@@ -231,7 +230,7 @@ class SecondaryJSONStorage(IStorage):
         :return:
         """
         with open(self.filename, "r") as f:
-            print(f"Get expiration time at {self.filename}")
+            logger.debug(f"Get expiration time at {self.filename}")
             try:
                 json_data: dict[int, StoreValue] = json.load(f)
             except json.JSONDecodeError:
@@ -245,7 +244,7 @@ class SecondaryJSONStorage(IStorage):
         :return:
         """
         with open(self.filename, "r") as f:
-            print(f"Remove at {self.filename}")
+            logger.debug(f"Remove at {self.filename}")
             try:
                 json_data: dict[str, StoreValue] = json.load(f)
             except json.JSONDecodeError:
@@ -263,7 +262,7 @@ class SecondaryJSONStorage(IStorage):
         :return:
         """
         with open(self.filename, "r") as f:
-            print(f"Get keys at {self.filename}")
+            logger.debug(f"Get keys at {self.filename}")
             try:
                 json_data: dict[int, StoreValue] = json.load(f)
             except json.JSONDecodeError:
@@ -277,7 +276,7 @@ class SecondaryJSONStorage(IStorage):
         :return:
         """
         with open(self.filename, "r") as f:
-            print(f"Touch at {self.filename}")
+            logger.debug(f"Touch at {self.filename}")
             try:
                 json_data: dict[int, StoreValue] = json.load(f)
             except json.JSONDecodeError:
@@ -293,17 +292,16 @@ class SecondaryJSONStorage(IStorage):
 
         with open(self.filename, "r") as f:
             if Constants.DEBUG:
-                print(f"[DEBUG] Try get value at {self.filename}")
+                logger.debug(f"Try get value at {self.filename}")
             try:
-                if Constants.DEBUG:
-                    f.seek(0)
-                    print(f"[DEBUG] File at {self.filename}: {f.read()}")
+                f.seek(0)
+                logger.debug(f"File at {self.filename}: {f.read()}")
                 f.seek(0)
                 # Key is a string because JSON library stores integers at strings
                 json_data: dict[str, StoreValue] = json.load(f)
-                print(json_data)
+                logger.debug(json_data)
             except json.JSONDecodeError as e:
-                print(e)
+                logger.error(f"JSON decoding error in 'try_get_value' for {self.filename}: {e}")
                 json_data = {}
         val = None
         ret = False
@@ -326,7 +324,7 @@ class SecondaryJSONStorage(IStorage):
         :return:
         """
         with open(filename) as f:
-            print(f"Set file at {self.filename}")
+            logger.debug(f"Adding data to JSON storage in{self.filename}")
             file_data = f.read()
         data_dict = {"filename": filename, "file_data": file_data}
         encoded_data: bytes = pickler.plain_encode_data(data=data_dict)

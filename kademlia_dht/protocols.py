@@ -1,3 +1,5 @@
+import logging
+
 import requests
 
 from kademlia_dht import pickler
@@ -15,12 +17,13 @@ from kademlia_dht.pickler import encode_data
 
 from tqdm import tqdm
 
+logger = logging.getLogger("__main__")
+
 
 def get_rpc_error(id: ID,
                   ret: BaseResponse | None,
                   timeout_error: bool,
                   peer_error: ErrorResponse) -> RPCError:
-    # print("Peer error:", peer_error)
     error = RPCError()
     if ret:
         error.id_mismatch_error = id != ret["random_id"]
@@ -136,27 +139,27 @@ class TCPSubnetProtocol(IProtocol):
                 random_id=id.value
             ))
         )
-        print(f"http://{self.url}:{self.port}/find_node")
+        logger.debug(f"http://{self.url}:{self.port}/find_node")
 
         ret = None
         timeout_error = False
         error = ""
         try:
-            print("[Client] Sending find_node RPC...")
+            logger.info("[Client] Sending find_node RPC...")
             ret = requests.post(
                 f"http://{self.url}:{self.port}/find_node",
                 data=encoded_data,
                 timeout=Constants.REQUEST_TIMEOUT
             )
-            print(ret)
+            logger.info(f"[Client] Received HTTP Response from {ret.url} with code {ret.status_code}")
 
         except requests.Timeout as t:
-            print("[ERROR] [Client] Timeout error when contacting node.\n", t)
+            logger.error("[Client] Timeout error when contacting node.\n", t)
             timeout_error = True
             error = t
 
         except Exception as e:
-            print("[ERROR] [Client]", e)
+            logger.error(f"[Client] {e}")
             # request timed out.
             timeout_error = False
             error = e
@@ -190,7 +193,7 @@ class TCPSubnetProtocol(IProtocol):
         except Exception as e:
             error = RPCError()
             error.protocol_error = True
-            print("[Client] Exception thrown: ", e)
+            logger.error(f"[Client] Exception thrown: {e}")
             return None, error
 
     def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, str | None, RPCError | None]:
@@ -229,14 +232,14 @@ class TCPSubnetProtocol(IProtocol):
 
         ret = None
         try:
-            print("[Client] Sending POST")
+            logger.debug("[Client] Sending POST")
             ret = requests.post(
                 url=f"http://{self.url}:{self.port}/find_value",
                 data=encoded_data,
                 timeout=Constants.REQUEST_TIMEOUT,
                 stream=True
             )
-            print("[Client] Completed POST")
+            logger.debug("[Client] Completed POST")
             timeout_error = False
             error = None
             if ret:
@@ -247,19 +250,16 @@ class TCPSubnetProtocol(IProtocol):
                 encoded_data = b''
                 for chunk in ret.iter_content(chunk_size=block_size):
                     if chunk:
-                        print("chunk")
                         encoded_data += chunk
                         progress_bar.update(len(chunk))
 
-                # progress_bar.close()
-
         except requests.Timeout as t:
-            print("Timeout error", t)
+            logger.error(f"Timeout error:{t}")
             timeout_error = True
             error = t
 
         except Exception as e:
-            print("Exception!", e)
+            logger.error(f"Exception while trying to find_value: {e}")
             # request timed out.
             timeout_error = False
             error = e
@@ -278,7 +278,6 @@ class TCPSubnetProtocol(IProtocol):
                             ID(c["contact"])
                         )
                         contacts.append(new_contact)
-                        print("about to return")
 
                 return [c for c in contacts if c.protocol is not None], \
                     ret_decoded["value"], \
@@ -296,7 +295,7 @@ class TCPSubnetProtocol(IProtocol):
         except Exception as e:
             rpc_error = RPCError(str(e))
             rpc_error.protocol_error = True
-            print(f"[Client] Error performing find_value: {rpc_error}")
+            logger.error(f"[Client] Error performing find_value: {rpc_error}")
             return None, None, rpc_error
 
     def ping(self, sender: Contact) -> RPCError:
@@ -326,21 +325,21 @@ class TCPSubnetProtocol(IProtocol):
         error = None
         ret = None
         try:
-            print("[Client] Sending Ping RPC...")
+            logger.info("[Client] Sending Ping RPC...")
             ret: requests.Response = requests.post(
                 url=f"http://{self.url}:{self.port}/ping",
                 data=encoded_data,
                 timeout=Constants.REQUEST_TIMEOUT
             )
-            print(f"[Client] Received HTTP Response from {ret.url} with code {ret.status_code}")
+            logger.info(f"[Client] Received PING response from {ret.url} with code {ret.status_code}")
 
         except requests.Timeout as t:
-            print("[Client] Ping timeout error: ", t)
+            logger.error("[Client] Ping timeout error: ", t)
             timeout_error = True
             error = t
 
         except Exception as e:
-            print("[ERROR] [Client] Other exception thrown (Ping): ", e)
+            logger.error(f"[Client] Other exception thrown (Ping): {e}")
             # request timed out.
             timeout_error = False
             error = e
@@ -381,21 +380,21 @@ class TCPSubnetProtocol(IProtocol):
         ret = None
 
         try:
-            print(f"[Client] Running Store POST to http://{self.url}:{self.port}/store")
+            logger.info(f"[Client] Sending STORE to http://{self.url}:{self.port}/store")
             ret = requests.post(
                 url=f"http://{self.url}:{self.port}/store",
                 data=encoded_data,
                 timeout=Constants.REQUEST_TIMEOUT
             )
-            print("[Client] Store POST done!")
+            logger.info(f"[Client] Received STORE response from {ret.url} with code {ret.status_code}")
 
         except requests.Timeout as t:
-            print("[Client] Timeout error when contacting node.")
+            logger.error("[Client] Timeout error when contacting node.")
             timeout_error = True
             error = t
 
         except Exception as e:
-            print("Exception!", e)
+            logger.error(f"Exception while trying to store: {e}")
             # request timed out.
             timeout_error = False
             error = e
@@ -428,27 +427,27 @@ class TCPProtocol(IProtocol):
                 random_id=id.value
             ))
         )
-        print(f"http://{self.url}:{self.port}/find_node")
+        logger.debug(f"http://{self.url}:{self.port}/find_node")
 
         ret = None
         timeout_error = False
         error = ""
         try:
-            print("[Client] Sending find_node RPC...")
+            logger.info("[Client] Sending find_node RPC...")
             ret = requests.post(
                 f"http://{self.url}:{self.port}/find_node",
                 data=encoded_data,
                 timeout=Constants.REQUEST_TIMEOUT
             )
-            print(ret)
+            logger.info(f"[Client] Received FIND_NODE response from {ret.url} with code {ret.status_code}")
 
         except requests.Timeout as t:
-            print("[ERROR] [Client] Timeout error when contacting node.\n", t)
+            logger.error("[Client] Timeout error when contacting node.\n", t)
             timeout_error = True
             error = t
 
         except Exception as e:
-            print("[ERROR] [Client]", e)
+            logger.error(f"[Client] {e}")
             # request timed out.
             timeout_error = False
             error = e
@@ -480,7 +479,7 @@ class TCPProtocol(IProtocol):
         except Exception as e:
             error = RPCError()
             error.protocol_error = True
-            print("[Client] Exception thrown: ", e)
+            logger.error(f"[Client] Exception thrown: {e}")
             return None, error
 
     def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, str | None, RPCError | None]:
@@ -508,19 +507,19 @@ class TCPProtocol(IProtocol):
             ))
         )
 
+        ret_decoded = None
         try:
-            print("[Client] Sending POST")
+            logger.info(f"[Client] Sending FIND_VALUE to http://{self.url}:{self.port}/find_value")
             ret = requests.post(
                 url=f"http://{self.url}:{self.port}/find_value",
                 data=encoded_data,
                 timeout=Constants.REQUEST_TIMEOUT,
                 stream=True
             )
-            print("[Client] Completed POST")
+            logger.info(f"[Client] Received FIND_VALUE response from {ret.url} with code {ret.status_code}")
             timeout_error = False
             error = None
 
-            ret_decoded = None
             if ret:
                 total_size = int(ret.headers.get('Content-Length', 0))
                 block_size = 1024  # 1 Kilobyte
@@ -537,12 +536,12 @@ class TCPProtocol(IProtocol):
 
 
         except requests.Timeout as t:
-            print("Timeout error", t)
+            logger.error(f"Timeout error:{t}")
             timeout_error = True
             error = t
 
         except Exception as e:
-            print("Exception!", e)
+            logger.error(f"Exception while trying to find_value: {e}")
             # request timed out.
             timeout_error = False
             error = e
@@ -557,7 +556,6 @@ class TCPProtocol(IProtocol):
                             ID(c["contact"])
                         )
                         contacts.append(new_contact)
-                        print("about to return")
 
                 return [c for c in contacts if c.protocol is not None], \
                     ret_decoded["value"], \
@@ -575,7 +573,7 @@ class TCPProtocol(IProtocol):
         except Exception as e:
             rpc_error = RPCError(str(e))
             rpc_error.protocol_error = True
-            print(f"[Client] Error performing find_value: {rpc_error}")
+            logger.error(f"[Client] Error performing find_value: {rpc_error}")
             return None, None, rpc_error
 
     def ping(self, sender: Contact) -> RPCError:
@@ -589,28 +587,26 @@ class TCPProtocol(IProtocol):
 
         timeout_error = False
         error = None
-        ret = None
+        ret: requests.Response | None = None
         try:
-            print("[Client] Sending Ping RPC...")
+            logger.info("[Client] Sending Ping RPC...")
             ret: requests.Response = requests.post(
                 url=f"http://{self.url}:{self.port}/ping",
                 data=encoded_data,
                 timeout=Constants.REQUEST_TIMEOUT
             )
-            print(f"[Client] Received HTTP Response from {ret.url} with code {ret.status_code}")
+            logger.info(f"[Client] Received HTTP Response from {ret.url} with code {ret.status_code}")
 
         except requests.Timeout as t:
-            print("[Client] Ping timeout error: ", t)
+            logger.error(f"[Client] Ping timeout error: {t}")
             timeout_error = True
             error = t
 
         except Exception as e:
-            print("[ERROR] [Client] Other exception thrown (Ping): ", e)
+            logger.error(f"[Client] Other exception thrown (Ping): {e}")
             # request timed out.
             timeout_error = False
             error = e
-
-        ret_base_response = None
 
         formatted_response = None
         if ret:
@@ -645,21 +641,21 @@ class TCPProtocol(IProtocol):
         ret = None
 
         try:
-            print(f"[Client] Running Store POST to http://{self.url}:{self.port}/store")
+            logger.info(f"[Client] Sending STORE to http://{self.url}:{self.port}/store")
             ret = requests.post(
                 url=f"http://{self.url}:{self.port}/store",
                 data=encoded_data,
                 timeout=Constants.REQUEST_TIMEOUT
             )
-            print("[Client] Store POST done!")
+            logger.info(f"[Client] Received STORE response from {ret.url} with code {ret.status_code}")
 
         except requests.Timeout as t:
-            print("[Client] Timeout error when contacting node.")
+            logger.error("[Client] Timeout error when contacting node.")
             timeout_error = True
             error = t
 
         except Exception as e:
-            print("Exception!", e)
+            logger.error(f"Exception while trying to store: {e}")
             # request timed out.
             timeout_error = False
             error = e

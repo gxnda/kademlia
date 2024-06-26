@@ -1,3 +1,4 @@
+import logging
 import threading
 from datetime import datetime, timedelta
 from typing import Callable, Optional
@@ -14,6 +15,9 @@ from kademlia_dht.id import ID
 from kademlia_dht.interfaces import IProtocol, IStorage
 from kademlia_dht.node import Node
 from kademlia_dht.routers import BaseRouter
+
+
+logger = logging.getLogger("__main__")
 
 
 class DHT:
@@ -135,7 +139,7 @@ class DHT:
         return self._originator_storage
 
     def store(self, key: ID, val: str) -> None:
-        print(f"[Client] Storing value at {key}.")
+        logger.info(f"[Client] Storing value at {key}.")
         self.touch_bucket_with_key(key)
         # We're storing to K closer contacts
         self._originator_storage.set(key, val)
@@ -193,7 +197,6 @@ class DHT:
 
                         if store_to:
                             separating_nodes: int = self._get_separating_nodes_count(self.our_contact, store_to)
-                            print("Separating nodes:", separating_nodes)  # TODO: remove
                             exp_time_sec: int = Constants.EXPIRATION_TIME_SEC // (2 ** separating_nodes)
                             error: RPCError = store_to.protocol.store(self.node.our_contact, key, lookup["val"],
                                                                       exp_time_sec=exp_time_sec)
@@ -237,8 +240,7 @@ class DHT:
         :param known_peer: Peer we know / are bootstrapping from.
         :return: None
         """
-        print("[Client] Bootstrapping from known peer.")
-        # print(f"Adding known peer with ID {known_peer.id}")
+        logger.info("[Client] Bootstrapping from known peer.")
         self.node.bucket_list.add_contact(known_peer)
 
         # UNITTEST NOTES: This should return something in test_bootstrap_outside_bootstrapping_bucket,
@@ -251,7 +253,6 @@ class DHT:
             sender=self.our_contact, key=self.our_id)
         self.handle_error(error, known_peer)
         if not error.has_error():
-            # print("NO ERROR")
 
             # add all contacts the known peer DIRECTLY knows
             for contact in contacts:
@@ -297,10 +298,8 @@ class DHT:
         # put in a separate list as contacts collection for this bucket might change.
         contacts: list[Contact] = bucket.contacts
         for contact in contacts:
-            # print(contact.id, contact.protocol.node.bucket_list.contacts())
             new_contacts, timeout_error = contact.protocol.find_node(
                 self.our_contact, random_id)
-            # print(contacts.index(contact) + 1, "new contacts", new_contacts)
             self.handle_error(timeout_error, contact)
             if new_contacts:
                 for other_contact in new_contacts:
@@ -501,7 +500,7 @@ class DHT:
         :return:
         """
 
-        print("[Client] Evicting contact from bucket.")
+        logger.debug("[Client] Evicting contact from bucket.")
 
         if to_evict.id.value in self.eviction_count:
             self.eviction_count.pop(to_evict.id.value)
@@ -517,21 +516,21 @@ class DHT:
         """
         Saves DHT to file.
         """
-        print(f"[Client] Saving DHT to {filename}...")
+        logger.info(f"[Client] Saving DHT to {filename}...")
         helpers.make_sure_filepath_exists(filename)
         with open(filename, "wb") as output_file:
             dill.dump(self, file=output_file)
-        print(f"[Client] Saved DHT to {filename}.")
+        logger.info(f"[Client] Saved DHT to {filename}.")
 
     @classmethod
     def load(cls, filename: str):
         """
         Loads DHT from file.
         """
-        print(f"[Client] Loading DHT from file {filename}...")
+        logger.info(f"[Client] Loading DHT from file {filename}...")
         with open(filename, "rb") as input_file:
             data = dill.load(file=input_file)
-        print(f"[Client] Loaded DHT from file {filename}.")
+        logger.info(f"[Client] Loaded DHT from file {filename}.")
         return data
 
     def _replace_with_pending_contact(self, bucket: KBucket) -> None:

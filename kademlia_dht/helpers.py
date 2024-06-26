@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 import socket
@@ -8,6 +9,8 @@ from kademlia_dht.contact import Contact
 from kademlia_dht.id import ID
 from kademlia_dht.node import Node
 from kademlia_dht.storage import VirtualStorage
+
+logger = logging.getLogger("__main__")
 
 
 def empty_node():
@@ -53,25 +56,20 @@ def convert_file_to_key(filename: str) -> ID:
 
 def make_sure_filepath_exists(filename: str) -> None:
     if os.path.isabs(filename):
-        if Constants.DEBUG:
-            print(f"[DEBUG] Path {filename} is absolute.")
+        logger.debug(f"Path {filename} is absolute.")
         path = filename
     else:
-        if Constants.DEBUG:
-            print(f"[DEBUG] Path {filename} is not absolute.")
+        logger.debug(f"Path {filename} is not absolute.")
         path = os.path.join(os.getcwd(), filename)
-        if Constants.DEBUG:
-            print(f"[DEBUG] Absolute version is {path}")
+        logger.debug(f"Absolute version is {path}")
     if not os.path.exists(path):
-        if Constants.DEBUG:
-            print(f"[DEBUG] Path does not exist.")
+        logger.debug(f"Path does not exist.")
         dirname = os.path.dirname(path)
         if dirname:
             if not os.path.exists(dirname):
                 os.mkdir(dirname)
     else:
-        if Constants.DEBUG:
-            print("[DEBUG] Path already existed.")
+        logger.debug("Path already existed.")
 
 
 def port_is_free(port: int) -> bool:
