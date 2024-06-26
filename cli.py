@@ -130,7 +130,7 @@ class ContactViewer(GenericMenu):
 
         # Input validation for filename
         filename = input("Where should the file be saved to? "
-                         "(Leave blank for \"our_contact\".json in root folder):\n>> ")
+                         "(Leave blank for \"our_contact.json\" in project root directory):\n>> ")
         if not filename:
             filename = "our_contact.json"
 
