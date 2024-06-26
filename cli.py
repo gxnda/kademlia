@@ -115,8 +115,8 @@ class ContactViewer(GenericMenu):
         self.add_info(f"Protocol type: {self.protocol_type}")
         self.add_info(f"URL/IP: {self.url}")
         self.add_info(f"Port: {self.port}")
-        self.add_option("Back", self.go_back)
         self.add_option("Export our contact", self.export_contact)
+        self.add_option("Back", self.go_back)
         self.display_all()
 
     def export_contact(self):
