@@ -26,7 +26,8 @@ class DHT:
 
     This has multiple purposes:
      - One is to propagate key-values to other close peers on the network using a lookup algorithm.
-     - Another is to use the same lookup algorithm to search for other close nodes that might have a value that we don’t have.
+     - Another is to use the same lookup algorithm to search for other close nodes that might have a value that we
+        don’t have.
      - It is also used for bootstrapping our peer into a pre-existing network.
 
     """
@@ -157,7 +158,6 @@ class DHT:
         :return: Found: bool (If it is found or not), contacts: list[Contact], val: str | None (value returned)
         """
         self.touch_bucket_with_key(key)
-        contacts_queried: list[Contact] = []
 
         # ret (found: False, contacts: None, val: None)
         contacts: list[Contact] | None = None

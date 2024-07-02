@@ -97,7 +97,8 @@ class VirtualStorage(IStorage):
 
     def try_get_value(self, key: ID) -> tuple[bool, str | None]:
         """
-        Tries to get a given value from a key-value pair, given the key. Returns True | False, and the value if it was found.
+        Tries to get a given value from a key-value pair, given the key. Returns True | False,
+        and the value if it was found.
         :param key:
         :return:
         """
