@@ -2,9 +2,10 @@ import logging
 import os
 import random
 import socket
+import threading
+import time
 from hashlib import sha1
 
-from kademlia_dht.constants import Constants
 from kademlia_dht.contact import Contact
 from kademlia_dht.id import ID
 from kademlia_dht.node import Node
@@ -104,3 +105,78 @@ def get_valid_port(default_tried=False,
         return port
     else:
         return get_valid_port(default_tried=default_tried)
+
+
+class Timer:
+    def __init__(self, interval_sec: float, function: callable, auto_reset: bool = False, *args, **kwargs):
+        self.interval_sec: float = interval_sec
+        self.function: callable = function
+        self.auto_reset: bool = auto_reset
+        self.args: tuple = args
+        self.kwargs: dict = kwargs
+        self._stop_event = threading.Event()
+        self.__thread = None
+
+    def run(self) -> None:
+        logger.info("Starting timer.")
+        print("Starting timer.")
+        self._stop_event.clear()
+
+        while not self._stop_event.is_set():
+            if self._stop_event.wait(self.interval_sec):
+                break
+            self.function(*self.args, **self.kwargs)
+            if not self.auto_reset:
+                break
+
+        logger.info("Timer stopped.")
+        print("Timer stopped.")
+
+    def reset(self) -> None:
+        self.stop()
+        self.start()
+
+    def start(self) -> None:
+        if self.__thread is None or not self.__thread.is_alive():
+            self.__thread = threading.Thread(target=self.run)
+            self.__thread.start()
+        else:
+            logger.info("Resetting timer.")
+            self.reset()
+
+    def stop(self) -> None:
+        if self._stop_event.is_set():
+            logger.warning("Timer already stopped.")
+            return
+
+        logger.info("Stopping timer.")
+        print("Stopping timer.")
+        self._stop_event.set()
+        if self.__thread and self.__thread.is_alive():
+            self.__thread.join()
+
+    def stopped(self):
+        return self._stop_event.is_set()
+
+
+if __name__ == "__main__":
+    logger.setLevel(logging.DEBUG)
+    start = time.time()
+    called = 0
+
+
+    def example_function():
+        global start, called
+        print(f"Function called at: {time.time() - start} seconds")
+        called += 1
+
+
+    timer = Timer(3, example_function, auto_reset=True)
+    timer.start()
+    timer.start()
+    time.sleep(10)  # Let it run for 10 seconds
+    timer.stop()
+    timer.stop()
+
+    print(f"Called {called} times.")
+
