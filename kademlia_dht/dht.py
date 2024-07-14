@@ -341,7 +341,7 @@ class DHT:
         rep_keys = [
             k for k in self._republish_storage.get_keys()
             if now - self._republish_storage.get_timestamp(k) >=
-               Constants.KEY_VALUE_REPUBLISH_INTERVAL_MS
+            Constants.KEY_VALUE_REPUBLISH_INTERVAL_MS
         ]
 
         for k in rep_keys:

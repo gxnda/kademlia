@@ -198,7 +198,7 @@ class BaseRouter:
 
 class Router(BaseRouter):
     """
-    TODO: Talk about what this does.
+    TODO: Add documentation.
     """
 
     def __init__(self, node: Node = None) -> None:
@@ -227,7 +227,7 @@ class Router(BaseRouter):
         closer_uncontacted_nodes = []
         further_uncontacted_nodes = []
         if Constants.TRY_CLOSEST_BUCKET:
-            # Spec: The lookup initator starts by picking a nodes from its closest non-empty k-bucket
+            # Spec: The lookup initiator starts by picking a nodes from its closest non-empty k-bucket
             bucket: KBucket = self.find_closest_nonempty_kbucket(key)
 
             # Not in spec: sort by the closest nodes in the closest bucket.
@@ -281,7 +281,7 @@ class Router(BaseRouter):
             if c.id not in [i.id for i in ret]:
                 ret.append(c)
 
-        # Spec: The lookup terminates when the initator has queried and received responses from the k closest nodes
+        # Spec: The lookup terminates when the initiator has queried and received responses from the k closest nodes
         # it has seen.
         have_work = True
         while len(ret) < Constants.K and have_work:
@@ -343,7 +343,7 @@ class Router(BaseRouter):
         # contacts, val, found, found_by
         return FindResult(
             found=False,
-            contacts=(ret if give_me_all else sorted(ret, key=lambda c: c.id ^ key)[:Constants.K]),
+            contacts=(ret if give_me_all else sorted(ret, key=lambda contact: contact.id ^ key)[:Constants.K]),
             found_by=None,
             val=None
         )
