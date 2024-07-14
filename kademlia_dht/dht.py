@@ -1,5 +1,4 @@
 import logging
-import threading
 from datetime import datetime, timedelta
 from typing import Callable, Optional
 
@@ -216,7 +215,7 @@ class DHT:
         kbucket: KBucket = self.node.bucket_list.get_kbucket(key)
         contacts: list[Contact]
         if (now - kbucket.time_stamp) < timedelta(
-                milliseconds=Constants.BUCKET_REFRESH_INTERVAL):
+                milliseconds=Constants.BUCKET_REFRESH_INTERVAL_MS):
             # Bucket has been refreshed recently, so don't do a lookup as we
             # have the k closest contacts.
             contacts: list[Contact] = self.node.bucket_list.get_close_contacts(
@@ -315,9 +314,8 @@ class DHT:
         not performed a node lookup in the past hour. Refreshing means picking a random ID in the bucket’s range and
         performing a node search for that ID.”
         """
-        bucket_refresh_timer = threading.Timer(Constants.BUCKET_REFRESH_INTERVAL / 1000, self._refresh_bucket)
+        bucket_refresh_timer = helpers.Timer(Constants.BUCKET_REFRESH_INTERVAL_MS / 1000, self._refresh_bucket)
         bucket_refresh_timer.auto_reset = True
-        bucket_refresh_timer.elapsed += self.bucket_refresh_timer_elapsed
         bucket_refresh_timer.start()
 
     def _bucket_refresh_timer_elapsed(self):
@@ -325,7 +323,7 @@ class DHT:
         # Put into a separate list as bucket collections may be modified.
         current_buckets: list[KBucket] = [
             b for b in self.node.bucket_list.buckets
-            if (now - b.time_stamp) >= timedelta(milliseconds=Constants.BUCKET_REFRESH_INTERVAL)
+            if (now - b.time_stamp) >= timedelta(milliseconds=Constants.BUCKET_REFRESH_INTERVAL_MS)
         ]
 
         for b in current_buckets:
@@ -343,7 +341,7 @@ class DHT:
         rep_keys = [
             k for k in self._republish_storage.get_keys()
             if now - self._republish_storage.get_timestamp(k) >=
-               Constants.KEY_VALUE_REPUBLISH_INTERVAL
+               Constants.KEY_VALUE_REPUBLISH_INTERVAL_MS
         ]
 
         for k in rep_keys:
@@ -392,7 +390,7 @@ class DHT:
             key for key in self._originator_storage.get_keys()
             if (now -
                 self._originator_storage.get_timestamp(key.value)) >= timedelta(
-                milliseconds=Constants.ORIGINATOR_REPUBLISH_INTERVAL)
+                milliseconds=Constants.ORIGINATOR_REPUBLISH_INTERVAL_MS)
         ]
 
         for k in keys_pending_republish:

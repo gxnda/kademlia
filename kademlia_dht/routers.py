@@ -449,7 +449,7 @@ class ParallelRouter(BaseRouter):
         Returns if the time since query was triggered is longer than Constants REQUEST-TIMEOUT.
         :return:
         """
-        return (datetime.now() - self.__now).total_seconds() > Constants.REQUEST_TIMEOUT
+        return (datetime.now() - self.__now).total_seconds() > Constants.REQUEST_TIMEOUT_SEC
 
     def __dequeue_remaining_work(self):
         """
@@ -566,7 +566,7 @@ class ParallelRouter(BaseRouter):
         # The lookup terminates when the initiator has queried and
         # received responses from the k closest nodes it has seen.
         while len(ret) < Constants.K and have_work:
-            sleep(Constants.RESPONSE_WAIT_TIME / 1000)
+            sleep(Constants.RESPONSE_WAIT_TIME_MS / 1000)
 
             found, found_return = self.parallel_found(find_result, found_return)
             if found:

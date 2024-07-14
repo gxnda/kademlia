@@ -149,7 +149,7 @@ class TCPSubnetProtocol(IProtocol):
             ret = requests.post(
                 f"http://{self.url}:{self.port}/find_node",
                 data=encoded_data,
-                timeout=Constants.REQUEST_TIMEOUT
+                timeout=Constants.REQUEST_TIMEOUT_SEC
             )
             logger.info(f"[Client] Received HTTP Response from {ret.url} with code {ret.status_code}")
 
@@ -236,7 +236,7 @@ class TCPSubnetProtocol(IProtocol):
             ret = requests.post(
                 url=f"http://{self.url}:{self.port}/find_value",
                 data=encoded_data,
-                timeout=Constants.REQUEST_TIMEOUT,
+                timeout=Constants.REQUEST_TIMEOUT_SEC,
                 stream=True
             )
             logger.debug("[Client] Completed POST")
@@ -329,7 +329,7 @@ class TCPSubnetProtocol(IProtocol):
             ret: requests.Response = requests.post(
                 url=f"http://{self.url}:{self.port}/ping",
                 data=encoded_data,
-                timeout=Constants.REQUEST_TIMEOUT
+                timeout=Constants.REQUEST_TIMEOUT_SEC
             )
             logger.info(f"[Client] Received PING response from {ret.url} with code {ret.status_code}")
 
@@ -384,7 +384,7 @@ class TCPSubnetProtocol(IProtocol):
             ret = requests.post(
                 url=f"http://{self.url}:{self.port}/store",
                 data=encoded_data,
-                timeout=Constants.REQUEST_TIMEOUT
+                timeout=Constants.REQUEST_TIMEOUT_SEC
             )
             logger.info(f"[Client] Received STORE response from {ret.url} with code {ret.status_code}")
 
@@ -437,7 +437,7 @@ class TCPProtocol(IProtocol):
             ret = requests.post(
                 f"http://{self.url}:{self.port}/find_node",
                 data=encoded_data,
-                timeout=Constants.REQUEST_TIMEOUT
+                timeout=Constants.REQUEST_TIMEOUT_SEC
             )
             logger.info(f"[Client] Received FIND_NODE response from {ret.url} with code {ret.status_code}")
 
@@ -513,7 +513,7 @@ class TCPProtocol(IProtocol):
             ret = requests.post(
                 url=f"http://{self.url}:{self.port}/find_value",
                 data=encoded_data,
-                timeout=Constants.REQUEST_TIMEOUT,
+                timeout=Constants.REQUEST_TIMEOUT_SEC,
                 stream=True
             )
             logger.info(f"[Client] Received FIND_VALUE response from {ret.url} with code {ret.status_code}")
@@ -593,7 +593,7 @@ class TCPProtocol(IProtocol):
             ret: requests.Response = requests.post(
                 url=f"http://{self.url}:{self.port}/ping",
                 data=encoded_data,
-                timeout=Constants.REQUEST_TIMEOUT
+                timeout=Constants.REQUEST_TIMEOUT_SEC
             )
             logger.info(f"[Client] Received HTTP Response from {ret.url} with code {ret.status_code}")
 
@@ -645,7 +645,7 @@ class TCPProtocol(IProtocol):
             ret = requests.post(
                 url=f"http://{self.url}:{self.port}/store",
                 data=encoded_data,
-                timeout=Constants.REQUEST_TIMEOUT
+                timeout=Constants.REQUEST_TIMEOUT_SEC
             )
             logger.info(f"[Client] Received STORE response from {ret.url} with code {ret.status_code}")
 
