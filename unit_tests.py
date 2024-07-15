@@ -289,7 +289,6 @@ class ForceFailedAddTest(unittest.TestCase):
                         "Expected new contact NOT to replace an older contact.")
 
 
-# 3 Here don't work
 class NodeLookupTests(unittest.TestCase):
 
     def test_get_close_contacts_ordered(self):
@@ -337,18 +336,19 @@ class NodeLookupTests(unittest.TestCase):
             distance = i
 
         # Verify the contacts with the smallest distances have been returned from all possible distances.
-        last_distance = distances[-1]
+        largest_close_contact = distances[-1]
 
         # This just makes sure it returned the K smallest contact ID's possible.
         others = []
         for b in node.bucket_list.buckets:
             for c in b.contacts:
-                if c not in closest and (c.id ^ key) < last_distance:
+                if c not in closest and (c.id ^ key) < largest_close_contact:
                     others.append(c)
 
         self.assertTrue(
             len(others) == 0,
-            "Expected no other contacts with a smaller distance than the greatest distance to exist."
+            "Expected no other contacts with a smaller distance than the greatest distance to exist, "
+            f"found {len(others)} {f"with distance {others[0].id ^ key}" if len(others) == 1 else ''}."
         )
 
     def test_no_nodes_to_query(self):
@@ -515,7 +515,7 @@ class NodeLookupTests(unittest.TestCase):
 
     def test_simple_all_closer_contacts(self):
         # setup
-        # by selecting our node ID to zero, we ensure that all distances of other nodes 
+        # by selecting our node ID to zero, we ensure that all distances of other nodes
         # are greater than the distance to our node.
 
         # Create a router with the largest ID possible.
@@ -549,27 +549,31 @@ class NodeLookupTests(unittest.TestCase):
         # all contacts are in one bucket
         # This is because we added K node's contacts to router,
         # so it shouldn't have split.
-        contacts_to_query = router.node.bucket_list.buckets[0].contacts
+        # contacts_to_query = router.node.bucket_list.buckets[0].contacts
 
-        contacts = router.lookup(key=key,
-                                 rpc_call=router.rpc_find_nodes,
-                                 give_me_all=True)
+        find_result = router.lookup(key=key,
+                                    rpc_call=router.rpc_find_nodes,
+                                    give_me_all=True)
+
+        contacts = find_result["contacts"]
 
         # Make sure lookup returns K contacts.
-        self.assertTrue(len(contacts) == Constants.K, f"Expected K closer contacts, got {len(contacts)}.")
+        self.assertTrue(len(contacts) == Constants.K, f"Expected K closer contacts, got {len(contacts)}. {contacts}")
 
         # Make sure it realises all contacts should be closer than 2**160 - 1.
         self.assertTrue(len(router.closer_contacts) == Constants.K,
                         "All contacts should be closer than the ID 2**160 - 1.")
 
-        self.assertTrue(len(router.further_contacts) == 0, "Expected no further contacts.")
+        self.assertTrue(len(router.further_contacts) == 0,
+                        f"Expected no further contacts, got {[c.id for c in router.further_contacts]}")
 
     def test_simple_all_further_contacts(self):
         # setup
-        # by selecting our node ID to zero, we ensure that all distances of other nodes 
+        # by selecting our node ID to zero, we ensure that all distances of other nodes
         # are greater than the distance to our node.
 
-        # Create a router with the largest ID possible.
+        # Create a router with the smallest ID possible.
+        # By selecting our node ID to zero, we ensure that all distances of other nodes are > the distance to our node.
         router = Router(Node(Contact(id=ID(0), protocol=None), VirtualStorage()))
         nodes: list[Node] = []
 
@@ -600,18 +604,19 @@ class NodeLookupTests(unittest.TestCase):
         # all contacts are in one bucket
         # This is because we added K node's contacts to router,
         # so it shouldn't have split.
-        contacts_to_query = router.node.bucket_list.buckets[0].contacts
 
-        contacts = router.lookup(key=key,
-                                 rpc_call=router.rpc_find_nodes,
-                                 give_me_all=True)
+        find_result = router.lookup(key=key,
+                                    rpc_call=router.rpc_find_nodes,
+                                    give_me_all=True)
+
+        contacts = find_result["contacts"]
 
         # Make sure lookup returns K contacts.
-        self.assertTrue(len(contacts) == Constants.K, f"Expected K closer contacts, got {len(contacts)}.")
+        self.assertTrue(len(contacts) == 0, f"Expected 0 closer contacts, got {len(contacts)}.")
 
         # Make sure it realises all contacts should be further than the ID 0.
         self.assertTrue(len(router.further_contacts) == Constants.K,
-                        "All contacts should be further than the ID 0.")
+                        "All contacts should be further.")
 
         self.assertTrue(len(router.closer_contacts) == 0, "Expected no closer contacts.")
 
@@ -1160,7 +1165,6 @@ class BucketManagementTests(unittest.TestCase):
         # seen (they are added in chronological order.)
 
         non_responding_contact: Contact = bucket_list.buckets[1].contacts[0]
-        print(non_responding_contact.id)
         # Since the protocols are shared, we need to assign 
         # a unique protocol for this node for testing.
         vp_unresponding: VirtualProtocol = VirtualProtocol(

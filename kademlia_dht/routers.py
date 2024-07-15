@@ -1,3 +1,4 @@
+import copy
 import logging
 import threading
 from abc import abstractmethod
@@ -252,8 +253,10 @@ class Router(BaseRouter):
 
         # Spec: The initiator then sends parallel, async FIND_NODE RPCs to the "a" nodes it has chosen,
         # "a" is a system-wide parameter, such as 3.
-        query_result: FindResult = self._query(key, nodes_to_query, rpc_call, self.closer_contacts,
-                                               self.further_contacts)
+
+        query_result: FindResult = self._query(key, nodes_to_query, rpc_call, copy.copy(self.closer_contacts),
+                                               copy.copy(self.further_contacts))
+
         if query_result["found"]:
             return query_result
 
