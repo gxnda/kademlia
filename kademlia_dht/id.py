@@ -87,11 +87,14 @@ class ID:
         else:
             return self.value > val
 
+    def log_value(self):
+        return round(log(self.value, 2), 3)
+
     def __str__(self) -> str:
-        return str(self.value)
+        return str(self.log_value())
 
     def __repr__(self) -> str:
-        return str(self.value)
+        return str(self.log_value())
 
     @classmethod
     def max(cls):
