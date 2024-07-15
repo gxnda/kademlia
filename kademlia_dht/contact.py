@@ -18,3 +18,6 @@ class Contact:
     def touch(self) -> None:
         """Updates the last time the contact was seen."""
         self.last_seen = datetime.now()
+
+    def __repr__(self) -> str:
+        return f"{self.id}"
