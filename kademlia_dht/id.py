@@ -88,7 +88,10 @@ class ID:
             return self.value > val
 
     def log_value(self):
-        return round(log(self.value, 2), 3)
+        if self.value > 0:
+            return round(log(self.value, 2), 3)
+        else:
+            return self.value
 
     def __str__(self) -> str:
         return str(self.log_value())
