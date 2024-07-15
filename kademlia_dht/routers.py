@@ -11,7 +11,7 @@ from kademlia_dht.buckets import KBucket
 from kademlia_dht.constants import Constants
 from kademlia_dht.contact import Contact
 from kademlia_dht.dictionaries import ContactQueueItem, FindResult
-from kademlia_dht.errors import AllKBucketsAreEmptyError, ValueCannotBeNoneError, NoNonEmptyBucketsException
+from kademlia_dht.errors import ValueCannotBeNoneError, NoNonEmptyBucketsException
 from kademlia_dht.id import ID
 from kademlia_dht.node import Node
 
