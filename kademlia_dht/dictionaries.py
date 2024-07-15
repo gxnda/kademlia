@@ -82,7 +82,6 @@ class CommonRequest(TypedDict):
     This includes all possible headers that could be passed.
     """
     protocol: dict  # IProtocol
-    protocol_name: str
     random_id: int
     sender: int
     key: int
@@ -105,7 +104,6 @@ class ErrorResponse(BaseResponse, TypedDict):
 class ContactResponse(TypedDict):
     contact: int
     protocol: dict  # Or object?
-    protocol_name: dict
 
 
 class FindNodeResponse(BaseResponse, TypedDict):

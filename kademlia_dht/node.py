@@ -238,7 +238,6 @@ class Node:
             contact_info = {
                 "contact": c.id.value,
                 "protocol": c.protocol,
-                "protocol_name": type(c.protocol)
             }
 
             contact_dict.append(contact_info)
@@ -261,7 +260,6 @@ class Node:
                 contact_info = {
                     "contact": c.id.value,
                     "protocol": c.protocol,
-                    "protocol_name": type(c.protocol)
                 }
                 contact_dict.append(contact_info)
         return {"contacts": contact_dict,

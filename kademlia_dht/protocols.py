@@ -38,6 +38,16 @@ def get_rpc_error(id: ID,
     return error
 
 
+def decode_protocol(protocol: dict) -> IProtocol:
+    if protocol["type"] == "TCPProtocol":
+        return TCPProtocol(protocol["url"], protocol["port"])
+    elif protocol["type"] == "TCPSubnetProtocol":
+        return TCPSubnetProtocol(protocol["url"], protocol["port"], protocol["subnet"])
+    else:
+        logger.debug(f"Unknown protocol: {protocol}")
+        raise Exception(f"Unknown protocol type: {protocol['type']}")
+
+
 class VirtualProtocol(IProtocol):
     """
     For unit testing, doesn't really do much in the main
