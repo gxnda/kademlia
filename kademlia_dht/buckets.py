@@ -291,3 +291,6 @@ class BucketList:
 
     def contact_exists(self, contact: Contact) -> bool:
         return contact in self.contacts()
+
+    def __repr__(self):
+        return f"{[[c.id for c in b.contacts] for b in self.buckets]}"
