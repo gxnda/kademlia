@@ -169,6 +169,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
 
             # If we know the node on the subnet, this should always happen right?
             # Because this is for testing on the same PC.
+            self.server: TCPSubnetServer
             node = self.server.subnets.get(subnet)  # should be valid if inheriting from SubnetServer?
             if node:
                 logger.debug("[Server] Request called:", node.bucket_list.buckets)
