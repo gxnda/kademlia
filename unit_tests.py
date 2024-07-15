@@ -39,7 +39,7 @@ def setup_split_failure(bucket_list=None):
     host_id: ID = ID.random_id(2 ** 158, 2 ** 159 - 1)
 
     dummy_contact: Contact = Contact(host_id, VirtualProtocol())
-    dummy_contact.protocol.__node = Node(dummy_contact, VirtualStorage())
+    dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
 
     if not bucket_list:
         bucket_list = BucketList(our_contact=dummy_contact)
@@ -48,7 +48,7 @@ def setup_split_failure(bucket_list=None):
     # Also add a contact in this 0 - 2 ** 159 range
     # This ensures that only 1 bucket split will occur after 20 nodes with ID >= 2 ** 159 are added.
     dummy_contact = Contact(ID(1), VirtualProtocol())
-    dummy_contact.protocol.__node = Node(dummy_contact, VirtualStorage())
+    dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
     bucket_list.add_contact(Contact(ID(1), dummy_contact.protocol))
 
     assert len(bucket_list.buckets) == 1  # Bucket split should not have occurred.
@@ -77,7 +77,7 @@ def setup_split_failure(bucket_list=None):
             int.from_bytes(b_contact_id, byteorder="little")
         )
         dummy_contact = Contact(ID(1), VirtualProtocol())
-        dummy_contact.protocol.__node = Node(dummy_contact, VirtualStorage())
+        dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
         bucket_list.add_contact(
             Contact(contact_id, dummy_contact.protocol)
         )
@@ -163,7 +163,7 @@ class AddContactTest(unittest.TestCase):
         dummy_contact: Contact = Contact(id=ID(0),
                                          protocol=VirtualProtocol())
 
-        dummy_contact.protocol.__node = Node(dummy_contact, VirtualStorage())
+        dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
 
         bucket_list: BucketList = BucketList(dummy_contact)
         bucket_list.our_id = ID.random_id()
@@ -190,7 +190,7 @@ class AddContactTest(unittest.TestCase):
         :return:
         """
         dummy_contact = Contact(ID(0), VirtualProtocol())
-        dummy_contact.protocol.__node = Node(dummy_contact, VirtualStorage())
+        dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
         bucket_list: BucketList = BucketList(dummy_contact)
         bucket_list.our_id = ID.random_id()
 
@@ -221,7 +221,7 @@ class AddContactTest(unittest.TestCase):
         """
 
         dummy_contact = Contact(ID(0), VirtualProtocol())
-        dummy_contact.protocol.__node = Node(dummy_contact, VirtualStorage())
+        dummy_contact.protocol.node = Node(dummy_contact, VirtualStorage())
         bucket_list: BucketList = BucketList(dummy_contact)
         bucket_list.our_id = ID.random_id()
         for i in range(Constants.K):
@@ -426,7 +426,7 @@ class NodeLookupTests(unittest.TestCase):
         for _ in range(100):
             contact: Contact = Contact(id=ID.random_id(), protocol=VirtualProtocol())
             node: Node = Node(contact, VirtualStorage())
-            contact.protocol.__node = node
+            contact.protocol.node = node
             self.nodes.append(node)
 
         for n in self.nodes:
@@ -632,7 +632,7 @@ class DHTTest(unittest.TestCase):
                   storage_factory=VirtualStorage,
                   router=Router())
         # print(dht._originator_storage)
-        vp.__node = dht._router.node
+        vp.node = dht._router.node
         key = ID.random_id()
         dht.store(key, "Test")
         found, contacts, return_val = dht.find_value(key)
@@ -659,11 +659,11 @@ class DHTTest(unittest.TestCase):
         dht = DHT(id=ID.max(), router=Router(), protocol=vp1, originator_storage=store1,
                   republish_storage=store1, cache_storage=VirtualStorage())
 
-        vp1.__node = dht._router.node
+        vp1.node = dht._router.node
         contact_id: ID = ID.mid()  # middle ID
         other_contact: Contact = Contact(id=contact_id, protocol=vp2)
         other_node = Node(contact=other_contact, storage=store2)
-        vp2.__node = other_node
+        vp2.node = other_node
 
         # add this other contact to our peer list
         dht._router.node.bucket_list.add_contact(other_contact)
@@ -692,11 +692,11 @@ class DHTTest(unittest.TestCase):
 
         dht: DHT = DHT(id=ID.min(), protocol=vp1, router=Router(), storage_factory=lambda: store1)
 
-        vp1.__node = dht._router.node
+        vp1.node = dht._router.node
         contact_id = ID.max()
         other_contact = Contact(contact_id, vp2)
         other_node = Node(other_contact, store2)
-        vp2.__node = other_node
+        vp2.node = other_node
         # Add this other contact to our peer list.
         dht._router.node.bucket_list.add_contact(other_contact)
         key = ID(1)
@@ -720,11 +720,11 @@ class DHTTest(unittest.TestCase):
         store2 = VirtualStorage()
 
         dht: DHT = DHT(id=ID.min(), protocol=vp1, router=Router(), storage_factory=lambda: store1)
-        vp1.__node = dht._router.node
+        vp1.node = dht._router.node
         contact_id = ID.mid()
         other_contact = Contact(contact_id, vp2)
         other_node = Node(other_contact, store2)
-        vp2.__node = other_node
+        vp2.node = other_node
         dht._router.node.bucket_list.add_contact(other_contact)
 
         key = ID(0)
@@ -761,13 +761,13 @@ class DHTTest(unittest.TestCase):
                        originator_storage=store1,
                        republish_storage=store1,
                        cache_storage=VirtualStorage())
-        vp1.__node = dht._router.node
+        vp1.node = dht._router.node
 
         # setup node 2
         contact_id_2 = ID.mid()
         other_contact_2 = Contact(contact_id_2, vp2)
         other_node_2 = Node(other_contact_2, store2)
-        vp2.__node = other_node_2
+        vp2.node = other_node_2
         # add the second contact to our peer list.
         dht._router.node.bucket_list.add_contact(other_contact_2)
         # node 2 has the value
@@ -779,7 +779,7 @@ class DHTTest(unittest.TestCase):
         contact_id_3 = ID(2 ** 158)  # I think this is the same as ID.Zero.SetBit(158)?
         other_contact_3 = Contact(contact_id_3, vp3)
         other_node_3 = Node(other_contact_3, storage=store3, cache_storage=cache3)
-        vp3.__node = other_node_3
+        vp3.node = other_node_3
         # add the third contact to our peer list
         dht._router.node.bucket_list.add_contact(other_contact_3)
 
@@ -810,7 +810,7 @@ class DHTParallelTest(unittest.TestCase):
                   protocol=vp,
                   storage_factory=VirtualStorage,
                   router=ParallelRouter())
-        vp.__node = dht._router.node
+        vp.node = dht._router.node
         key = ID.random_id()
         dht.store(key, "Test")
         _, _, return_val = dht.find_value(key)
@@ -836,11 +836,11 @@ class DHTParallelTest(unittest.TestCase):
         # (the distance between a node and max id is always closer than the furthest possible)
         dht = DHT(id=ID.max(), router=ParallelRouter(), storage_factory=lambda: store1, protocol=VirtualProtocol())
 
-        vp1.__node = dht._router.node
+        vp1.node = dht._router.node
         contact_id: ID = ID.mid()  # middle ID
         other_contact: Contact = Contact(id=contact_id, protocol=vp2)
         other_node = Node(contact=other_contact, storage=store2)
-        vp2.__node = other_node
+        vp2.node = other_node
 
         # add this other contact to our peer list
         dht._router.node.bucket_list.add_contact(other_contact)
@@ -869,11 +869,11 @@ class DHTParallelTest(unittest.TestCase):
 
         dht: DHT = DHT(id=ID.min(), protocol=vp1, router=ParallelRouter(), storage_factory=lambda: store1)
 
-        vp1.__node = dht._router.node
+        vp1.node = dht._router.node
         contact_id = ID.max()
         other_contact = Contact(contact_id, vp2)
         other_node = Node(other_contact, store2)
-        vp2.__node = other_node
+        vp2.node = other_node
         # Add this other contact to our peer list.
         dht._router.node.bucket_list.add_contact(other_contact)
         key = ID(1)
@@ -897,11 +897,11 @@ class DHTParallelTest(unittest.TestCase):
         store2 = VirtualStorage()
 
         dht: DHT = DHT(id=ID.min(), protocol=vp1, router=ParallelRouter(), storage_factory=lambda: store1)
-        vp1.__node = dht._router.node
+        vp1.node = dht._router.node
         contact_id = ID.mid()
         other_contact = Contact(contact_id, vp2)
         other_node = Node(other_contact, store2)
-        vp2.__node = other_node
+        vp2.node = other_node
         dht._router.node.bucket_list.add_contact(other_contact)
 
         key = ID(0)
@@ -1013,11 +1013,11 @@ class BootstrappingTests(unittest.TestCase):
 
         # us
         dht_us: DHT = DHT(ID.random_id(), vp[0], storage_factory=VirtualStorage, router=Router())
-        vp[0].__node = dht_us._router.node
+        vp[0].node = dht_us._router.node
 
         # our bootstrap peer
         dht_bootstrap: DHT = DHT(ID.random_id(), vp[1], storage_factory=VirtualStorage, router=Router())
-        vp[1].__node = dht_bootstrap._router.node
+        vp[1].node = dht_bootstrap._router.node
 
         # stops pycharm saying it could be undefined later on. THIS LINE IS USELESS.
         n: Node = Node(Contact(ID.random_id(), vp[0]), VirtualStorage())
@@ -1026,7 +1026,7 @@ class BootstrappingTests(unittest.TestCase):
         for i in range(10):
             c: Contact = Contact(ID.random_id(), vp[i + 2])
             n: Node = Node(c, VirtualStorage())
-            vp[i + 2].__node = n
+            vp[i + 2].node = n
             dht_bootstrap._router.node.bucket_list.add_contact(c)
 
         # One of those nodes, in this case the last one we added to our bootstrapper (for convenience's sake)
@@ -1040,7 +1040,7 @@ class BootstrappingTests(unittest.TestCase):
         for i in range(10):
             c: Contact = Contact(ID.random_id(), vp[i + 12])
             n2: Node = Node(c, VirtualStorage())
-            vp[i + 12].__node = n2
+            vp[i + 12].node = n2
             node_who_knows_10.bucket_list.add_contact(c)
 
         dht_us.bootstrap(dht_bootstrap._router.node.our_contact)
@@ -1074,12 +1074,12 @@ class BootstrappingTests(unittest.TestCase):
 
         # Us, ID doesn't matter.
         dht_us: DHT = DHT(ID.random_id(), vp[0], storage_factory=VirtualStorage, router=Router())
-        vp[0].__node = dht_us._router.node
+        vp[0].node = dht_us._router.node
 
         # our bootstrap peer
         # all IDs are < 2 ** 159
         dht_bootstrap: DHT = DHT(ID.random_id(0, 2 ** 159 - 1), vp[1], storage_factory=VirtualStorage, router=Router())
-        vp[1].__node = dht_bootstrap._router.node
+        vp[1].node = dht_bootstrap._router.node
         # print(sum([len([c for c in b.contacts]) for b in dht_bootstrap._router.node.bucket_list.buckets]))
 
         # Our bootstrapper knows 20 contacts
@@ -1087,7 +1087,7 @@ class BootstrappingTests(unittest.TestCase):
             # creating 19 shell contacts
             id: ID = ID.random_id(0, 2 ** 159 - 1)
             c: Contact = Contact(id, vp[i + 2])
-            c.protocol.__node = Node(c, VirtualStorage())
+            c.protocol.node = Node(c, VirtualStorage())
             dht_bootstrap._router.node.bucket_list.add_contact(c)
 
         # for 20th
@@ -1104,21 +1104,21 @@ class BootstrappingTests(unittest.TestCase):
             # creating 10 shell contacts
             c2: Contact = Contact(ID.random_id(), vp[i + 22])
             n2 = Node(c2, VirtualStorage())
-            vp[i + 22].__node = n2
+            vp[i + 22].node = n2
             # adding the 10 shell contacts
             n.bucket_list.add_contact(c2)  # Note we're adding these contacts to the 10th node.
 
-        important_contact.protocol.__node = n
+        important_contact.protocol.node = n
         dht_bootstrap._router.node.bucket_list.add_contact(important_contact)  # adds the 1 important contact.
 
         # just making sure vp[i + 2].node = n works retrospectively on c.
 
-        self.assertTrue(n.our_contact.id == important_contact.protocol.__node.our_contact.id == ID.max())
+        self.assertTrue(n.our_contact.id == important_contact.protocol.node.our_contact.id == ID.max())
 
         self.assertTrue(len(n.bucket_list.contacts()) == 10,
                         f"contacts: {len(n.bucket_list.contacts())}")
 
-        self.assertTrue(len(important_contact.protocol.__node.bucket_list.contacts()) == 10,
+        self.assertTrue(len(important_contact.protocol.node.bucket_list.contacts()) == 10,
                         f"contacts: {len(n.bucket_list.contacts())}")
 
         self.assertTrue(important_contact.id == ID.max(), "What else could it be?")
@@ -1168,7 +1168,7 @@ class BucketManagementTests(unittest.TestCase):
         # Since the protocols are shared, we need to assign 
         # a unique protocol for this node for testing.
         vp_unresponding: VirtualProtocol = VirtualProtocol(
-            non_responding_contact.protocol.__node,
+            non_responding_contact.protocol.node,
             False
         )
         non_responding_contact.protocol = vp_unresponding
@@ -1224,7 +1224,7 @@ class BucketManagementTests(unittest.TestCase):
 
         # Since the protocols are shared, we assign a unique protocol for this node for testing.
         vp_unresponding = VirtualProtocol(
-            node=non_responding_contact.protocol.__node,
+            node=non_responding_contact.protocol.node,
             responds=False
         )
         non_responding_contact.protocol = vp_unresponding
@@ -1286,7 +1286,7 @@ class Chapter10Tests(unittest.TestCase):
         unseen_vp = VirtualProtocol()
         unseen_contact = Contact(ID(2 ** 158 + 2 ** 157), unseen_vp)
         unseen = Node(unseen_contact, VirtualStorage())
-        unseen_vp.__node = unseen  # final fixup
+        unseen_vp.node = unseen  # final fixup
 
         self.assertTrue(len(unseen.storage.get_keys()) == 0, "The unseen node shouldn't have any key-values!")
 
@@ -1368,7 +1368,7 @@ class DHTSerialisationTests(unittest.TestCase):
         )
 
         self.assertTrue(
-            dht._router.node.our_contact.id == new_dht._router.__node.our_contact.id,
+            dht._router.node.our_contact.id == new_dht._router.node.our_contact.id,
             "Saved and loaded DHT is not identical to the original."
         )
 

@@ -47,7 +47,7 @@ class VirtualProtocol(IProtocol):
 
     def __init__(self, node: Node | None = None, responds=True) -> None:
         self.responds = responds
-        self.__node = node
+        self.node = node
         self.type = "VirtualProtocol"
 
     def encode(self):
@@ -61,7 +61,7 @@ class VirtualProtocol(IProtocol):
         :return:
         """
         if self.responds:
-            self.__node.ping(sender)
+            self.node.ping(sender)
             return RPCError.no_error()
         else:
             error = RPCError(
@@ -79,7 +79,7 @@ class VirtualProtocol(IProtocol):
         :param sender: Contact to be excluded and added if new.
         :return: list of K (or less) contacts near the key, and an error that may need to be handled.
         """
-        return self.__node.find_node(sender=sender, key=key)[0], RPCError.no_error()
+        return self.node.find_node(sender=sender, key=key)[0], RPCError.no_error()
 
     def find_value(self, sender: Contact,
                    key: ID) -> tuple[list[Contact] | None, str | None, RPCError]:
@@ -88,7 +88,7 @@ class VirtualProtocol(IProtocol):
         our storage (then cache storage), given the key. If it cannot do that, it will return
         K contacts that are closer to the key than it is.
         """
-        contacts, val = self.__node.find_value(sender=sender, key=key)
+        contacts, val = self.node.find_value(sender=sender, key=key)
         return contacts, val, RPCError.no_error()
 
     def store(self,
@@ -100,11 +100,11 @@ class VirtualProtocol(IProtocol):
         """
         Stores the key-value on the remote peer.
         """
-        self.__node.store(sender=sender,
-                          key=key,
-                          val=val,
-                          is_cached=is_cached,
-                          expiration_time_sec=exp_time_sec)
+        self.node.store(sender=sender,
+                        key=key,
+                        val=val,
+                        is_cached=is_cached,
+                        expiration_time_sec=exp_time_sec)
 
         return RPCError.no_error()
 
