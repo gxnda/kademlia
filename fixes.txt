@@ -1,3 +1,0 @@
-For anyone running this on CNS computers (SSL not working) this is how you have to install all dependencies:
-
-pip install -r requirements.txt --trusted-host=pypi.org --trusted-host=pypi.python.org --trusted-host=files.pythonhosted.org
