@@ -1,5 +1,7 @@
+import json
 import logging
 import threading
+from ast import literal_eval
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from time import sleep
 from typing import Optional, TypedDict, Callable
@@ -10,10 +12,21 @@ from kademlia_dht.dictionaries import PingRequest, StoreRequest, FindNodeRequest
     CommonRequest, PingSubnetRequest, StoreSubnetRequest, FindNodeSubnetRequest, FindValueSubnetRequest
 from kademlia_dht.errors import IncorrectProtocolError
 from kademlia_dht.id import ID
+from kademlia_dht.interfaces import IProtocol
 from kademlia_dht.node import Node
-from kademlia_dht.protocols import TCPProtocol
+from kademlia_dht.protocols import TCPProtocol, TCPSubnetProtocol
 
 logger = logging.getLogger("__main__")
+
+
+def decode_protocol(protocol: dict) -> IProtocol:
+    if protocol["type"] == "TCPProtocol":
+        return TCPProtocol(protocol["url"], protocol["port"])
+    elif protocol["type"] == "TCPSubnetProtocol":
+        return TCPSubnetProtocol(protocol["url"], protocol["port"], protocol["subnet"])
+    else:
+        logger.debug(f"Unknown protocol: {protocol}")
+        raise Exception(f"Unknown protocol type: {protocol['type']}")
 
 
 class BaseServer(ThreadingHTTPServer):
@@ -37,6 +50,7 @@ class BaseServer(ThreadingHTTPServer):
         Starts the server.
         :return:
         """
+        print("[Server] Starting server...")
         logger.info("[Server] Starting server...")
         self.serve_forever()
 
@@ -45,6 +59,7 @@ class BaseServer(ThreadingHTTPServer):
         Stops the server.
         :return:
         """
+        print("[Server] Stopping server...")
         logger.warning("[Server] Stopping server...")
         self.shutdown()
         self.server_close()
@@ -78,7 +93,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
                                 method_name: str, common_request: CommonRequest, node):
         old_self_instance = self  # To prevent other threads overwriting it,
         # lock isn't used because I don't want to make the program wait.
-
+        print("common request handler")
         # Test what happens if a node does not respond
         if Constants.DEBUG:
             if node.our_contact.protocol.type == "TCPSubnetProtocol":
@@ -91,7 +106,9 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             method: Callable = getattr(node, method_name)
             # Calls method, eg: server_store.
             response = method(common_request)
-            encoded_response = pickler.encode_data(response)
+            print("response", response)
+            encoded_response = bytes(json.dumps(response), Constants.PICKLE_ENCODING)
+            print("encoded response", encoded_response)
             logger.debug("[Server] Sending encoded 200: ", response)
             old_self_instance.send_response(code=200)
 
@@ -128,6 +145,7 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
                 logger.error(f"[Server] Exception sending response: {e}")
 
     def do_POST(self):
+        print("[Server] POST Received.")
         logger.info("[Server] POST Received.")
         routing_methods = {
             "/ping": PingRequest,  # "ping" should refer to type PingRequest
@@ -137,9 +155,13 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
         }
 
         content_length = int(self.headers['Content-Length'])
-        encoded_request: bytes = self.rfile.read(content_length)
-        # encoded_request: bytes = self.rfile.read()
-        decoded_request: dict = pickler.decode_data(encoded_request)
+        encoded_request: str = self.rfile.read(content_length).decode(Constants.PICKLE_ENCODING)
+        print("encoded request", type(encoded_request), encoded_request)
+        decoded_request: dict = json.loads(encoded_request)
+        print("decoded request", decoded_request)
+        # decode protocol
+        decoded_request["protocol"] = decode_protocol(decoded_request["protocol"])
+
         logger.debug(f"[Server] Request received: {decoded_request}")
         request_dict = decoded_request
         path: str = self.path
@@ -172,12 +194,16 @@ class HTTPSubnetRequestHandler(BaseHTTPRequestHandler):
             self.server: TCPSubnetServer
             node = self.server.subnets.get(subnet)  # should be valid if inheriting from SubnetServer?
             if node:
+                print("request called:", node.bucket_list.buckets)
                 logger.debug("[Server] Request called:", node.bucket_list.buckets)
                 self._common_request_handler(method_name, common_request, node)
 
             else:
+                print("[Server] Subnet node not found.")
                 logger.error("[Server] Subnet node not found.")
-                encoded_response = pickler.encode_data({"error_message": "Subnet node not found."})
+                encoded_response = bytes(json.dumps({"error_message": "Subnet node not found."}),
+                                         Constants.PICKLE_ENCODING)
+                print("encoded response", encoded_response)
                 self.send_header("Content-Type", "application/octet-stream")
                 self.end_headers()
                 self.send_response(400)
@@ -213,7 +239,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         old_self_instance = self  # To prevent other threads overwriting it,
         # lock isn't used because I don't want to make the program wait.
 
-        # Test what happens if a node does not respond
+        # Test what happens if a node does not respond, for unit testing.
         if Constants.DEBUG:
             if node.our_contact.protocol.type == "TCPSubnetProtocol":
                 if not node.our_contact.protocol.responds:

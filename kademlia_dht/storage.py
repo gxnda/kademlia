@@ -328,8 +328,7 @@ class SecondaryJSONStorage(IStorage):
             logger.debug(f"Adding data to JSON storage in{self.filename}")
             file_data = f.read()
         data_dict = {"filename": filename, "file_data": file_data}
-        encoded_data: bytes = pickler.plain_encode_data(data=data_dict)
-        encoded_data_str = encoded_data.decode(Constants.PICKLE_ENCODING)
+        encoded_data_str = pickler.encode_data(data=data_dict)
         self.set(
             key=key,
             value=encoded_data_str,

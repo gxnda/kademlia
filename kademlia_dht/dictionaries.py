@@ -30,8 +30,7 @@ class GetCloserNodesReturn(TypedDict):
 
 
 class BaseRequest(TypedDict):
-    protocol: object
-    protocol_name: str
+    protocol: dict
     sender: int
     random_id: int
 
@@ -82,7 +81,7 @@ class CommonRequest(TypedDict):
     """
     This includes all possible headers that could be passed.
     """
-    protocol: any  # IProtocol
+    protocol: dict  # IProtocol
     protocol_name: str
     random_id: int
     sender: int

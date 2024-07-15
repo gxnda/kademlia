@@ -1,3 +1,4 @@
+import json
 import logging
 
 import requests
@@ -48,6 +49,9 @@ class VirtualProtocol(IProtocol):
         self.responds = responds
         self.__node = node
         self.type = "VirtualProtocol"
+
+    def encode(self):
+        raise Exception("VirtualProtocol should not be encoded (only for testing, not for use across HTTP).")
 
     def ping(self, sender: Contact) -> RPCError:
         """
@@ -114,6 +118,14 @@ class TCPSubnetProtocol(IProtocol):
         self.subnet = subnet
         self.type = "TCPSubnetProtocol"
 
+    def encode(self) -> dict[str, any]:
+        return {
+            "type": self.type,
+            "url": self.url,
+            "port": self.port,
+            "subnet": self.subnet
+        }
+
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
         """
         Encodes all of the data that is needed into a FindNodeSubnetRequest,
@@ -128,11 +140,9 @@ class TCPSubnetProtocol(IProtocol):
         :return:
         """
         id: ID = ID.random_id()
-
         encoded_data = encode_data(
             dict(FindNodeSubnetRequest(
-                protocol=sender.protocol,
-                protocol_name=type(sender.protocol),
+                protocol=sender.protocol.encode(),
                 subnet=self.subnet,
                 sender=sender.id.value,
                 key=key.value,
@@ -140,17 +150,20 @@ class TCPSubnetProtocol(IProtocol):
             ))
         )
         logger.debug(f"http://{self.url}:{self.port}/find_node")
+        print(f"http://{self.url}:{self.port}/find_node")
 
         ret = None
         timeout_error = False
         error = ""
         try:
             logger.info("[Client] Sending find_node RPC...")
+            print("[Client] Sending find_node RPC...")
             ret = requests.post(
                 f"http://{self.url}:{self.port}/find_node",
                 data=encoded_data,
                 timeout=Constants.REQUEST_TIMEOUT_SEC
             )
+            print("[Client] Received HTTP Response from {ret.url} with code {ret.status_code}")
             logger.info(f"[Client] Received HTTP Response from {ret.url} with code {ret.status_code}")
 
         except requests.Timeout as t:
@@ -159,6 +172,7 @@ class TCPSubnetProtocol(IProtocol):
             error = t
 
         except Exception as e:
+            print(f"[Client] {e}")
             logger.error(f"[Client] {e}")
             # request timed out.
             timeout_error = False
@@ -221,8 +235,7 @@ class TCPSubnetProtocol(IProtocol):
         random_id = ID.random_id()
         encoded_data = encode_data(
             dict(FindValueSubnetRequest(
-                protocol=sender.protocol,
-                protocol_name=type(sender.protocol),
+                protocol=sender.protocol.encode(),
                 subnet=self.subnet,
                 sender=sender.id.value,
                 key=key.value,
@@ -315,8 +328,7 @@ class TCPSubnetProtocol(IProtocol):
         random_id = ID.random_id()
         encoded_data = encode_data(
             dict(PingSubnetRequest(
-                protocol=sender.protocol,
-                protocol_name=type(sender.protocol),
+                protocol=sender.protocol.encode(),
                 subnet=self.subnet,
                 sender=sender.id.value,
                 random_id=random_id.value)))
@@ -349,7 +361,9 @@ class TCPSubnetProtocol(IProtocol):
         formatted_response = None
         if ret:
             encoded_data = ret.content
-            formatted_response = pickler.decode_data(encoded_data)
+            print("[ping] encoded data", encoded_data)
+            formatted_response = json.loads(encoded_data)
+            print("[ping] formatted response", formatted_response)
 
         return get_rpc_error(random_id, formatted_response, timeout_error, ErrorResponse(
             error_message=str(error), random_id=ID.random_id()))
@@ -365,8 +379,7 @@ class TCPSubnetProtocol(IProtocol):
 
         encoded_data = encode_data(
             dict(StoreSubnetRequest(
-                protocol=sender.protocol,
-                protocol_name=type(sender.protocol),
+                protocol=sender.protocol.encode(),
                 subnet=self.subnet,
                 sender=sender.id.value,
                 key=key.value,
@@ -402,7 +415,10 @@ class TCPSubnetProtocol(IProtocol):
         formatted_response = None
         if ret:
             encoded_data = ret.content
-            formatted_response = pickler.decode_data(encoded_data)
+            print("[store] ret content", ret.status_code, ret.content, ret.headers)
+            print("[store] encoded data", encoded_data)
+            formatted_response = json.loads(encoded_data)
+            print("[store] formatted response", formatted_response)
 
         return get_rpc_error(random_id, formatted_response, timeout_error, ErrorResponse(
             error_message=str(error), random_id=ID.random_id()))
@@ -416,12 +432,34 @@ class TCPProtocol(IProtocol):
         self.responds = True
         self.type = "TCPProtocol"
 
+    def encode(self):
+        return {
+            "type": self.type,
+            "url": self.url,
+            "port": self.port
+        }
+
     def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
+        """
+        finds closest K nodes to a given key, excluding the sender.
+
+        example request:
+        {
+            protocol: {
+                type: "TCPProtocol,
+                url: "124.65.22.15",
+                port: 7124
+            },
+            sender: 9482634529837698752365938576329242,
+            key: 7259283645297869293458762395872364523,
+            random_id: 57340928573049586239847592876955024
+        }
+
+        """
         id: ID = ID.random_id()
         encoded_data = encode_data(
             dict(FindNodeRequest(
-                protocol=sender.protocol,
-                protocol_name=type(sender.protocol),
+                protocol=sender.protocol.encode(),
                 sender=sender.id.value,
                 key=key.value,
                 random_id=id.value
@@ -499,8 +537,7 @@ class TCPProtocol(IProtocol):
         random_id = ID.random_id()
         encoded_data = encode_data(
             dict(FindValueRequest(
-                protocol=sender.protocol,
-                protocol_name=type(sender.protocol),
+                protocol=sender.protocol.encode(),
                 sender=sender.id.value,
                 key=key.value,
                 random_id=random_id.value
@@ -580,8 +617,7 @@ class TCPProtocol(IProtocol):
         random_id = ID.random_id()
         encoded_data = encode_data(
             dict(PingRequest(
-                protocol=sender.protocol,
-                protocol_name=type(sender.protocol),
+                protocol=sender.protocol.encode(),
                 sender=sender.id.value,
                 random_id=random_id.value)))
 
@@ -627,8 +663,7 @@ class TCPProtocol(IProtocol):
 
         encoded_data = encode_data(
             dict(StoreRequest(
-                protocol=sender.protocol,
-                protocol_name=type(sender.protocol),
+                protocol=sender.protocol.encode(),
                 sender=sender.id.value,
                 key=key.value,
                 value=val,

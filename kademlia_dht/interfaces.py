@@ -101,6 +101,10 @@ class IProtocol:
         pass
 
     @abstractmethod
+    def encode(self) -> dict[str, any]:
+        pass
+
+    @abstractmethod
     def ping(self, sender) -> RPCError:
         """
         Handles an incoming ping request from “sender”, returns an RPCError object.

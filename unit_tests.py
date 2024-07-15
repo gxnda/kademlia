@@ -5,6 +5,7 @@ import random
 import shutil
 import unittest
 
+import ui_helpers
 from kademlia_dht.buckets import BucketList, KBucket
 from kademlia_dht.constants import Constants
 from kademlia_dht.contact import Contact
@@ -23,8 +24,8 @@ if Constants.DEBUG:
     random.seed(0)
 
 
-logger = logging.getLogger("__main__")
-
+logger = ui_helpers.create_logger(verbose=True)
+logger.info("Starting unit tests.")
 
 def setup_split_failure(bucket_list=None):
     # force host node ID to < 2 ** 159 so the node ID is not in the
@@ -1485,6 +1486,7 @@ class TCPSubnetTests(unittest.TestCase):
         server.thread_stop(thread)
 
     def test_find_nodes_route(self):
+        print()
         local_ip = "127.0.0.1"
         valid_server = False
         port = None
@@ -1522,7 +1524,9 @@ class TCPSubnetTests(unittest.TestCase):
 
         id = ID.random_id()
         ret, errors = p2.find_node(c1, id)
-
+        print()
+        print("ret", ret)
+        print("errors", errors)
         if ret:
             self.assertTrue(
                 len(ret) == 1,
