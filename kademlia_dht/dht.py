@@ -166,6 +166,7 @@ class DHT:
         found, our_val = self._originator_storage.try_get_value(key)
         # There has to be a better way to do this.
         if our_val:
+            print(1)
             found = True
             val = our_val
         else:
@@ -179,9 +180,11 @@ class DHT:
                     found = True
                     val = our_val
                 else:
+                    print(6)
                     lookup: FindResult = self._router.lookup(
                         key, self._router.rpc_find_value)
                     if lookup["found"]:
+                        print(7)
                         found = True
                         contacts = None
                         val = lookup["val"]
@@ -193,11 +196,11 @@ class DHT:
                             if c.id.value != lookup["found_by"].id.value:
                                 store_to: Contact | None = c
                                 break
-
                         if store_to:
                             separating_nodes: int = self._get_separating_nodes_count(self.our_contact, store_to)
                             exp_time_sec: int = Constants.EXPIRATION_TIME_SEC // (2 ** separating_nodes)
                             error: RPCError = store_to.protocol.store(self.node.our_contact, key, lookup["val"],
+                                                                      is_cached=True,
                                                                       exp_time_sec=exp_time_sec)
                             self.handle_error(error, store_to)
 
