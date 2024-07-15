@@ -39,6 +39,10 @@ class BucketDoesNotContainContactToEvictError(Exception):
     pass
 
 
+class NoNonEmptyBucketsException(Exception):
+    pass
+
+
 class RPCError(Exception):
     """
     Possible errors for RPC commands.

@@ -505,22 +505,9 @@ class NodeLookupTests(unittest.TestCase):
                                        key=id,
                                        distance=self.distance)
 
-            print("close_contacts", [str(i.id.value)[-3:] for i in close_contacts])
-            print("closer_contacts_alt_computation",
-                  [str(i.id.value)[-3:] for i in self.closer_contacts_alt_computation])
-            print("\n\n")
-
-            # Check closer_contacts_alt_computation is right:
-            for contact in self.closer_contacts_alt_computation:
-                print("Distance delta close_alt:", ((contact.id.value ^ id.value) - self.distance) < 0,
-                      ((contact.id.value ^ id.value) - self.distance))
-
-            for contact in close_contacts:
-                print("Distance delta close_contacts:", ((contact.id.value ^ id.value) - self.distance) < 0,
-                      ((contact.id.value ^ id.value) - self.distance))
-
             self.assertTrue(len(close_contacts) >= len(self.closer_contacts_alt_computation),
-                            f"Expected at least as many contacts: {len(close_contacts)} vs {len(self.closer_contacts_alt_computation)}")
+                            f"Expected at least as many contacts: {len(close_contacts)} vs "
+                            f"{len(self.closer_contacts_alt_computation)}")
 
             for c in self.closer_contacts_alt_computation:
                 self.assertTrue(c in close_contacts,

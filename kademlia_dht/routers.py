@@ -10,7 +10,7 @@ from kademlia_dht.buckets import KBucket
 from kademlia_dht.constants import Constants
 from kademlia_dht.contact import Contact
 from kademlia_dht.dictionaries import ContactQueueItem, FindResult
-from kademlia_dht.errors import AllKBucketsAreEmptyError, ValueCannotBeNoneError
+from kademlia_dht.errors import AllKBucketsAreEmptyError, ValueCannotBeNoneError, NoNonEmptyBucketsException
 from kademlia_dht.id import ID
 from kademlia_dht.node import Node
 
@@ -33,15 +33,13 @@ class BaseRouter:
         :return:
         """
         # gets all non-empty buckets from bucket list
-        non_empty_buckets: list[KBucket] = [
-            b for b in self.node.bucket_list.buckets if (len(b.contacts) != 0)
-        ]
-        if len(non_empty_buckets) == 0:
-            raise AllKBucketsAreEmptyError(
-                "No non-empty buckets can be found.")
+        closest: KBucket = sorted(self.node.bucket_list.buckets, key=lambda b: b.high() ^ key.value)[0]
 
-        return sorted(non_empty_buckets,
-                      key=(lambda b: b.id.value ^ key.value))[0]
+        if closest is None:
+            raise NoNonEmptyBucketsException("No non-empty buckets exist.  "
+                                             "You must first register a peer and add that peer to your bucketlist.")
+
+        return closest
 
     def rpc_find_nodes(self, key: ID, contact: Contact):
         """
