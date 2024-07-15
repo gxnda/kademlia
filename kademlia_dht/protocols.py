@@ -162,21 +162,19 @@ class TCPSubnetProtocol(IProtocol):
                 random_id=id.value
             ))
         )
+        encoded_data = encoded_data.encode(Constants.PICKLE_ENCODING)
         logger.debug(f"http://{self.url}:{self.port}/find_node")
-        print(f"http://{self.url}:{self.port}/find_node")
 
         ret = None
         timeout_error = False
         error = ""
         try:
             logger.info("[Client] Sending find_node RPC...")
-            print("[Client] Sending find_node RPC...")
             ret = requests.post(
                 f"http://{self.url}:{self.port}/find_node",
                 data=encoded_data,
                 timeout=Constants.REQUEST_TIMEOUT_SEC
             )
-            print("[Client] Received HTTP Response from {ret.url} with code {ret.status_code}")
             logger.info(f"[Client] Received HTTP Response from {ret.url} with code {ret.status_code}")
 
         except requests.Timeout as t:

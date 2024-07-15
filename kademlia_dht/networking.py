@@ -79,7 +79,6 @@ class BaseHTTPRequestHandler2(BaseHTTPRequestHandler):
                                 method_name: str, common_request: CommonRequest, node):
         old_self_instance = self  # To prevent other threads overwriting it,
         # lock isn't used because I don't want to make the program wait.
-
         try:
             method: Callable = getattr(node, method_name)
             # Calls method, eg: server_store.
@@ -205,7 +204,8 @@ class TCPServer(BaseServer):
         :param node:
         """
 
-        if (subnet_server_address is not None) ^ (node is not None):
+        print(subnet_server_address, node)
+        if (subnet_server_address and node) or (not subnet_server_address and not node):
             raise ValueError("Must provide either a node or a subnet server address.")
 
         if subnet_server_address:
@@ -231,6 +231,9 @@ class TCPServer(BaseServer):
                 server_address=server_address,
                 request_handler_class=HTTPRequestHandler
             )
+
+    def register_protocol(self, subnet: int, node):
+        self.subnets[subnet] = node
 
 
 class HTTPSubnetRequestHandler(HTTPRequestHandler):
