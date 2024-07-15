@@ -775,12 +775,10 @@ class DHTTest(unittest.TestCase):
 
         # setup node 3
         contact_id_3 = ID(2 ** 158)  # I think this is the same as ID.Zero.SetBit(158)?
-        print("id", contact_id_3)
         other_contact_3 = Contact(contact_id_3, vp3)
         other_node_3 = Node(other_contact_3, storage=store3, cache_storage=cache3)
         vp3.node = other_node_3
         # add the third contact to our peer list
-        print("DHT Router DHT", dht._router.dht._router.dht._router.dht._router)
         dht._router.node.bucket_list.add_contact(other_contact_3)
 
         self.assertFalse(store1.contains(key),
