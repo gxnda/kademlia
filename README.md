@@ -13,8 +13,8 @@ This mostly serves as an introduction to peer-to-peer systems for me.
 - [x] Make Kademlia implementation
 - [x] Make GUI
 - [x] Make CLI
+- [X] Make all unit tests pass
 
-- [ ] Make all unit tests pass
 - [ ] Add more unit tests for the CLI for input validation
 - [ ] Add encryption
 - [ ] Make it more usable
