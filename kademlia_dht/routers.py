@@ -222,41 +222,28 @@ class Router(BaseRouter):
         :return: returns query result.
         """
         contacted_nodes = []
-        closer_uncontacted_nodes = []
-        further_uncontacted_nodes = []
-        if Constants.TRY_CLOSEST_BUCKET:
-            # Spec: The lookup initiator starts by picking a nodes from its closest non-empty k-bucket
-            bucket: KBucket = self.find_closest_nonempty_kbucket(key)
 
-            # Not in spec: sort by the closest nodes in the closest bucket.
+        if Constants.DEBUG:
+            all_nodes: list[Contact] = self.node.bucket_list.get_kbucket(key).contacts[0:Constants.K]
+        else:
+            # This is a bad way to get a list of close contacts with virtual nodes because we're always going to
+            # get the closest nodes right at the get go.
             all_nodes: list[Contact] = self.node.bucket_list.get_close_contacts(
                 key, self.node.our_contact.id)[0:Constants.K]
-            nodes_to_query: list[Contact] = all_nodes[0:Constants.A]
+        nodes_to_query: list[Contact] = all_nodes[:Constants.A]
 
-            for i in all_nodes[Constants.A + 1:]:
-                self.further_contacts.append(i)
-        else:
-            if Constants.DEBUG:
-                all_nodes: list[Contact] = self.node.bucket_list.get_kbucket(key).contacts[0:Constants.K]
+        # Also not explicitly in spec:
+        # Any closer node in the alpha list is immediately added to our closer contact list
+        # and any further node in the alpha list is immediately added to our further contact list.
+        for n in nodes_to_query:
+            if (n.id ^ key) < (self.node.our_contact.id ^ key):
+                self.closer_contacts.append(n)
             else:
-                # This is a bad way to get a list of close contacts with virtual nodes because we're always going to
-                # get the closest nodes right at the get go.
-                all_nodes: list[Contact] = self.node.bucket_list.get_close_contacts(
-                    key, self.node.our_contact.id)[0:Constants.K]
-            nodes_to_query: list[Contact] = all_nodes[:Constants.A]
-
-            # Also not explicitly in spec:
-            # Any closer node in the alpha list is immediately added to our closer contact list
-            # and any further node in the alpha list is immediately added to our further contact list.
-            for n in nodes_to_query:
-                if (n.id ^ key) < (self.node.our_contact.id ^ key):
-                    self.closer_contacts.append(n)
-                else:
-                    self.further_contacts.append(n)
-
-            # The remaining contacts not tested yet can be put here.
-            for n in all_nodes[Constants.A + 1:]:
                 self.further_contacts.append(n)
+
+        # The remaining contacts not tested yet can be put here.
+        for n in all_nodes[Constants.A + 1:]:
+            self.further_contacts.append(n)
 
         # We're about to contact these nodes.
         for n in nodes_to_query:
@@ -268,9 +255,6 @@ class Router(BaseRouter):
         query_result: FindResult = self._query(key, nodes_to_query, rpc_call, self.closer_contacts,
                                                self.further_contacts)
         if query_result["found"]:
-            # For unit testing
-            closer_contacts_unittest = self.closer_contacts
-            further_contacts_unittest = self.further_contacts
             return query_result
 
         # Add any new closer contacts to the list we're going to return.
@@ -308,9 +292,6 @@ class Router(BaseRouter):
                                             self.further_contacts))
 
                 if query_result["found"]:
-                    # # For unit testing.
-                    # closer_contacts_unittest = self.closer_contacts
-                    # further_contacts_unittest = self.further_contacts
                     return query_result
 
             elif have_further:
