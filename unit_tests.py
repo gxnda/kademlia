@@ -19,6 +19,9 @@ from kademlia_dht.storage import VirtualStorage, SecondaryJSONStorage
 
 Constants.DEBUG = True
 
+if Constants.DEBUG:
+    random.seed(0)
+
 
 logger = logging.getLogger("__main__")
 
