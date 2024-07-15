@@ -98,7 +98,6 @@ class IProtocol:
     """
 
     def __init__(self):
-        self.node = None
 
     @abstractmethod
     def ping(self, sender) -> RPCError:
