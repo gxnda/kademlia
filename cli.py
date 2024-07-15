@@ -16,7 +16,6 @@ from kademlia_dht.constants import Constants
 USE_GLOBAL_IP, PORT, verbose = ui_helpers.handle_terminal()
 
 logger: logging.Logger = ui_helpers.create_logger(verbose)
-print(__name__)
 
 
 class GenericMenu:
