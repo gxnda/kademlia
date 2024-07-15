@@ -293,7 +293,6 @@ class ForceFailedAddTest(unittest.TestCase):
 
 
 class NodeLookupTests(unittest.TestCase):
-
     def test_get_close_contacts_ordered(self):
         """
         Description
@@ -324,7 +323,6 @@ class NodeLookupTests(unittest.TestCase):
         key: ID = ID.random_id()
 
         closest: list[Contact] = node.find_node(sender=sender, key=key)[0]
-        # print(closest)
         self.assertTrue(len(closest) == Constants.K,
                         "Expected K contacts to be returned.")
 
@@ -345,7 +343,7 @@ class NodeLookupTests(unittest.TestCase):
         others = []
         for b in node.bucket_list.buckets:
             for c in b.contacts:
-                if c not in closest and (c.id ^ key) < largest_close_contact:
+                if c not in closest and (c.id ^ key) < largest_close_contact and c.id != sender.id:
                     others.append(c)
 
         self.assertTrue(
