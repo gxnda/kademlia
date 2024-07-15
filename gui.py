@@ -38,7 +38,6 @@ and if the user is not in a network, the user is prompted to join a network.
 
 
 USE_GLOBAL_IP, PORT, verbose = ui_helpers.handle_terminal()
-Constants.DEBUG = verbose  # TODO: Remove - constants.DEBUG should be deprecated once logging is done.
 
 logger: logging.Logger = ui_helpers.create_logger(verbose)
 
