@@ -128,6 +128,9 @@ class TCPSubnetProtocol(IProtocol):
         self.subnet = subnet
         self.type = "TCPSubnetProtocol"
 
+    def __repr__(self):
+        return f"{self.type}({self.url}:{self.port}, subnet={self.subnet})"
+
     def encode(self) -> dict[str, any]:
         return {
             "type": self.type,
