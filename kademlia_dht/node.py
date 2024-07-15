@@ -97,6 +97,7 @@ class Node:
         # managing sender
         if sender.id == self.our_contact.id:
             raise SendingQueryToSelfError("Sender cannot be ourselves.")
+
         self.send_key_values_if_new_contact(sender)
         self.bucket_list.add_contact(sender)
 
