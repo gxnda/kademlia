@@ -27,6 +27,14 @@ class BaseRouter:
         self.dht = None
         # self.locker
 
+    def __repr__(self):
+        return str({
+            "closer_contacts": self.closer_contacts,
+            "further_contacts": self.further_contacts,
+            # "dht": self.dht,
+            "node": self.node
+        })
+
     def find_closest_nonempty_kbucket(self, key: ID) -> KBucket:
         """
         Finds the closest non empty Kbucket in our nodes bucket list to a given key.

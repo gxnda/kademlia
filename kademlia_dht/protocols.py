@@ -437,6 +437,13 @@ class TCPProtocol(IProtocol):
         self.responds = True
         self.type = "TCPProtocol"
 
+    def __repr__(self):
+        return str({
+            "type": self.type,
+            "url": self.url,
+            "port": self.port,
+        })
+
     def encode(self):
         return {
             "type": self.type,

@@ -39,6 +39,15 @@ class Node:
         self.dht = None  # This should never be None
         self.bucket_list = BucketList(contact)
 
+    def __repr__(self):
+        return str({
+            "our_contact": self.our_contact,
+            "storage": self.storage,
+            "cache_storage": self.cache_storage,
+            # "dht": self.dht,
+            "bucket_list": self.bucket_list
+        })
+
     def ping(self, sender: Contact) -> Contact:
         """
         Someone is pinging us.

@@ -23,7 +23,10 @@ class VirtualStorage(IStorage):
         self._store: dict[int, StoreValue] = {}
 
     def __repr__(self):
-        return str(self._store)
+        return str({
+            "type": "VirtualStorage",
+            "store": self._store
+        })
 
     def contains(self, key: ID) -> bool:
         """
@@ -137,7 +140,16 @@ class SecondaryJSONStorage(IStorage):
                 pass  # Makes file.
 
     def __repr__(self):
-        return self.filename
+        return str({
+            "type": "SecondaryJSONStorage",
+            "filename": self.filename
+        })
+
+    def __str__(self):
+        return str({
+            "type": "SecondaryJSONStorage",
+            "filename": self.filename
+        })
 
     def set(self, key: ID, value: str | bytes, expiration_time_sec: int = 0) -> None:
         """

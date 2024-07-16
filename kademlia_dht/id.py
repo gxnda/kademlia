@@ -94,10 +94,10 @@ class ID:
             return self.value
 
     def __str__(self) -> str:
-        return str(self.log_value())
+        return str(self.value)
 
     def __repr__(self) -> str:
-        return str(self.log_value())
+        return str(self.value)
 
     @classmethod
     def max(cls):

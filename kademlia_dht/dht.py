@@ -129,6 +129,15 @@ class DHT:
         self._router.dht = self
         self.eviction_count: dict[int, int] = {}
 
+    def __repr__(self):
+        return str({
+            "our_contact": self.our_contact,
+            "node": self.node,
+            "protocol": self.protocol(),
+            "router": self.router(),
+            "eviction_count": self.eviction_count
+        })
+
     def router(self) -> BaseRouter:
         return self._router
 
