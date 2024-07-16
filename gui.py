@@ -457,16 +457,10 @@ class DownloadFrame(ctk.CTkFrame):
             if not found:
                 self.parent.show_error("File not found.")
             else:
-                # TODO: It might be a better idea to use JSON to send values.
 
-                val_bytes: bytes = val.encode(Constants.PICKLE_ENCODING)
-
-                # "pickle.loads()" is very insecure and can lead to arbitrary code execution, the val received
-                #   could be maliciously crafted to allow for malicious code execution because it compiles and creates
-                #   a python object.
-                file_dict: dict = pickle.loads(val_bytes)  # TODO: Make secure.
+                file_dict: dict = json.loads(val)
                 filename: str = file_dict["filename"]
-                file_bytes: bytes = file_dict["file"]
+                file_bytes: bytes = file_dict["file"].encode(Constants.PICKLE_ENCODING)
                 del file_dict  # Free up memory.
 
                 cwd = os.getcwd()  # TODO: Add option to change where it is installed to.

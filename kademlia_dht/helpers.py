@@ -7,6 +7,7 @@ import threading
 import time
 from hashlib import sha1
 
+from kademlia_dht.constants import Constants
 from kademlia_dht.contact import Contact
 from kademlia_dht.id import ID
 from kademlia_dht.node import Node
@@ -185,7 +186,7 @@ def store_file(file_to_upload: str, dht) -> ID:
         file_contents: bytes = f.read()
 
     # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
-    val: str = json.dumps({"filename": filename, "file": file_contents})
+    val: str = json.dumps({"filename": filename, "file": file_contents.decode(Constants.PICKLE_ENCODING)})
     del file_contents  # free up memory, file_contents could be pretty big.
 
     id_to_store_to = ID.random_id()
