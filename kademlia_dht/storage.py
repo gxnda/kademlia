@@ -22,6 +22,9 @@ class VirtualStorage(IStorage):
     def __init__(self):
         self._store: dict[int, StoreValue] = {}
 
+    def __repr__(self):
+        return f"VirtualStorage({self._store})"
+
     def contains(self, key: ID) -> bool:
         """
         Returns a Boolean stating whether a key-value pair exists, given key.
@@ -132,6 +135,9 @@ class SecondaryJSONStorage(IStorage):
                 os.mkdir(os.path.join(cwd, os.path.dirname(self.filename)))
             with open(self.filename, "w"):
                 pass  # Makes file.
+
+    def __repr__(self):
+        return f"SecondaryJSONStorage({self.filename})"
 
     def set(self, key: ID, value: str | bytes, expiration_time_sec: int = 0) -> None:
         """
