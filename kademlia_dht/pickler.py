@@ -58,7 +58,7 @@ def decode_data(encoded_data: str | bytes) -> dict:
 
 
 def encode_dict_as_str(data: dict) -> str:
-    return pickle.dumps(data).decode(Constants.PICKLE_ENCODING)
+    return json.dumps(data)
 
 
 if __name__ == "__main__":
