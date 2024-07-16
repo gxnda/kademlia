@@ -183,7 +183,6 @@ class TCPSubnetProtocol(IProtocol):
             error = t
 
         except Exception as e:
-            print(f"[Client] {e}")
             logger.error(f"[Client] {e}")
             # request timed out.
             timeout_error = False
@@ -372,9 +371,7 @@ class TCPSubnetProtocol(IProtocol):
         formatted_response = None
         if ret:
             encoded_data = ret.content
-            print("[ping] encoded data", encoded_data)
             formatted_response = json.loads(encoded_data)
-            print("[ping] formatted response", formatted_response)
 
         return get_rpc_error(random_id, formatted_response, timeout_error, ErrorResponse(
             error_message=str(error), random_id=ID.random_id()))
@@ -426,10 +423,7 @@ class TCPSubnetProtocol(IProtocol):
         formatted_response = None
         if ret:
             encoded_data = ret.content
-            print("[store] ret content", ret.status_code, ret.content, ret.headers)
-            print("[store] encoded data", encoded_data)
             formatted_response = json.loads(encoded_data)
-            print("[store] formatted response", formatted_response)
 
         return get_rpc_error(random_id, formatted_response, timeout_error, ErrorResponse(
             error_message=str(error), random_id=ID.random_id()))

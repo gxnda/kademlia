@@ -119,7 +119,6 @@ class Timer:
 
     def run(self) -> None:
         logger.info("Starting timer.")
-        print("Starting timer.")
         self._stop_event.clear()
 
         while not self._stop_event.is_set():
@@ -130,7 +129,6 @@ class Timer:
                 break
 
         logger.info("Timer stopped.")
-        print("Timer stopped.")
 
     def reset(self) -> None:
         self.stop()
@@ -150,7 +148,6 @@ class Timer:
             return
 
         logger.info("Stopping timer.")
-        print("Stopping timer.")
         self._stop_event.set()
         if self.__thread and self.__thread.is_alive():
             self.__thread.join()

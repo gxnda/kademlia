@@ -6,13 +6,16 @@ from kademlia_dht.constants import Constants
 from kademlia_dht.errors import DataDecodingError
 
 
+logger = logging.getLogger("__main__")
+
+
 class Encoder(json.JSONEncoder):
     def default(self, obj):
         if hasattr(obj, "encode_into_json"):
-            print(f"Encoding object {type(obj)} with method 'encode'.")
+            logger.debug(f"Encoding object {type(obj)} with method 'encode'.")
             return obj.encode()
 
-        print(f"Encoding object {type(obj)} with method 'default'.")
+        logger.debug(f"Encoding object {type(obj)} with method 'default'.")
         return json.JSONEncoder.default(self, obj)
 
 
@@ -34,11 +37,11 @@ def decode_data(encoded_data: str | bytes) -> dict:
 
     def object_hook(obj):
         if isinstance(obj, dict) and "can_decode_into_json" in obj:
-            print(f"Decoding object {type(obj)} with method 'decode'.")
+            logger.debug(f"Decoding object {type(obj)} with method 'decode'.")
 
             return obj.decode()
 
-        print(f"Decoding object {type(obj)} with method 'default'.")
+        logger.debug(f"Decoding object {type(obj)} with method 'default'.")
         return obj
 
     try:

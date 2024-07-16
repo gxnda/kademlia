@@ -166,7 +166,6 @@ class DHT:
         found, our_val = self._originator_storage.try_get_value(key)
         # There has to be a better way to do this.
         if our_val:
-            print(1)
             found = True
             val = our_val
         else:
@@ -180,11 +179,9 @@ class DHT:
                     found = True
                     val = our_val
                 else:
-                    print(6)
                     lookup: FindResult = self._router.lookup(
                         key, self._router.rpc_find_value)
                     if lookup["found"]:
-                        print(7)
                         found = True
                         contacts = None
                         val = lookup["val"]

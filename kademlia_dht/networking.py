@@ -37,7 +37,6 @@ class BaseServer(ThreadingHTTPServer):
         Starts the server.
         :return:
         """
-        print("[Server] Starting server...")
         logger.info("[Server] Starting server...")
         self.serve_forever()
 
@@ -46,7 +45,6 @@ class BaseServer(ThreadingHTTPServer):
         Stops the server.
         :return:
         """
-        print("[Server] Stopping server...")
         logger.warning("[Server] Stopping server...")
         self.shutdown()
         self.server_close()
@@ -204,7 +202,6 @@ class TCPServer(BaseServer):
         :param node:
         """
 
-        print(subnet_server_address, node)
         if (subnet_server_address and node) or (not subnet_server_address and not node):
             raise ValueError("Must provide either a node or a subnet server address.")
 
