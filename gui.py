@@ -408,16 +408,13 @@ class UploadFrame(ctk.CTkFrame):
         if isfile(file_to_upload):
             filename = os.path.basename(file_to_upload)
             if not filename:  # os.path.basename returns "" on file paths ending in "/"
+                logger.error("File to upload must not be a directory.")
                 self.parent.show_error("Must not be a directory.")
             else:
-                with open(file_to_upload, "rb") as f:
-                    file_contents: bytes = f.read()
-                # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
-                val: str = pickler.encode_dict_as_str({"filename": filename, "file": file_contents})
-                id_to_store_to = id.ID.random_id()
-                self.parent.dht.store(id_to_store_to, val)
+                id_to_store_to = helpers.store_file(file_to_upload, self.parent.dht)
                 self.parent.show_status(f"Stored file at {id_to_store_to}.", copy_data=str(id_to_store_to))
         else:
+            logger.error(f"Path not found: {file_to_upload}")
             self.parent.show_error(f"Path not found: {file_to_upload}")
 
 
