@@ -317,19 +317,22 @@ class UploadMenu(GenericMenu):
             if not filename:  # os.path.basename returns "" on file paths ending in "/"
                 logger.error("File to upload must not be a directory.")
             else:
-                with open(file_to_upload, "rb") as f:
-                    file_contents: bytes = f.read()
-
-                # TODO: Make a function to do this.
-                # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
-                val: str = pickler.encode_dict_as_str({"filename": filename, "file": file_contents})
-                del file_contents  # free up memory, file_contents could be pretty big.
-
-                id_to_store_to = id.ID.random_id()
-                self.parent.dht.store(id_to_store_to, val)
-                logger.info(f"Stored file at {id_to_store_to}.")
+                self.__store_file(file_to_upload)
         else:
             logger.error(f"Path not found: {file_to_upload}")
+
+    def __store_file(self, file_to_upload: str):
+        filename = os.path.basename(file_to_upload)
+        with open(file_to_upload, "rb") as f:
+            file_contents: bytes = f.read()
+
+        # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
+        val: str = pickler.encode_dict_as_str({"filename": filename, "file": file_contents})
+        del file_contents  # free up memory, file_contents could be pretty big.
+
+        id_to_store_to = id.ID.random_id()
+        self.parent.dht.store(id_to_store_to, val)
+        logger.info(f"Stored file at {id_to_store_to}.")
 
 
 class DownloadMenu(GenericMenu):
