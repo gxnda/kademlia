@@ -412,7 +412,7 @@ class UploadFrame(ctk.CTkFrame):
                 self.parent.show_error("Must not be a directory.")
             else:
                 id_to_store_to = helpers.store_file(file_to_upload, self.parent.dht)
-                self.parent.show_status(f"Stored file at {id_to_store_to}.", copy_data=str(id_to_store_to))
+                self.parent.show_status(f"Stored file at {id_to_store_to.value}.", copy_data=str(id_to_store_to.value))
         else:
             logger.error(f"Path not found: {file_to_upload}")
             self.parent.show_error(f"Path not found: {file_to_upload}")
