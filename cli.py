@@ -206,52 +206,7 @@ class JoinNetworkMenu(GenericMenu):
 
                 :return:
                 """
-        logger.info("Initialising Kademlia.")
-
-        our_id = id.ID.random_id()
-        if USE_GLOBAL_IP:  # Port forwarding is required.
-            our_ip = get('https://api.ipify.org').content.decode('utf8')
-        else:
-            our_ip = "127.0.0.1"
-        logger.info(f"Our hostname is {our_ip}.")
-
-        if PORT:
-            valid_port = PORT
-        else:
-            valid_port = helpers.get_valid_port()
-
-        logger.info(f"Port free at {valid_port}, creating our node here.")
-
-        protocol = protocols.TCPProtocol(
-            url=our_ip, port=valid_port
-        )
-
-        our_node = node.Node(
-            contact=contact.Contact(
-                id=our_id,
-                protocol=protocol
-            ),
-            storage=storage.SecondaryJSONStorage(f"{our_id.value}/node.json"),
-            cache_storage=storage.VirtualStorage()
-        )
-
-        # Make directory of our_id at current working directory.
-        create_dir_at = os.path.join(os.getcwd(), str(our_id.value))
-        logger.info(f"Making directory at {create_dir_at}")
-
-        if not exists(create_dir_at):
-            os.mkdir(create_dir_at)
-        self.dht: dht.DHT = dht.DHT(
-            id=our_id,
-            protocol=protocol,
-            originator_storage=storage.SecondaryJSONStorage(f"{our_id.value}/originator_storage.json"),
-            republish_storage=storage.SecondaryJSONStorage(f"{our_id.value}/republish_storage.json"),
-            cache_storage=storage.VirtualStorage(),
-            router=routers.ParallelRouter(our_node)
-        )
-
-        self.server = networking.TCPServer(our_node)
-        self.server_thread = self.server.thread_start()
+        self.dht, self.server, self.server_thread = ui_helpers.initialise_kademlia(USE_GLOBAL_IP, PORT, logger=logger)
 
         self.make_main_network_menu()
 
