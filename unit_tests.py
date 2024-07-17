@@ -1250,8 +1250,13 @@ class TCPSubnetTests(unittest.TestCase):
 
     def test_unresponsive_node(self):
         local_ip = "127.0.0.1"
-        port = 7124
-        server = TCPSubnetServer(server_address=(local_ip, port))
+        valid_server = False
+        server = None
+        port = 1
+        while not valid_server:
+            port = random.randint(10000, 10500)
+            server = TCPServer(subnet_server_address=(local_ip, port))
+            valid_server = True
 
         p1 = TCPSubnetProtocol(url=local_ip, port=port, subnet=1)
         p2 = TCPSubnetProtocol(url=local_ip, port=port, subnet=2)
