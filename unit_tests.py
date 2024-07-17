@@ -293,336 +293,6 @@ class ForceFailedAddTest(unittest.TestCase):
                         "Expected new contact NOT to replace an older contact.")
 
 
-class NodeLookupTests(unittest.TestCase):
-    def test_get_close_contacts_ordered(self):
-        """
-        Description
-
-        Adds 100 random contacts to a nodes bucket list, then FIND_NODE is performed.
-
-        Expected
-
-        K Contacts should be returned; Returned contacts should be ordered by distance.
-        It should have returned the smallest ID’s possible, as host ID = 0.
-
-        :return:
-        """
-        sender: Contact = Contact(id=ID.random_id(),
-                                  protocol=None)
-        node: Node = Node(
-            Contact(id=ID.random_id(), protocol=None),
-            VirtualStorage())
-
-        contacts: list[Contact] = []
-        for _ in range(100):
-            contacts.append(
-                Contact(id=ID.random_id(), protocol=None))
-
-        for contact in contacts:
-            node.bucket_list.add_contact(contact)
-
-        key: ID = ID.random_id()
-
-        closest: list[Contact] = node.find_node(sender=sender, key=key)[0]
-        self.assertTrue(len(closest) == Constants.K,
-                        "Expected K contacts to be returned.")
-
-        # the contacts are already in ascending order with respect to the key.
-        distances: list[int] = [c.id ^ key for c in closest]
-        distance: int = distances[0]
-
-        # checking they're all in order (ascending)
-        for i in distances[1:]:
-            self.assertTrue(distance < i,
-                            "Expected contacts to be ordered by distance.")
-            distance = i
-
-        # Verify the contacts with the smallest distances have been returned from all possible distances.
-        largest_close_contact = distances[-1]
-
-        # This just makes sure it returned the K smallest contact ID's possible.
-        others = []
-        for b in node.bucket_list.buckets:
-            for c in b.contacts:
-                if c not in closest and (c.id ^ key) < largest_close_contact and c.id != sender.id:
-                    others.append(c)
-
-        self.assertTrue(
-            len(others) == 0,
-            "Expected no other contacts with a smaller distance than the greatest distance to exist, "
-            f"found {len(others)} {f"with distance {others[0].id ^ key}" if len(others) == 1 else ''}."
-        )
-
-    def test_no_nodes_to_query(self):
-        """
-        Creates K nodes and adds them to our routers bucket list, where each node knows about
-        the other peers.
-        :return:
-        """
-        router_node_contact = Contact(id=ID.random_id(),
-                                      protocol=None)
-        router = Router(
-            node=Node(contact=router_node_contact, storage=VirtualStorage()))
-
-        nodes: list[Node] = []
-
-        for i in range(Constants.K):
-            nodes.append(
-                Node(Contact(id=ID(2 ** i)), storage=VirtualStorage()))
-
-        for n in nodes:
-            # fixup protocols
-            n.our_contact.protocol = VirtualProtocol(n)
-
-            # our contacts:
-            router.node.bucket_list.add_contact(n.our_contact)
-
-            # each peer needs to know about the other peers
-            n_other = [i for i in nodes if i is not n]  # MIGHT ERROR
-            # n_other = [i for i in nodes if i != n]
-
-            # From book:
-            # nodes.ForEach(n => nodes.Where(nOther => nOther != n).
-            # ForEach(nOther => n.BucketList.AddContact(nOther.OurContact)));
-            for other_node in n_other:
-                n.bucket_list.add_contact(other_node.our_contact)
-
-        # select the key such that n^0==n
-        key = ID(0)
-        # all contacts are in one bucket (?)
-        contacts_to_query = router.node.bucket_list.buckets[0].contacts
-        closer_contacts: list[Contact] = []
-        further_contacts: list[Contact] = []
-
-        for c in contacts_to_query:
-            # should I read the output?
-            found, val, found_by, closer_contacts, further_contacts = \
-                router.get_closer_nodes(key=key,
-                                        node_to_query=c,
-                                        rpc_call=router.rpc_find_nodes,
-                                        closer_contacts=closer_contacts,
-                                        further_contacts=further_contacts)
-
-            closer_compare_arr = []
-            for contact in further_contacts:
-                if contact.id not in [i.id for i in contacts_to_query]:
-                    closer_compare_arr.append(contact)
-
-            self.assertTrue(len(closer_compare_arr) == 0, "No new nodes expected.")
-
-            further_compare_arr = []
-            for contact in further_contacts:
-                if contact.id not in [i.id for i in contacts_to_query]:
-                    further_compare_arr.append(contact)
-
-            self.assertTrue(len(further_compare_arr) == 0, "No new nodes expected.")
-
-    def __setup(self):
-        self.router = Router(
-            Node(Contact(id=ID.random_id(), protocol=None),
-                 storage=VirtualStorage()))
-
-        self.nodes: list[Node] = []
-        for _ in range(100):
-            contact: Contact = Contact(id=ID.random_id(), protocol=VirtualProtocol())
-            node: Node = Node(contact, VirtualStorage())
-            contact.protocol.node = node
-            self.nodes.append(node)
-
-        for n in self.nodes:
-            n.our_contact.protocol = VirtualProtocol(n)  # Fix up protocols
-            self.router.node.bucket_list.add_contact(n.our_contact)
-            for other_n in self.nodes:  # let each node know about each other node
-                if other_n != n:
-                    n.bucket_list.add_contact(other_n.our_contact)
-
-        # pick a random bucket
-        key = ID.random_id()
-        # take "A" contacts from a random KBucket
-        self.contacts_to_query: list[Contact] = \
-            self.router.node.bucket_list.get_kbucket(key).contacts[:Constants.A]
-
-        self.closer_contacts: list[Contact] = []
-        self.further_contacts: list[Contact] = []
-
-        self.closer_contacts_alt_computation: list[Contact] = []
-        self.further_contacts_alt_computation: list[Contact] = []
-
-        self.nearest_contact_node = sorted(self.contacts_to_query,
-                                           key=lambda contacts_to_query_nodes: contacts_to_query_nodes.id ^ key)[0]
-        self.distance = self.nearest_contact_node.id ^ key
-
-    def get_alt_close_and_far(self, contacts_to_query: list[Contact],
-                              closer: list[Contact],
-                              further: list[Contact],
-                              nodes: list[Node],
-                              key: ID,  # I think this is needed.
-                              distance
-                              ):
-        """
-        Alternate implementation for getting closer and further contacts.
-        """
-        # For each node (A == K) for testing in our bucket (nodes_to_query
-        for contact in contacts_to_query:
-            # Find the node that we're contacting:
-            contact_node: Node = next((n for n in nodes if n.our_contact == contact), None)
-            if contact_node is None:
-                continue
-
-            # Close contacts except ourself and the nodes we're contacting.
-            # Note that of all the contacts in the bucket list, many of the K returned
-            # by the get_close_contacts call are contacts we're querying, so they're being excluded.
-            close_contacts_of_contacted_node = [
-                c for c in contact_node.bucket_list.get_close_contacts(key, self.router.node.our_contact.id)
-                if c.id.value not in [c.id.value for c in contacts_to_query]
-            ]
-
-            for close_contact_of_contacted_node in close_contacts_of_contacted_node:
-                # Which of these contacts are closer?
-                if (
-                        close_contact_of_contacted_node.id.value ^ key.value < distance and close_contact_of_contacted_node.id.value not in
-                        [c.id.value for c in closer]):
-                    closer.append(close_contact_of_contacted_node)
-
-                # Which of these contacts are farther?
-                if close_contact_of_contacted_node.id.value ^ key.value >= distance and close_contact_of_contacted_node.id.value not in [
-                    c.id.value for c in further]:
-                    further.append(close_contact_of_contacted_node)
-
-    def test_lookup(self):
-
-        for i in range(100):
-            id = ID.random_id(seed=i)
-
-            self.__setup()
-
-            close_contacts: list[Contact] = self.router.lookup(
-                key=id, rpc_call=self.router.rpc_find_nodes, give_me_all=True)["contacts"]
-
-            contacted_nodes: list[Contact] = close_contacts
-            self.get_alt_close_and_far(self.contacts_to_query,
-                                       self.closer_contacts_alt_computation,
-                                       self.further_contacts_alt_computation,
-                                       self.nodes,
-                                       key=id,
-                                       distance=self.distance)
-
-            self.assertTrue(len(close_contacts) >= len(self.closer_contacts_alt_computation),
-                            f"Expected at least as many contacts: {len(close_contacts)} vs "
-                            f"{len(self.closer_contacts_alt_computation)}")
-
-            for c in self.closer_contacts_alt_computation:
-                self.assertTrue(c in close_contacts,
-                                "somehow a close contact in the computation is not in the originals?")
-
-    def test_simple_all_closer_contacts(self):
-        # setup
-        # by selecting our node ID to zero, we ensure that all distances of other nodes
-        # are greater than the distance to our node.
-
-        # Create a router with the largest ID possible.
-        router = Router(Node(Contact(id=ID.max(), protocol=None), VirtualStorage()))
-        nodes: list[Node] = []
-
-        for n in range(Constants.K):
-            # Create a node with id of a power of 2, up to 2**20.
-            node = Node(Contact(id=ID(2 ** n), protocol=None), storage=VirtualStorage())
-            nodes.append(node)
-
-        # Fixup protocols
-        for n in nodes:
-            n.our_contact.protocol = VirtualProtocol(n)
-
-        # add all contacts in our node list to the router.
-        for n in nodes:
-            router.node.bucket_list.add_contact(n.our_contact)
-
-        # let all of them know where the others are:
-        # (add each nodes contact to each nodes bucket_list)
-        for n in nodes:
-            for n_other in nodes:
-                if n != n_other:
-                    n.bucket_list.add_contact(n_other.our_contact)
-
-        # select the key such that n ^ 0 == n (TODO: Why?)
-        # this ensures the distance metric uses only the node ID,
-        # which makes for an integer difference for distance, not an XOR distance.
-        key = ID(0)
-        # all contacts are in one bucket
-        # This is because we added K node's contacts to router,
-        # so it shouldn't have split.
-        # contacts_to_query = router.node.bucket_list.buckets[0].contacts
-
-        find_result = router.lookup(key=key,
-                                    rpc_call=router.rpc_find_nodes,
-                                    give_me_all=True)
-
-        contacts = find_result["contacts"]
-
-        # Make sure lookup returns K contacts.
-        self.assertTrue(len(contacts) == Constants.K, f"Expected K closer contacts, got {len(contacts)}. {contacts}")
-
-        # Make sure it realises all contacts should be closer than 2**160 - 1.
-        self.assertTrue(len(router.closer_contacts) == Constants.K,
-                        "All contacts should be closer than the ID 2**160 - 1.")
-
-        self.assertTrue(len(router.further_contacts) == 0,
-                        f"Expected no further contacts, got {[c.id for c in router.further_contacts]}")
-
-    def test_simple_all_further_contacts(self):
-        # setup
-        # by selecting our node ID to zero, we ensure that all distances of other nodes
-        # are greater than the distance to our node.
-
-        # Create a router with the smallest ID possible.
-        # By selecting our node ID to zero, we ensure that all distances of other nodes are > the distance to our node.
-        router = Router(Node(Contact(id=ID(0), protocol=None), VirtualStorage()))
-        nodes: list[Node] = []
-
-        for n in range(Constants.K):
-            # Create a node with id of a power of 2, up to 2**20.
-            node = Node(Contact(id=ID(2 ** n), protocol=None), storage=VirtualStorage())
-            nodes.append(node)
-
-        # Fixup protocols
-        for n in nodes:
-            n.our_contact.protocol = VirtualProtocol(n)
-
-        # add all contacts in our node list to the router.
-        for n in nodes:
-            router.node.bucket_list.add_contact(n.our_contact)
-
-        # let all of them know where the others are:
-        # (add each nodes contact to each nodes bucket_list)
-        for n in nodes:
-            for n_other in nodes:
-                if n != n_other:
-                    n.bucket_list.add_contact(n_other.our_contact)
-
-        # select the key such that n ^ 0 == n
-        # this ensures the distance metric uses only the node ID,
-        # which makes for an integer difference for distance, not an XOR distance.
-        key = ID(0)
-        # all contacts are in one bucket
-        # This is because we added K node's contacts to router,
-        # so it shouldn't have split.
-
-        find_result = router.lookup(key=key,
-                                    rpc_call=router.rpc_find_nodes,
-                                    give_me_all=True)
-
-        contacts = find_result["contacts"]
-
-        # Make sure lookup returns K contacts.
-        self.assertTrue(len(contacts) == 0, f"Expected 0 closer contacts, got {len(contacts)}.")
-
-        # Make sure it realises all contacts should be further than the ID 0.
-        self.assertTrue(len(router.further_contacts) == Constants.K,
-                        "All contacts should be further.")
-
-        self.assertTrue(len(router.closer_contacts) == 0, "Expected no closer contacts.")
-
-
 class DHTTest(unittest.TestCase):
     def test_local_store_find_value(self):
         vp = VirtualProtocol()
@@ -1671,6 +1341,337 @@ class IDIntegerTests(unittest.TestCase):
         self.assertTrue(ID(1) >= 0)
         self.assertTrue(ID(100) >= 100)
         self.assertTrue(ID(2 ** 160 - 1) >= 1)
+
+
+class NodeLookupTests(unittest.TestCase):
+    def test_get_close_contacts_ordered(self):
+        """
+        Description
+
+        Adds 100 random contacts to a nodes bucket list, then FIND_NODE is performed.
+
+        Expected
+
+        K Contacts should be returned; Returned contacts should be ordered by distance.
+        It should have returned the smallest ID’s possible, as host ID = 0.
+
+        :return:
+        """
+        sender: Contact = Contact(id=ID.random_id(),
+                                  protocol=None)
+        node: Node = Node(
+            Contact(id=ID.random_id(), protocol=None),
+            VirtualStorage())
+
+        contacts: list[Contact] = []
+        for _ in range(100):
+            contacts.append(
+                Contact(id=ID.random_id(), protocol=None))
+
+        for contact in contacts:
+            node.bucket_list.add_contact(contact)
+
+        key: ID = ID.random_id()
+
+        closest: list[Contact] = node.find_node(sender=sender, key=key)[0]
+        self.assertTrue(len(closest) == Constants.K,
+                        "Expected K contacts to be returned.")
+
+        # the contacts are already in ascending order with respect to the key.
+        distances: list[int] = [c.id ^ key for c in closest]
+        distance: int = distances[0]
+
+        # checking they're all in order (ascending)
+        for i in distances[1:]:
+            self.assertTrue(distance < i,
+                            "Expected contacts to be ordered by distance.")
+            distance = i
+
+        # Verify the contacts with the smallest distances have been returned from all possible distances.
+        largest_close_contact = distances[-1]
+
+        # This just makes sure it returned the K smallest contact ID's possible.
+        others = []
+        for b in node.bucket_list.buckets:
+            for c in b.contacts:
+                if c not in closest and (c.id ^ key) < largest_close_contact and c.id != sender.id:
+                    others.append(c)
+
+        self.assertTrue(
+            len(others) == 0,
+            "Expected no other contacts with a smaller distance than the greatest distance to exist, "
+            f"found {len(others)} {f"with distance {others[0].id ^ key}" if len(others) == 1 else ''}."
+        )
+
+    def test_no_nodes_to_query(self):
+        """
+        Creates K nodes and adds them to our routers bucket list, where each node knows about
+        the other peers.
+        :return:
+        """
+        router_node_contact = Contact(id=ID.random_id(),
+                                      protocol=None)
+        router = Router(
+            node=Node(contact=router_node_contact, storage=VirtualStorage()))
+
+        nodes: list[Node] = []
+
+        for i in range(Constants.K):
+            nodes.append(
+                Node(Contact(id=ID(2 ** i)), storage=VirtualStorage()))
+
+        for n in nodes:
+            # fixup protocols
+            n.our_contact.protocol = VirtualProtocol(n)
+
+            # our contacts:
+            router.node.bucket_list.add_contact(n.our_contact)
+
+            # each peer needs to know about the other peers
+            n_other = [i for i in nodes if i is not n]  # MIGHT ERROR
+            # n_other = [i for i in nodes if i != n]
+
+            # From book:
+            # nodes.ForEach(n => nodes.Where(nOther => nOther != n).
+            # ForEach(nOther => n.BucketList.AddContact(nOther.OurContact)));
+            for other_node in n_other:
+                n.bucket_list.add_contact(other_node.our_contact)
+
+        # select the key such that n^0==n
+        key = ID(0)
+        # all contacts are in one bucket (?)
+        contacts_to_query = router.node.bucket_list.buckets[0].contacts
+        closer_contacts: list[Contact] = []
+        further_contacts: list[Contact] = []
+
+        for c in contacts_to_query:
+            # should I read the output?
+            found, val, found_by, closer_contacts, further_contacts = \
+                router.get_closer_nodes(key=key,
+                                        node_to_query=c,
+                                        rpc_call=router.rpc_find_nodes,
+                                        closer_contacts=closer_contacts,
+                                        further_contacts=further_contacts)
+
+            closer_compare_arr = []
+            for contact in further_contacts:
+                if contact.id not in [i.id for i in contacts_to_query]:
+                    closer_compare_arr.append(contact)
+
+            self.assertTrue(len(closer_compare_arr) == 0, "No new nodes expected.")
+
+            further_compare_arr = []
+            for contact in further_contacts:
+                if contact.id not in [i.id for i in contacts_to_query]:
+                    further_compare_arr.append(contact)
+
+            self.assertTrue(len(further_compare_arr) == 0, "No new nodes expected.")
+
+    def __setup(self):
+        self.router = Router(
+            Node(Contact(id=ID.random_id(), protocol=None),
+                 storage=VirtualStorage()))
+
+        self.nodes: list[Node] = []
+        for _ in range(100):
+            contact: Contact = Contact(id=ID.random_id(), protocol=VirtualProtocol())
+            node: Node = Node(contact, VirtualStorage())
+            contact.protocol.node = node
+            self.nodes.append(node)
+
+        for n in self.nodes:
+            n.our_contact.protocol = VirtualProtocol(n)  # Fix up protocols
+            self.router.node.bucket_list.add_contact(n.our_contact)
+            for other_n in self.nodes:  # let each node know about each other node
+                if other_n != n:
+                    n.bucket_list.add_contact(other_n.our_contact)
+
+        # pick a random bucket
+        key = ID.random_id()
+        # take "A" contacts from a random KBucket
+        self.contacts_to_query: list[Contact] = \
+            self.router.node.bucket_list.get_kbucket(key).contacts[:Constants.A]
+
+        self.closer_contacts: list[Contact] = []
+        self.further_contacts: list[Contact] = []
+
+        self.closer_contacts_alt_computation: list[Contact] = []
+        self.further_contacts_alt_computation: list[Contact] = []
+
+        self.nearest_contact_node = sorted(self.contacts_to_query,
+                                           key=lambda contacts_to_query_nodes: contacts_to_query_nodes.id ^ key)[0]
+        self.distance = self.nearest_contact_node.id ^ key
+
+    def get_alt_close_and_far(self, contacts_to_query: list[Contact],
+                              closer: list[Contact],
+                              further: list[Contact],
+                              nodes: list[Node],
+                              key: ID,  # I think this is needed.
+                              distance
+                              ):
+        """
+        Alternate implementation for getting closer and further contacts.
+        """
+        # For each node (A == K) for testing in our bucket (nodes_to_query
+        for contact in contacts_to_query:
+            # Find the node that we're contacting:
+            contact_node: Node = next((n for n in nodes if n.our_contact == contact), None)
+            if contact_node is None:
+                continue
+
+            # Close contacts except ourself and the nodes we're contacting.
+            # Note that of all the contacts in the bucket list, many of the K returned
+            # by the get_close_contacts call are contacts we're querying, so they're being excluded.
+            close_contacts_of_contacted_node = [
+                c for c in contact_node.bucket_list.get_close_contacts(key, self.router.node.our_contact.id)
+                if c.id.value not in [c.id.value for c in contacts_to_query]
+            ]
+
+            for close_contact_of_contacted_node in close_contacts_of_contacted_node:
+                # Which of these contacts are closer?
+                if (
+                        close_contact_of_contacted_node.id.value ^ key.value < distance and close_contact_of_contacted_node.id.value not in
+                        [c.id.value for c in closer]):
+                    closer.append(close_contact_of_contacted_node)
+
+                # Which of these contacts are farther?
+                if close_contact_of_contacted_node.id.value ^ key.value >= distance and close_contact_of_contacted_node.id.value not in [
+                    c.id.value for c in further]:
+                    further.append(close_contact_of_contacted_node)
+
+    def test_simple_all_closer_contacts(self):
+        # setup
+        # by selecting our node ID to zero, we ensure that all distances of other nodes
+        # are greater than the distance to our node.
+
+        # Create a router with the largest ID possible.
+        router = Router(Node(Contact(id=ID.max(), protocol=None), VirtualStorage()))
+        nodes: list[Node] = []
+
+        for n in range(Constants.K):
+            # Create a node with id of a power of 2, up to 2**20.
+            node = Node(Contact(id=ID(2 ** n), protocol=None), storage=VirtualStorage())
+            nodes.append(node)
+
+        # Fixup protocols
+        for n in nodes:
+            n.our_contact.protocol = VirtualProtocol(n)
+
+        # add all contacts in our node list to the router.
+        for n in nodes:
+            router.node.bucket_list.add_contact(n.our_contact)
+
+        # let all of them know where the others are:
+        # (add each nodes contact to each nodes bucket_list)
+        for n in nodes:
+            for n_other in nodes:
+                if n != n_other:
+                    n.bucket_list.add_contact(n_other.our_contact)
+
+        # select the key such that n ^ 0 == n (TODO: Why?)
+        # this ensures the distance metric uses only the node ID,
+        # which makes for an integer difference for distance, not an XOR distance.
+        key = ID(0)
+        # all contacts are in one bucket
+        # This is because we added K node's contacts to router,
+        # so it shouldn't have split.
+        # contacts_to_query = router.node.bucket_list.buckets[0].contacts
+
+        find_result = router.lookup(key=key,
+                                    rpc_call=router.rpc_find_nodes,
+                                    give_me_all=True)
+
+        contacts = find_result["contacts"]
+
+        # Make sure lookup returns K contacts.
+        self.assertTrue(len(contacts) == Constants.K, f"Expected K closer contacts, got {len(contacts)}. {contacts}")
+
+        # Make sure it realises all contacts should be closer than 2**160 - 1.
+        self.assertTrue(len(router.closer_contacts) == Constants.K,
+                        "All contacts should be closer than the ID 2**160 - 1.")
+
+        self.assertTrue(len(router.further_contacts) == 0,
+                        f"Expected no further contacts, got {[c.id for c in router.further_contacts]}")
+
+    def test_simple_all_further_contacts(self):
+        # setup
+        # by selecting our node ID to zero, we ensure that all distances of other nodes
+        # are greater than the distance to our node.
+
+        # Create a router with the smallest ID possible.
+        # By selecting our node ID to zero, we ensure that all distances of other nodes are > the distance to our node.
+        router = Router(Node(Contact(id=ID(0), protocol=None), VirtualStorage()))
+        nodes: list[Node] = []
+
+        for n in range(Constants.K):
+            # Create a node with id of a power of 2, up to 2**20.
+            node = Node(Contact(id=ID(2 ** n), protocol=None), storage=VirtualStorage())
+            nodes.append(node)
+
+        # Fixup protocols
+        for n in nodes:
+            n.our_contact.protocol = VirtualProtocol(n)
+
+        # add all contacts in our node list to the router.
+        for n in nodes:
+            router.node.bucket_list.add_contact(n.our_contact)
+
+        # let all of them know where the others are:
+        # (add each nodes contact to each nodes bucket_list)
+        for n in nodes:
+            for n_other in nodes:
+                if n != n_other:
+                    n.bucket_list.add_contact(n_other.our_contact)
+
+        # select the key such that n ^ 0 == n
+        # this ensures the distance metric uses only the node ID,
+        # which makes for an integer difference for distance, not an XOR distance.
+        key = ID(0)
+        # all contacts are in one bucket
+        # This is because we added K node's contacts to router,
+        # so it shouldn't have split.
+
+        find_result = router.lookup(key=key,
+                                    rpc_call=router.rpc_find_nodes,
+                                    give_me_all=True)
+
+        contacts = find_result["contacts"]
+
+        # Make sure lookup returns K contacts.
+        self.assertTrue(len(contacts) == 0, f"Expected 0 closer contacts, got {len(contacts)}.")
+
+        # Make sure it realises all contacts should be further than the ID 0.
+        self.assertTrue(len(router.further_contacts) == Constants.K,
+                        "All contacts should be further.")
+
+        self.assertTrue(len(router.closer_contacts) == 0, "Expected no closer contacts.")
+
+
+    def test_z_lookup(self):
+
+        for i in range(100):
+            id = ID.random_id(seed=i)
+
+            self.__setup()
+
+            close_contacts: list[Contact] = self.router.lookup(
+                key=id, rpc_call=self.router.rpc_find_nodes, give_me_all=True)["contacts"]
+
+            contacted_nodes: list[Contact] = close_contacts
+            self.get_alt_close_and_far(self.contacts_to_query,
+                                       self.closer_contacts_alt_computation,
+                                       self.further_contacts_alt_computation,
+                                       self.nodes,
+                                       key=id,
+                                       distance=self.distance)
+
+            self.assertTrue(len(close_contacts) >= len(self.closer_contacts_alt_computation),
+                            f"Expected at least as many contacts: {len(close_contacts)} vs "
+                            f"{len(self.closer_contacts_alt_computation)}")
+
+            for c in self.closer_contacts_alt_computation:
+                self.assertTrue(c in close_contacts,
+                                "somehow a close contact in the computation is not in the originals?")
 
 
 if __name__ == '__main__':
