@@ -177,7 +177,7 @@ class TCPSubnetProtocol(IProtocol):
             )
             logger.info(f"[Client] Received HTTP Response from {ret.url} with code {ret.status_code}")
 
-        except requests.Timeout as t:
+        except (requests.Timeout, requests.ConnectionError) as t:
             logger.error("[Client] Timeout error when contacting node.\n", t)
             timeout_error = True
             error = t
@@ -276,7 +276,7 @@ class TCPSubnetProtocol(IProtocol):
                         encoded_data += chunk
                         progress_bar.update(len(chunk))
 
-        except requests.Timeout as t:
+        except (requests.Timeout, requests.ConnectionError) as t:
             logger.error(f"Timeout error:{t}")
             timeout_error = True
             error = t
@@ -355,7 +355,7 @@ class TCPSubnetProtocol(IProtocol):
             )
             logger.info(f"[Client] Received PING response from {ret.url} with code {ret.status_code}")
 
-        except requests.Timeout as t:
+        except (requests.Timeout, requests.ConnectionError) as t:
             logger.error("[Client] Ping timeout error: ", t)
             timeout_error = True
             error = t
@@ -409,7 +409,7 @@ class TCPSubnetProtocol(IProtocol):
             )
             logger.info(f"[Client] Received STORE response from {ret.url} with code {ret.status_code}")
 
-        except requests.Timeout as t:
+        except (requests.Timeout, requests.ConnectionError) as t:
             logger.error("[Client] Timeout error when contacting node.")
             timeout_error = True
             error = t
@@ -491,7 +491,7 @@ class TCPProtocol(IProtocol):
             )
             logger.info(f"[Client] Received FIND_NODE response from {ret.url} with code {ret.status_code}")
 
-        except requests.Timeout as t:
+        except (requests.Timeout, requests.ConnectionError) as t:
             logger.error("[Client] Timeout error when contacting node.\n", t)
             timeout_error = True
             error = t
@@ -584,7 +584,7 @@ class TCPProtocol(IProtocol):
                 ret_decoded = pickler.decode_data(encoded_data)
 
 
-        except requests.Timeout as t:
+        except (requests.Timeout, requests.ConnectionError) as t:
             logger.error(f"Timeout error:{t}")
             timeout_error = True
             error = t
@@ -645,7 +645,7 @@ class TCPProtocol(IProtocol):
             )
             logger.info(f"[Client] Received HTTP Response from {ret.url} with code {ret.status_code}")
 
-        except requests.Timeout as t:
+        except (requests.Timeout, requests.ConnectionError) as t:
             logger.error(f"[Client] Ping timeout error: {t}")
             timeout_error = True
             error = t
@@ -696,7 +696,7 @@ class TCPProtocol(IProtocol):
             )
             logger.info(f"[Client] Received STORE response from {ret.url} with code {ret.status_code}")
 
-        except requests.Timeout as t:
+        except (requests.Timeout, requests.ConnectionError) as t:
             logger.error("[Client] Timeout error when contacting node.")
             timeout_error = True
             error = t
