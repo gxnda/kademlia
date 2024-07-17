@@ -221,7 +221,7 @@ class TCPServer(BaseServer):
         elif node:
             self.node: Node = node
             if isinstance(self.node.our_contact.protocol, TCPProtocol):
-                server_address: tuple[str, int] = ("127.0.0.1", self.node.our_contact.protocol.port)
+                server_address: tuple[str, int] = (self.node.our_contact.protocol.url, self.node.our_contact.protocol.port)
             else:
                 raise IncorrectProtocolError("Invalid protocol.")
             super().__init__(
