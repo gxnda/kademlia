@@ -11,7 +11,7 @@ from kademlia_dht.buckets import KBucket
 from kademlia_dht.constants import Constants
 from kademlia_dht.contact import Contact
 from kademlia_dht.dictionaries import ContactQueueItem, FindResult
-from kademlia_dht.errors import ValueCannotBeNoneError, NoNonEmptyBucketsException
+from kademlia_dht.errors import ValueCannotBeNoneError, NoNonEmptyBucketsError
 from kademlia_dht.id import ID
 from kademlia_dht.node import Node
 
@@ -45,7 +45,7 @@ class BaseRouter:
         closest: KBucket = sorted(self.node.bucket_list.buckets, key=lambda b: b.high() ^ key.value)[0]
 
         if closest is None:
-            raise NoNonEmptyBucketsException("No non-empty buckets exist.  "
+            raise NoNonEmptyBucketsError("No non-empty buckets exist.  "
                                              "You must first register a peer and add that peer to your bucketlist.")
 
         return closest

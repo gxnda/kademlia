@@ -3,47 +3,51 @@ import logging
 logger = logging.getLogger("__main__")
 
 
-class DataDecodingError(Exception):
+class KademliaError(Exception):
     pass
 
 
-class TooManyContactsError(Exception):
+class DataDecodingError(KademliaError):
+    pass
+
+
+class TooManyContactsError(KademliaError):
     """Raised when a contact is added to a full k-bucket."""
     pass
 
 
-class OutOfRangeError(Exception):
+class OutOfRangeError(KademliaError):
     """Raised when a contact is added to a k-bucket that is out of range."""
     pass
 
 
-class OurNodeCannotBeAContactError(Exception):
+class OurNodeCannotBeAContactError(KademliaError):
     """Raised when a contact added has the same ID as the client."""
 
 
-class AllKBucketsAreEmptyError(Exception):
+class AllKBucketsAreEmptyError(KademliaError):
     """Raised when no KBuckets can be iterated through."""
 
 
-class SendingQueryToSelfError(Exception):
+class SendingQueryToSelfError(KademliaError):
     """Raised when a Query (RPC Call) is sent to ourselves."""
     pass
 
 
-class SenderIsSelfError(Exception):
+class SenderIsSelfError(KademliaError):
     """Raised when trying to send certain RPC commands, if sender is us."""
     pass
 
 
-class BucketDoesNotContainContactToEvictError(Exception):
+class BucketDoesNotContainContactToEvictError(KademliaError):
     pass
 
 
-class NoNonEmptyBucketsException(Exception):
+class NoNonEmptyBucketsError(KademliaError):
     pass
 
 
-class RPCError(Exception):
+class RPCError(KademliaError):
     """
     Possible errors for RPC commands.
     """
@@ -114,7 +118,23 @@ class RPCError(Exception):
         return cls()
 
 
-class ValueCannotBeNoneError(Exception):
+class ProtocolError(RPCError):
+    pass
+
+
+class PeerError(RPCError):
+    pass
+
+
+class TimeoutError(RPCError):
+    pass
+
+
+class IDMismatchError(RPCError):
+    pass
+
+
+class ValueCannotBeNoneError(KademliaError):
     """
     Raised when a value is None, when everything was meant to have gone OK.
     There is a risk of this being purposely triggered maliciously to shut down nodes on the network.
@@ -122,9 +142,9 @@ class ValueCannotBeNoneError(Exception):
     """
 
 
-class UnknownRequestError(Exception):
+class UnknownRequestError(KademliaError):
     pass
 
 
-class IncorrectProtocolError(Exception):
+class IncorrectProtocolError(KademliaError):
     pass
