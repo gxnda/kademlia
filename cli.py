@@ -11,7 +11,7 @@ from requests import get
 import ui_helpers
 from kademlia_dht import dht, contact, protocols, storage, networking, routers, node, helpers, id, pickler
 from kademlia_dht.constants import Constants
-
+from kademlia_dht.errors import IDMismatchError
 
 USE_GLOBAL_IP, PORT, verbose = ui_helpers.handle_terminal()
 
@@ -317,7 +317,7 @@ class UploadMenu(GenericMenu):
             if not filename:  # os.path.basename returns "" on file paths ending in "/"
                 logger.error("File to upload must not be a directory.")
             else:
-                helpers.store_file(file_to_upload, self.parent.dht)
+                ui_helpers.store_file(file_to_upload, self.parent.dht)
         else:
             logger.error(f"Path not found: {file_to_upload}")
 
@@ -348,40 +348,14 @@ class DownloadMenu(GenericMenu):
 
     def handle_download(self):
         id_to_download: id.ID = id.ID(int(self.id_to_download))
-        found, contacts, val = self.parent.dht.find_value(key=id_to_download)
-        # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
-        if not found:
-            logger.error("File not found on the network.")
-            self.go_back()
-        else:
-            # TODO: It might be a better idea to use JSON to send values.
-            val_bytes: bytes = val.encode(Constants.PICKLE_ENCODING)  # TODO: Add option for changing this in settings.
+        try:
+            download_path = ui_helpers.download_file(id_to_download, self.parent.dht)
+            logger.info(f"File downloaded to {download_path}.")
+        except IDMismatchError:
+            logger.error("File ID not found on the network.")
+        except Exception as e:
+            logger.error(str(e))
 
-            # "pickle.loads()" is very insecure and can lead to arbitrary code execution, the val received
-            #   could be maliciously crafted to allow for malicious code execution because it compiles and creates
-            #   a python object.
-            file_dict: dict = pickle.loads(val_bytes)  # TODO: Make secure.
-            if not isinstance(file_dict, dict):
-                assert TypeError("The file downloaded is formatted incorrectly.")
-
-            filename: str = file_dict["filename"]
-            if not isinstance(filename, str):
-                assert TypeError("The file downloaded is formatted incorrectly.")
-
-            file_bytes: bytes = file_dict["file"]
-            if not isinstance(file_bytes, bytes):
-                assert TypeError("The file downloaded is formatted incorrectly.")
-
-            del file_dict  # Free up memory.
-
-            # get current working directory
-            cwd = os.getcwd()  # TODO: Add option to change where it is installed to.
-
-            install_directory = cwd  # writes the file to the current working directory
-            with open(os.path.join(cwd, filename), "wb") as f:
-                f.write(file_bytes)
-
-            logger.info(f"File downloaded to {os.path.join(cwd, filename)}.")
 
 
 if __name__ == "__main__":

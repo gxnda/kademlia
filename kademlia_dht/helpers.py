@@ -179,19 +179,3 @@ if __name__ == "__main__":
 
     print(f"Called {called} times.")
 
-
-def store_file(file_to_upload: str, dht) -> ID:
-    filename = os.path.basename(file_to_upload)
-    with open(file_to_upload, "rb") as f:
-        file_contents: bytes = f.read()
-
-    # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
-    val: str = json.dumps({"filename": filename, "file": file_contents.decode(Constants.PICKLE_ENCODING)})
-    del file_contents  # free up memory, file_contents could be pretty big.
-
-    id_to_store_to = ID.random_id()
-    dht.store(id_to_store_to, val)
-    logger.info(f"Stored file at {id_to_store_to}.")
-
-    return id_to_store_to
-

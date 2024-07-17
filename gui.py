@@ -15,6 +15,7 @@ from requests import get
 import ui_helpers
 from kademlia_dht import dht, id, networking, protocols, node, contact, storage, routers, errors, helpers, pickler
 from kademlia_dht.constants import Constants
+from kademlia_dht.errors import IDMismatchError
 
 """
 ├── User Interface
@@ -411,7 +412,7 @@ class UploadFrame(ctk.CTkFrame):
                 logger.error("File to upload must not be a directory.")
                 self.parent.show_error("Must not be a directory.")
             else:
-                id_to_store_to = helpers.store_file(file_to_upload, self.parent.dht)
+                id_to_store_to = ui_helpers.store_file(file_to_upload, self.parent.dht)
                 self.parent.show_status(f"Stored file at {id_to_store_to.value}.", copy_data=str(id_to_store_to.value))
         else:
             logger.error(f"Path not found: {file_to_upload}")
@@ -452,22 +453,13 @@ class DownloadFrame(ctk.CTkFrame):
             self.parent.show_error("ID out of range.")
         else:
             id_to_download: id.ID = id.ID(int(id_from_entry))
-            found, contacts, val = self.parent.dht.find_value(key=id_to_download)
-            # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
-            if not found:
-                self.parent.show_error("File not found.")
-            else:
-
-                file_dict: dict = json.loads(val)
-                filename: str = file_dict["filename"]
-                file_bytes: bytes = file_dict["file"].encode(Constants.PICKLE_ENCODING)
-                del file_dict  # Free up memory.
-
-                cwd = os.getcwd()  # TODO: Add option to change where it is installed to.
-                with open(os.path.join(cwd, filename), "wb") as f:
-                    f.write(file_bytes)
-
-                self.parent.show_status(f"File downloaded to {os.path.join(cwd, filename)}.")
+            try:
+                download_path = ui_helpers.download_file(id_to_download, self.parent.dht)
+                self.parent.show_status(f"File downloaded to {download_path}.")
+            except IDMismatchError:
+                self.parent.show_error("File ID not found on the network.")
+            except Exception as e:
+                self.parent.show_error(str(e))
 
 
 class MainNetworkFrame(ctk.CTkFrame):
