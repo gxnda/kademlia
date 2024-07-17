@@ -216,11 +216,65 @@ class JoinNetworkMenu(GenericMenu):
 
 
 class BootstrapFromJSONMenu(GenericMenu):
-    pass  # TODO: This should not be an object, this should be a function.
+    def __init__(self, parent: GenericMenu):
+        raise NotImplementedError("Not implemented yet.")
+
+
+class ManualBootstrapMenu(GenericMenu):
+    def __init__(self, parent: GenericMenu):
+        GenericMenu.__init__(self, title="Manual bootstrap", parent=parent)
+        self.ip = self.get_input("Enter IP address of bootstrap peer (Leave blank to go back): ",
+                       regex=r"(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2["
+                             r"0-4][0-9]|25[0-5])")
+        if not self.ip:
+            self.go_back()
+
+        valid = False
+        while not valid:
+            self.port = self.get_input("Enter port of bootstrap peer (Leave blank to go back): ")
+            if not self.port:
+                self.go_back()
+            elif self.port.isnumeric():
+                valid = True
+            else:
+                logger.error("Port was not a number, please try again.")
+
+        valid = False
+        while not valid:
+            self.id = self.get_input("Enter ID of bootstrap peer (Leave blank to go back): ")
+            if not self.id:
+                self.go_back()
+            elif self.id.isnumeric():
+                valid = True
+            else:
+                logger.error("ID was not a number, please try again.")
+
+        valid = False
+        while not valid:
+            self.protocol = self.get_input("Enter protocol of bootstrap peer (TCP, TCPSubnet) (Leave blank to go back): ",
+                                           regex=r"(TCP|TCPSubnet|tcpsubnet)")
+            if not self.protocol:
+                self.go_back()
+            elif self.protocol.lower() == "tcpsubnet":
+                self.protocol = protocols.TCPSubnetProtocol(self.ip, int(self.port), int(self.id))
+            else:
+                logger.error("Protocol was not recognised, please try again.")
+
 
 
 class BootstrapMenu(GenericMenu):
-    pass  # TODO: This should not be an object, this should be a function.
+    def __init__(self, parent: GenericMenu):
+        GenericMenu.__init__(self, title="Bootstrap from known peer", parent=parent)
+        self.add_option(name="Manual bootstrap", command=self.manual_bootstrap)
+        self.add_option(name="Bootstrap from contact file", command=self.bootstrap_from_contact_json)
+
+    def manual_bootstrap(self):
+        menu = ManualBootstrapMenu(parent=self)
+        menu.display_all()
+
+    def bootstrap_from_contact_json(self):
+        menu = BootstrapFromJSONMenu(parent=self)
+        menu.display_all()
 
 
 class MainNetworkMenu(GenericMenu):
