@@ -1679,5 +1679,11 @@ class NodeLookupTests(unittest.TestCase):
                                 "somehow a close contact in the computation is not in the originals?")
 
 
+class LargeFileTests(unittest.TestCase):
+    def test_large_file_splits(self):
+
+        dht = DHT(ID.random_id(), VirtualProtocol(), storage_factory=VirtualStorage, router=Router())
+
+
 if __name__ == '__main__':
     unittest.main()

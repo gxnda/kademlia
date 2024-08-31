@@ -138,6 +138,32 @@ class DHT:
             "eviction_count": self.eviction_count
         })
 
+    @classmethod
+    def from_data_file(cls,
+                  filename: str,
+                  protocol: IProtocol,
+                  router: BaseRouter,
+                  storage_factory: Callable[[], IStorage] | None = None,
+                  originator_storage: IStorage | None = None,
+                  republish_storage: IStorage | None = None,
+                  cache_storage: IStorage | None = None):
+        """
+        Loads DHT from a large file, splitting it into pieces and placing them into buckets.
+        """
+        file_hash: int = helpers.get_sha1_hash_from_file(filename)
+        dht_id: ID = ID(file_hash)
+        dht = cls(dht_id, protocol, router, storage_factory, originator_storage, republish_storage, cache_storage)
+        with open(filename, "rb") as file:
+            chunk: bytes = file.read(4096)
+
+            while chunk:
+                key: ID = ID(helpers.get_sha1_hash(chunk))
+                value: str = chunk.decode(Constants.PICKLE_ENCODING)
+                dht.store(key, value)
+                chunk = file.read(4096)
+
+        return dht
+
     def router(self) -> BaseRouter:
         return self._router
 
