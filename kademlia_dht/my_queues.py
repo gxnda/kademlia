@@ -37,7 +37,7 @@ class InfiniteLinearQueue:
             return None
 
 
-class LinearQueue(object):
+class LinearQueue:
 
     def __init__(self, queue_size: int):
         """
