@@ -3,8 +3,16 @@ from dataclasses import dataclass
 
 @dataclass
 class Constants:
+    DEBUG = False
+
     K = 20
     B = 5  # or 160 according to https://xlattice.sourceforge.net/components/protocol/kademlia/specs.html
+
+    if DEBUG:
+        A: int = 3
+    else:
+        A: int = 20
+
     REQUEST_TIMEOUT_SEC = 0.5  # 500ms
     ID_LENGTH_BYTES = 20
     ID_LENGTH_BITS = ID_LENGTH_BYTES * 8
@@ -17,12 +25,7 @@ class Constants:
     EXPIRATION_TIME_SEC = 24 * 60 * 60  # every 24 hours in seconds
     EVICTION_LIMIT = 5
     MAX_PORT_RETRIES = 100
-    DEBUG = False
-
     DHT_SERIALISED_SUFFIX = "dht"
     PICKLE_ENCODING = "latin1"
+    PIECE_LENGTH= 262_144  # Standard piece length for BitTorrent pieces.
 
-    if DEBUG:
-        A: int = 3
-    else:
-        A: int = 20
