@@ -158,6 +158,21 @@ class Timer:
         return self._stop_event.is_set()
 
 
+def sha1_hash_file(filename):
+    """
+    Hash a file using SHA-1 (160-bit hash).
+    """
+    sha1_hash = sha1()
+
+    with open(filename, 'rb') as file:
+        chunk = file.read(4096)
+        while chunk:
+            sha1_hash.update(chunk)
+            chunk = file.read(4096)
+
+    return sha1_hash.hexdigest()
+
+
 if __name__ == "__main__":
     logger.setLevel(logging.DEBUG)
     start = time.time()
