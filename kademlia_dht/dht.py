@@ -154,13 +154,13 @@ class DHT:
         dht_id: ID = ID(file_hash)
         dht = cls(dht_id, protocol, router, storage_factory, originator_storage, republish_storage, cache_storage)
         with open(filename, "rb") as file:
-            chunk: bytes = file.read(4096)
+            chunk: bytes = file.read(Constants.PIECE_LENGTH)
 
             while chunk:
                 key: ID = ID(helpers.get_sha1_hash(chunk))
                 value: str = chunk.decode(Constants.PICKLE_ENCODING)
                 dht.store(key, value)
-                chunk = file.read(4096)
+                chunk = file.read(Constants.PIECE_LENGTH)
 
         return dht
 
