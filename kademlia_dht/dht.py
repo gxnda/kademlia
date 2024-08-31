@@ -580,15 +580,3 @@ class DHT:
         if contact is not None:
             self.pending_contacts.remove(contact)
             bucket.add_contact(contact)
-
-# class DHTSubclass(DHT):
-#     def __init__(self):
-#         super().__init__()
-#
-#     # @override
-#     def expire_keys_elapsed(self, sender: object, e) -> None:
-#         """
-#         Allows for never expiring republished key values.
-#         """
-#         self.remove_expired_data(self.cache_storage)
-#         # self.remove_expired_data(self.republish_storage)
