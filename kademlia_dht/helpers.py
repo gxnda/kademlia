@@ -1,10 +1,8 @@
-import json
 import logging
 import os
 import random
 import socket
 import threading
-import time
 from hashlib import sha1
 
 from kademlia_dht.constants import Constants
@@ -158,24 +156,28 @@ class Timer:
         return self._stop_event.is_set()
 
 
+def get_sha1_hash_from_file(filename) -> int:
+    """
+    Hash a file using SHA-1 (160-bit hash).
+    """
+    sha1_hash = sha1()
+
+    with open(filename, 'rb') as file:
+        chunk = file.read(4096)
+        while chunk:
+            sha1_hash.update(chunk)
+            chunk = file.read(4096)
+
+    return int.from_bytes(sha1_hash.digest(), byteorder='big')
+
+
+def get_sha1_hash(input: bytes) -> int:
+    sha1_hash = sha1(input)
+    return int.from_bytes(sha1_hash.digest(), byteorder='big')
+
+
 if __name__ == "__main__":
-    logger.setLevel(logging.DEBUG)
-    start = time.time()
-    called = 0
-
-
-    def example_function():
-        global start, called
-        print(f"Function called at: {time.time() - start} seconds")
-        called += 1
-
-
-    timer = Timer(3, example_function, auto_reset=True)
-    timer.start()
-    timer.start()
-    time.sleep(10)  # Let it run for 10 seconds
-    timer.stop()
-    timer.stop()
-
-    print(f"Called {called} times.")
+    var = "hello world"
+    digest = get_sha1_hash(var.encode("latin-1"))
+    print(digest)
 

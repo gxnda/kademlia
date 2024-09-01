@@ -138,6 +138,32 @@ class DHT:
             "eviction_count": self.eviction_count
         })
 
+    @classmethod
+    def from_data_file(cls,
+                  filename: str,
+                  protocol: IProtocol,
+                  router: BaseRouter,
+                  storage_factory: Callable[[], IStorage] | None = None,
+                  originator_storage: IStorage | None = None,
+                  republish_storage: IStorage | None = None,
+                  cache_storage: IStorage | None = None):
+        """
+        Loads DHT from a large file, splitting it into pieces and placing them into buckets.
+        """
+        file_hash: int = helpers.get_sha1_hash_from_file(filename)
+        dht_id: ID = ID(file_hash)
+        dht = cls(dht_id, protocol, router, storage_factory, originator_storage, republish_storage, cache_storage)
+        with open(filename, "rb") as file:
+            chunk: bytes = file.read(Constants.PIECE_LENGTH)
+
+            while chunk:
+                key: ID = ID(helpers.get_sha1_hash(chunk))
+                value: str = chunk.decode(Constants.PICKLE_ENCODING)
+                dht.store(key, value)
+                chunk = file.read(Constants.PIECE_LENGTH)
+
+        return dht
+
     def router(self) -> BaseRouter:
         return self._router
 
@@ -554,15 +580,3 @@ class DHT:
         if contact is not None:
             self.pending_contacts.remove(contact)
             bucket.add_contact(contact)
-
-# class DHTSubclass(DHT):
-#     def __init__(self):
-#         super().__init__()
-#
-#     # @override
-#     def expire_keys_elapsed(self, sender: object, e) -> None:
-#         """
-#         Allows for never expiring republished key values.
-#         """
-#         self.remove_expired_data(self.cache_storage)
-#         # self.remove_expired_data(self.republish_storage)

@@ -6,8 +6,11 @@ from time import sleep
 from typing import Optional, TypedDict, Callable
 
 from kademlia_dht.constants import Constants
-from kademlia_dht.dictionaries import PingRequest, StoreRequest, FindNodeRequest, FindValueRequest, ErrorResponse, \
-    CommonRequest, PingSubnetRequest, StoreSubnetRequest, FindNodeSubnetRequest, FindValueSubnetRequest
+from kademlia_dht.dictionaries import (PingRequest, StoreRequest, FindNodeRequest,
+                                       FindValueRequest, ErrorResponse,
+                                       CommonRequest, PingSubnetRequest,
+                                       StoreSubnetRequest, FindNodeSubnetRequest,
+                                       FindValueSubnetRequest)
 from kademlia_dht.errors import IncorrectProtocolError
 from kademlia_dht.id import ID
 from kademlia_dht.node import Node
@@ -221,7 +224,8 @@ class TCPServer(BaseServer):
         elif node:
             self.node: Node = node
             if isinstance(self.node.our_contact.protocol, TCPProtocol):
-                server_address: tuple[str, int] = (self.node.our_contact.protocol.url, self.node.our_contact.protocol.port)
+                server_address: tuple[str, int] = (self.node.our_contact.protocol.url,
+                                                   self.node.our_contact.protocol.port)
             else:
                 raise IncorrectProtocolError("Invalid protocol.")
             super().__init__(
