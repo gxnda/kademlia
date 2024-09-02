@@ -164,7 +164,7 @@ class TorrentFile(TypedDict):
 
 
 
-class TorrentDict:
+class TorrentDict(TypedDict):
     """
     A torrent file contains a list of files and integrity metadata about all the pieces,
     and optionally contains a large list of trackers.
@@ -176,7 +176,7 @@ class TorrentDict:
 
     info — this maps to a dictionary whose keys are very dependent on whether one or more files are being shared:
 
-    files — a list of dictionaries each corresponding to a file (only when multiple files are being shared).    
+    files — a list of dictionaries each corresponding to a file (only when multiple files are being shared).
     """
 
     announce: str
