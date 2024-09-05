@@ -138,7 +138,7 @@ class StoreValue(TypedDict):
     expiration_time: int
 
 
-class TorrentFile(TypedDict):
+class DHTDataPerFile(TypedDict):
     """
         length — size of the file in bytes.
 
@@ -164,7 +164,7 @@ class TorrentFile(TypedDict):
 
 
 
-class TorrentDict(TypedDict):
+class DotTorrent(TypedDict):
     """
     A torrent file contains a list of files and integrity metadata about all the pieces,
     and optionally contains a large list of trackers.
@@ -181,4 +181,4 @@ class TorrentDict(TypedDict):
 
     announce: str
     info: dict
-    files: list[TorrentFile]
+    files: list[DHTDataPerFile]
