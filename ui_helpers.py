@@ -68,7 +68,8 @@ def create_logger(verbose: bool) -> logging.Logger:
 def store_file(file_to_upload: str, dht: DHT) -> ID:
     filename = os.path.basename(file_to_upload)
     piece_size = Constants.PIECE_LENGTH  # in bytes
-    piece_dict: dict = {}
+    encoded_filename = filename.encode(Constants.PICKLE_ENCODING)
+    piece_dict: dict[int, bytes] = {get_sha1_hash(encoded_filename): encoded_filename}
     with open(file_to_upload, "rb") as f:
         file_read = False
         while not file_read:
@@ -91,41 +92,41 @@ def store_file(file_to_upload: str, dht: DHT) -> ID:
         dht.store(ID(piece_key), piece_dict[piece_key].decode(Constants.PICKLE_ENCODING))
 
 
-def download_file(id_to_download: ID, dht) -> str:
-    found, contacts, val = dht.find_value(key=id_to_download)
+def download_file(manifest_id: ID, dht: DHT) -> str:
+    """
+    Downloads a given file from the given DHT. It does this by taking the
+    manifest ID, which points to an encoded list of all piece's keys.
+
+    It then uses this list to download each piece of the file.
+
+    The manifest list is NOT sorted, so the key order given is the order of
+    the file.
+    """
+
+
+    found, contacts, val = dht.find_value(key=manifest_id)
     # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
     if not found:
-        raise IDMismatchError("File ID not found on the network.")
+        raise IDMismatchError(str(manifest_id))
     else:
-        # TODO: It might be a better idea to use JSON to send values.
-        val_bytes: bytes = val.encode(Constants.PICKLE_ENCODING)  # TODO: Add option for changing this in settings.
+        manifest_list: list[int] = list(val.encode(Constants.PICKLE_ENCODING))
+        filename_key: int = manifest_list.pop(0)
+        found, contacts, filename = dht.find_value(ID(filename_key))
+        if not found:
+            raise IDMismatchError("Filename not found on network")
 
-        # "pickle.loads()" is very insecure and can lead to arbitrary code execution, the val received
-        #   could be maliciously crafted to allow for malicious code execution because it compiles and creates
-        #   a python object.
-        file_dict: dict = pickle.loads(val_bytes)  # TODO: Make secure.
-        if not isinstance(file_dict, dict):
-            raise TypeError("The file downloaded is formatted incorrectly.")
-
-        filename: str = file_dict["filename"]
-        if not isinstance(filename, str):
-            raise TypeError("The file downloaded is formatted incorrectly.")
-
-        file_bytes: bytes = file_dict["file"]
-        if not isinstance(file_bytes, bytes):
-            raise TypeError("The file downloaded is formatted incorrectly.")
-
-        del file_dict  # Free up memory.
-
-        # get current working directory
-        cwd = os.getcwd()  # TODO: Add option to change where it is installed to.
-
-        install_path = os.path.join(cwd, filename)  # writes the file to the current working directory
-
+        install_path = os.path.join(os.getcwd(), filename)
         with open(install_path, "wb") as f:
-            f.write(file_bytes)
+            for piece_key in manifest_list:
+                found, contacts, val = dht.find_value(key=ID(piece_key))
+                if not found:
+                    raise IDMismatchError(str(ID(piece_key)))
+
+                byte_piece: bytes = val.encode(Constants.PICKLE_ENCODING)
+                f.write(byte_piece)
 
         return str(install_path)
+
 
 def initialise_kademlia(USE_GLOBAL_IP, PORT, logger=None) -> tuple[DHT, TCPServer, Thread]:
     if logger:
