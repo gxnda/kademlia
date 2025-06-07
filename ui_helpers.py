@@ -10,6 +10,7 @@ from requests import get
 from sys import stdout
 
 from kademlia_dht import helpers
+from kademlia_dht.helpers import get_sha1_hash, get_manifest_hash
 from kademlia_dht.node import Node
 from kademlia_dht.protocols import TCPProtocol
 from kademlia_dht.contact import Contact
@@ -64,19 +65,30 @@ def create_logger(verbose: bool) -> logging.Logger:
     return logger
 
 
-def store_file(file_to_upload: str, dht) -> ID:
+def store_file(file_to_upload: str, dht: DHT) -> ID:
     filename = os.path.basename(file_to_upload)
+    piece_size = Constants.PIECE_LENGTH  # in bytes
+    piece_dict: dict = {}
     with open(file_to_upload, "rb") as f:
-        file_contents: bytes = f.read()
+        file_read = False
+        while not file_read:
+            file_piece: bytes = f.read(piece_size)
+            if file_piece:
+                piece_key: int = get_sha1_hash(file_piece)
+                piece_dict[piece_key] = file_piece
+            else:
+                file_read = True
 
-    # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
-    val: str = json.dumps({"filename": filename, "file": file_contents.decode(Constants.PICKLE_ENCODING)})
-    del file_contents  # free up memory, file_contents could be pretty big.
+    manifest_list: list[int] = list(piece_dict.keys())
+    manifest_key: int = get_manifest_hash(manifest_list)
 
-    id_to_store_to = ID.random_id()
-    dht.store(id_to_store_to, val)
+    # Store the manifest
+    dht.store(ID(manifest_key), bytes(manifest_list).decode(
+        Constants.PICKLE_ENCODING))
 
-    return id_to_store_to
+    # Store each of the pieces
+    for piece_key in piece_dict:
+        dht.store(ID(piece_key), piece_dict[piece_key].decode(Constants.PICKLE_ENCODING))
 
 
 def download_file(id_to_download: ID, dht) -> str:
