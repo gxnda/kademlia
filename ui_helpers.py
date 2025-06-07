@@ -65,69 +65,6 @@ def create_logger(verbose: bool) -> logging.Logger:
     return logger
 
 
-def store_file(file_to_upload: str, dht: DHT) -> ID:
-    filename = os.path.basename(file_to_upload)
-    piece_size = Constants.PIECE_LENGTH  # in bytes
-    encoded_filename = filename.encode(Constants.PICKLE_ENCODING)
-    piece_dict: dict[int, bytes] = {get_sha1_hash(encoded_filename): encoded_filename}
-    with open(file_to_upload, "rb") as f:
-        file_read = False
-        while not file_read:
-            file_piece: bytes = f.read(piece_size)
-            if file_piece:
-                piece_key: int = get_sha1_hash(file_piece)
-                piece_dict[piece_key] = file_piece
-            else:
-                file_read = True
-
-    manifest_list: list[int] = list(piece_dict.keys())
-    manifest_key: int = get_manifest_hash(manifest_list)
-
-    # Store the manifest
-    dht.store(ID(manifest_key), bytes(manifest_list).decode(
-        Constants.PICKLE_ENCODING))
-
-    # Store each of the pieces
-    for piece_key in piece_dict:
-        dht.store(ID(piece_key), piece_dict[piece_key].decode(Constants.PICKLE_ENCODING))
-
-
-def download_file(manifest_id: ID, dht: DHT) -> str:
-    """
-    Downloads a given file from the given DHT. It does this by taking the
-    manifest ID, which points to an encoded list of all piece's keys.
-
-    It then uses this list to download each piece of the file.
-
-    The manifest list is NOT sorted, so the key order given is the order of
-    the file.
-    """
-
-
-    found, contacts, val = dht.find_value(key=manifest_id)
-    # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
-    if not found:
-        raise IDMismatchError(str(manifest_id))
-    else:
-        manifest_list: list[int] = list(val.encode(Constants.PICKLE_ENCODING))
-        filename_key: int = manifest_list.pop(0)
-        found, contacts, filename = dht.find_value(ID(filename_key))
-        if not found:
-            raise IDMismatchError("Filename not found on network")
-
-        install_path = os.path.join(os.getcwd(), filename)
-        with open(install_path, "wb") as f:
-            for piece_key in manifest_list:
-                found, contacts, val = dht.find_value(key=ID(piece_key))
-                if not found:
-                    raise IDMismatchError(str(ID(piece_key)))
-
-                byte_piece: bytes = val.encode(Constants.PICKLE_ENCODING)
-                f.write(byte_piece)
-
-        return str(install_path)
-
-
 def initialise_kademlia(USE_GLOBAL_IP, PORT, logger=None) -> tuple[DHT, TCPServer, Thread]:
     if logger:
         logger.info("Initialising Kademlia.")

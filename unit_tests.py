@@ -1524,7 +1524,7 @@ class NodeLookupTests(unittest.TestCase):
             if contact_node is None:
                 continue
 
-            # Close contacts except ourself and the nodes we're contacting.
+            # Close contacts except ourselves and the nodes we're contacting.
             # Note that of all the contacts in the bucket list, many of the K returned
             # by the get_close_contacts call are contacts we're querying, so they're being excluded.
             close_contacts_of_contacted_node = [

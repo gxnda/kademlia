@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Callable, Optional
 
@@ -9,7 +10,9 @@ from kademlia_dht.buckets import KBucket
 from kademlia_dht.constants import Constants
 from kademlia_dht.contact import Contact
 from kademlia_dht.dictionaries import FindResult
-from kademlia_dht.errors import BucketDoesNotContainContactToEvictError, RPCError
+from kademlia_dht.errors import BucketDoesNotContainContactToEvictError, \
+    RPCError, IDMismatchError
+from kademlia_dht.helpers import get_sha1_hash, get_manifest_hash
 from kademlia_dht.id import ID
 from kademlia_dht.interfaces import IProtocol, IStorage
 from kademlia_dht.node import Node
@@ -580,3 +583,69 @@ class DHT:
         if contact is not None:
             self.pending_contacts.remove(contact)
             bucket.add_contact(contact)
+
+
+    def store_file(self, file_to_upload: str) -> ID:
+        filename = os.path.basename(file_to_upload)
+        piece_size = Constants.PIECE_LENGTH  # in bytes
+        encoded_filename = filename.encode(Constants.PICKLE_ENCODING)
+        piece_dict: dict[int, bytes] = {
+            get_sha1_hash(encoded_filename): encoded_filename}
+        with open(file_to_upload, "rb") as f:
+            file_read = False
+            while not file_read:
+                file_piece: bytes = f.read(piece_size)
+                if file_piece:
+                    piece_key: int = get_sha1_hash(file_piece)
+                    piece_dict[piece_key] = file_piece
+                else:
+                    file_read = True
+
+        manifest_list: list[int] = list(piece_dict.keys())
+        manifest_key: int = get_manifest_hash(manifest_list)
+
+        # Store the manifest
+        self.store(ID(manifest_key), bytes(manifest_list).decode(
+            Constants.PICKLE_ENCODING))
+
+        # Store each of the pieces
+        for piece_key in piece_dict:
+            self.store(ID(piece_key),
+                      piece_dict[piece_key].decode(Constants.PICKLE_ENCODING))
+
+        return ID(manifest_key)
+
+
+    def download_file(self, manifest_id: ID) -> str:
+        """
+        Downloads a given file from the given DHT. It does this by taking the
+        manifest ID, which points to an encoded list of all piece's keys.
+
+        It then uses this list to download each piece of the file.
+
+        The manifest list is NOT sorted, so the key order given is the order of
+        the file.
+        """
+
+        found, contacts, val = self.find_value(key=manifest_id)
+        # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
+        if not found:
+            raise IDMismatchError(str(manifest_id))
+        else:
+            manifest_list: list[int] = list(val.encode(Constants.PICKLE_ENCODING))
+            filename_key: int = manifest_list.pop(0)
+            found, contacts, filename = self.find_value(ID(filename_key))
+            if not found:
+                raise IDMismatchError("Filename not found on network")
+
+            install_path = os.path.join(os.getcwd(), filename)
+            with open(install_path, "wb") as f:
+                for piece_key in manifest_list:
+                    found, contacts, val = self.find_value(key=ID(piece_key))
+                    if not found:
+                        raise IDMismatchError(str(ID(piece_key)))
+
+                    byte_piece: bytes = val.encode(Constants.PICKLE_ENCODING)
+                    f.write(byte_piece)
+
+            return str(install_path)

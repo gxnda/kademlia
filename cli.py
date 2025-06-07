@@ -6,10 +6,8 @@ import re
 from os.path import exists, isfile
 from typing import Callable
 
-from requests import get
-
 import ui_helpers
-from kademlia_dht import dht, contact, protocols, storage, networking, routers, node, helpers, id, pickler
+from kademlia_dht import dht, contact, protocols, id
 from kademlia_dht.constants import Constants
 from kademlia_dht.errors import IDMismatchError
 
@@ -217,6 +215,7 @@ class JoinNetworkMenu(GenericMenu):
 
 class BootstrapFromJSONMenu(GenericMenu):
     def __init__(self, parent: GenericMenu):
+        super().__init__("")
         raise NotImplementedError("Not implemented yet.")
 
 
@@ -326,7 +325,7 @@ class UploadMenu(GenericMenu):
             if not filename:  # os.path.basename returns "" on file paths ending in "/"
                 logger.error("File to upload must not be a directory.")
             else:
-                ui_helpers.store_file(file_to_upload, self.parent.dht)
+                self.parent.dht.store_file(file_to_upload)
         else:
             logger.error(f"Path not found: {file_to_upload}")
 
@@ -358,7 +357,7 @@ class DownloadMenu(GenericMenu):
     def handle_download(self):
         id_to_download: id.ID = id.ID(int(self.id_to_download))
         try:
-            download_path = ui_helpers.download_file(id_to_download, self.parent.dht)
+            download_path = self.parent.dht.download_file(id_to_download)
             logger.info(f"File downloaded to {download_path}.")
         except IDMismatchError:
             logger.error("File ID not found on the network.")
