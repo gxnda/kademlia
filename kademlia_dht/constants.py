@@ -27,5 +27,5 @@ class Constants:
     MAX_PORT_RETRIES = 100
     DHT_SERIALISED_SUFFIX = "dht"
     PICKLE_ENCODING = "latin1"
-    PIECE_LENGTH= 262_144  # Standard piece length for BitTorrent pieces.
+    PIECE_LENGTH= 262_144  # Standard piece length for BitTorrent pieces in bytes.
 

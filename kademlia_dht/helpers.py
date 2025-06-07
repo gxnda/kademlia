@@ -176,6 +176,15 @@ def get_sha1_hash(input: bytes) -> int:
     return int.from_bytes(sha1_hash.digest(), byteorder='big')
 
 
+def get_manifest_hash(manifest_key_list: list[int]) -> int:
+    sorted_manifest_list = sorted(manifest_key_list)
+    sha1_hash = sha1()
+    for el in sorted_manifest_list:
+        sha1_hash.update(bytes(el))
+
+    return int.from_bytes(sha1_hash.digest(), byteorder='big')
+
+
 if __name__ == "__main__":
     var = "hello world"
     digest = get_sha1_hash(var.encode("latin-1"))
