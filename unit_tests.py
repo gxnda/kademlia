@@ -1,16 +1,18 @@
-import logging
 import math
 import os
+import pickle
 import random
 import shutil
 import unittest
 
+import tempfile
 import ui_helpers
 from kademlia_dht.buckets import BucketList, KBucket
 from kademlia_dht.constants import Constants
 from kademlia_dht.contact import Contact
 from kademlia_dht.dht import DHT
 from kademlia_dht.errors import RPCError, TooManyContactsError
+from kademlia_dht.helpers import get_sha1_hash
 from kademlia_dht.id import ID
 from kademlia_dht.networking import TCPSubnetServer, TCPServer
 from kademlia_dht.node import Node
@@ -1651,13 +1653,11 @@ class NodeLookupTests(unittest.TestCase):
 
         self.assertTrue(len(router.closer_contacts) == 0, "Expected no closer contacts.")
 
-
     def test_z_lookup(self):
 
+        self.__setup()
         for i in range(100):
             id = ID.random_id(seed=i)
-
-            self.__setup()
 
             close_contacts: list[Contact] = self.router.lookup(
                 key=id, rpc_call=self.router.rpc_find_nodes, give_me_all=True)["contacts"]
@@ -1684,6 +1684,159 @@ class LargeFileTests(unittest.TestCase):
 
         dht = DHT(ID.random_id(), VirtualProtocol(), storage_factory=VirtualStorage, router=Router())
 
+
+class TestDHTFileSystem(unittest.TestCase):
+    def setUp(self):
+        # Create virtual protocol and storage
+        self.protocol = VirtualProtocol()
+        self.storage_factory = VirtualStorage
+        self.router = ParallelRouter()
+
+        # Initialize DHT with virtual components
+        self.dht = DHT(
+            id=ID.random_id(),
+            protocol=self.protocol,
+            router=self.router,
+            storage_factory=self.storage_factory
+        )
+
+        # Create a temporary test file
+        self.temp_file = tempfile.NamedTemporaryFile(delete=False)
+        self.test_content = b"Hello, Kademlia P2P File Sharing!\n" * 10
+        self.temp_file.write(self.test_content)
+        self.temp_file.close()
+
+    def tearDown(self):
+        # Clean up temporary files
+        if os.path.exists(self.temp_file.name):
+            os.unlink(self.temp_file.name)
+        if hasattr(self, 'downloaded_file') and os.path.exists(
+                self.downloaded_file):
+            os.unlink(self.downloaded_file)
+
+    def test_file_storage_and_retrieval(self):
+        """Test full cycle: store file -> retrieve file -> verify content"""
+        # 1. Store file in DHT
+        manifest_id = self.dht.store_file(self.temp_file.name)
+        self.assertIsInstance(manifest_id, ID,
+                              "Manifest ID should be an ID object")
+
+        # 2. Retrieve file from DHT
+        self.downloaded_file = self.dht.download_file(manifest_id)
+        self.assertTrue(os.path.exists(self.downloaded_file),
+                        "Downloaded file should exist")
+
+        # 3. Verify content matches
+        with open(self.downloaded_file, 'rb') as f:
+            downloaded_content = f.read()
+        self.assertEqual(
+            downloaded_content,
+            self.test_content,
+            "Downloaded content should match original"
+        )
+
+    def test_manifest_storage(self):
+        """Test that manifest is stored correctly"""
+        manifest_id = self.dht.store_file(self.temp_file.name)
+
+        # Verify manifest exists in originator storage
+        found, _, manifest_data = self.dht.find_value(manifest_id)
+        self.assertTrue(found, "Manifest should be stored in DHT")
+
+        # Verify manifest structure
+        piece_keys: list[int] = pickle.loads(manifest_data.encode(
+            Constants.PICKLE_ENCODING))
+        self.assertGreater(len(piece_keys), 0,
+                           "Manifest should contain piece keys")
+
+        # the first key should be the filename hash
+        filename = os.path.basename(self.temp_file.name)
+        encoded_filename = filename.encode(Constants.PICKLE_ENCODING)
+        expected_filename_key = get_sha1_hash(encoded_filename)
+        self.assertEqual(piece_keys[0], expected_filename_key,
+                         "First manifest key should be filename hash")
+
+    def test_piece_storage(self):
+        """Test that file pieces are stored correctly"""
+        manifest_id = self.dht.store_file(self.temp_file.name)
+
+        # Get manifest content
+        _, _, manifest_data = self.dht.find_value(manifest_id)
+        piece_keys: list[int] = pickle.loads(manifest_data.encode(
+            Constants.PICKLE_ENCODING))
+        # Verify all pieces exist in storage
+        for key in piece_keys:
+            found, _, _ = self.dht.find_value(ID(key))
+            self.assertTrue(found, f"Piece with key {key} should be stored")
+
+        # Verify first piece is the filename
+        filename_key = ID(piece_keys[0])
+        found, _, filename_data = self.dht.find_value(filename_key)
+        self.assertTrue(found, "Filename piece should exist")
+        self.assertEqual(
+            filename_data,
+            os.path.basename(self.temp_file.name),
+            "Filename piece should contain correct filename"
+        )
+
+    def test_large_file_handling(self):
+        """Test handling of files larger than piece size"""
+        # Create a file larger than PIE CE_LENGTH
+        large_file = tempfile.NamedTemporaryFile(delete=False)
+        large_content = b"X" * (Constants.PIECE_LENGTH * 3)
+        large_file.write(large_content)
+        large_file.close()
+
+        # Store and retrieve
+        manifest_id = self.dht.store_file(large_file.name)
+        downloaded_file = self.dht.download_file(manifest_id)
+
+        # Verify content
+        with open(downloaded_file, 'rb') as f:
+            downloaded_content = f.read()
+
+        # Cleanup
+        os.unlink(large_file.name)
+        os.unlink(downloaded_file)
+
+        self.assertEqual(len(downloaded_content), len(large_content))
+
+        self.assertEqual(downloaded_content, large_content,
+                         "Large file content should match")
+
+
+    def test_consecutive_operations(self):
+        """Test multiple store/download operations"""
+        filenames = []
+        for i in range(3):
+            # Create temporary file
+            tf = tempfile.NamedTemporaryFile(delete=False)
+            content = f"Test file {i}\n".encode() * 50
+            tf.write(content)
+            tf.close()
+            filenames.append(tf.name)
+
+            # Store file
+            manifest_id = self.dht.store_file(tf.name)
+
+            # Download file
+            downloaded = self.dht.download_file(manifest_id)
+
+            # Verify content
+            with open(tf.name, 'rb') as orig, open(downloaded, 'rb') as dl:
+                self.assertEqual(orig.read(), dl.read(),
+                                 f"File {i} content should match")
+
+            # Cleanup
+            os.unlink(downloaded)
+
+        # Cleanup originals
+        for fn in filenames:
+            os.unlink(fn)
+
+
+if __name__ == '__main__':
+    unittest.main()
 
 if __name__ == '__main__':
     unittest.main()

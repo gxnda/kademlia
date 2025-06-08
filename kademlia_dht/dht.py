@@ -1,5 +1,6 @@
 import logging
 import os
+import pickle
 from datetime import datetime, timedelta
 from typing import Callable, Optional
 
@@ -589,29 +590,29 @@ class DHT:
         filename = os.path.basename(file_to_upload)
         piece_size = Constants.PIECE_LENGTH  # in bytes
         encoded_filename = filename.encode(Constants.PICKLE_ENCODING)
-        piece_dict: dict[int, bytes] = {
-            get_sha1_hash(encoded_filename): encoded_filename}
+        piece_list: list[list] = [[
+            get_sha1_hash(encoded_filename), encoded_filename]]
         with open(file_to_upload, "rb") as f:
             file_read = False
             while not file_read:
                 file_piece: bytes = f.read(piece_size)
                 if file_piece:
                     piece_key: int = get_sha1_hash(file_piece)
-                    piece_dict[piece_key] = file_piece
+                    piece_list.append([piece_key, file_piece])
                 else:
                     file_read = True
 
-        manifest_list: list[int] = list(piece_dict.keys())
+        manifest_list: list[int] = [piece_list[i][0] for i in range(
+            len(piece_list))]
         manifest_key: int = get_manifest_hash(manifest_list)
-
+        print(len(manifest_list), manifest_list)
         # Store the manifest
-        self.store(ID(manifest_key), bytes(manifest_list).decode(
+        self.store(ID(manifest_key), pickle.dumps(manifest_list).decode(
             Constants.PICKLE_ENCODING))
 
         # Store each of the pieces
-        for piece_key in piece_dict:
-            self.store(ID(piece_key),
-                      piece_dict[piece_key].decode(Constants.PICKLE_ENCODING))
+        for i in range(len(piece_list)):
+            self.store(ID(piece_list[i][0]), piece_list[i][1].decode(Constants.PICKLE_ENCODING))
 
         return ID(manifest_key)
 
@@ -626,13 +627,13 @@ class DHT:
         The manifest list is NOT sorted, so the key order given is the order of
         the file.
         """
-
         found, contacts, val = self.find_value(key=manifest_id)
         # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
         if not found:
             raise IDMismatchError(str(manifest_id))
         else:
-            manifest_list: list[int] = list(val.encode(Constants.PICKLE_ENCODING))
+            manifest_list: list[int] = pickle.loads(val.encode(
+                Constants.PICKLE_ENCODING))
             filename_key: int = manifest_list.pop(0)
             found, contacts, filename = self.find_value(ID(filename_key))
             if not found:
@@ -646,6 +647,8 @@ class DHT:
                         raise IDMismatchError(str(ID(piece_key)))
 
                     byte_piece: bytes = val.encode(Constants.PICKLE_ENCODING)
+                    print("writing piece", piece_key, "which has length",
+                          len(val.encode(Constants.PICKLE_ENCODING)))
                     f.write(byte_piece)
 
             return str(install_path)

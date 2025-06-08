@@ -180,7 +180,7 @@ def get_manifest_hash(manifest_key_list: list[int]) -> int:
     sorted_manifest_list = sorted(manifest_key_list)
     sha1_hash = sha1()
     for el in sorted_manifest_list:
-        sha1_hash.update(bytes(el))
+        sha1_hash.update(el.to_bytes(32, byteorder='big'))
 
     return int.from_bytes(sha1_hash.digest(), byteorder='big')
 
