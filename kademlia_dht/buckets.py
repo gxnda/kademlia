@@ -261,7 +261,10 @@ class BucketList:
                 # Bucket is not full, nothing special happens.
                 kbucket.add_contact(contact)
 
-        if needs_ping:  # Set this flag in the locked section
+        """
+        This is moved out of the lock because it contains networking.
+        """
+        if needs_ping:
             logger.info("[Client] Pinging last seen contact.")
             print("pinging last seen contact")
             error = last_seen_contact.protocol.ping(self.our_contact)
@@ -271,12 +274,12 @@ class BucketList:
                         kbucket.is_full() and
                         not self.can_split(kbucket)):
                     print("nothings changed")
-                    if not error:
-                        print("no error", error)
-                        kbucket.evict_contact(last_seen_contact)
-                        kbucket.add_contact(contact)
+                    if error.has_error():
+                        print(error)
+                        if self.dht:
+                            print("delaying eviction")
+                            self.dht.delay_eviction(last_seen_contact, contact)
                     else:
-                        print("error")
                         if self.dht:
                             self.dht.add_to_pending(contact)
                 else:
@@ -294,7 +297,6 @@ class BucketList:
             contacts = []
             for bucket in self.buckets:
                 for contact in bucket.contacts:
-
                     if contact.id != exclude:
                         contacts.append(contact)
         contacts = sorted(contacts, key=lambda c: c.id ^ key)[:self.k]

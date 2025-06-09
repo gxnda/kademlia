@@ -477,6 +477,10 @@ class DHT:
                 if count >= Constants.EVICTION_LIMIT:
                     self._replace_contact(contact)
 
+    def add_to_pending(self, contact: Contact) -> None:
+        if contact.id not in [c.id for c in self.pending_contacts]:
+            self.pending_contacts.append(contact)
+
     def delay_eviction(self,
                        to_evict: Contact,
                        to_replace: Contact) -> None:
@@ -497,9 +501,9 @@ class DHT:
             self.pending_contacts.append(to_replace)
 
         key: int = to_evict.id.value
-        count = self._add_contact_to_evict(key)
+        number_of_eviction_attempts_on_to_evict = self._add_contact_to_evict(key)
         # if the eviction attempts on key reach the eviction limit
-        if count == Constants.EVICTION_LIMIT:
+        if number_of_eviction_attempts_on_to_evict == Constants.EVICTION_LIMIT:
             self._replace_contact(to_evict)
 
     def _add_contact_to_evict(self, key_to_evict: int) -> int:
