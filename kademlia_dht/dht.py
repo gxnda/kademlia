@@ -605,7 +605,7 @@ class DHT:
         manifest_list: list[int] = [piece_list[i][0] for i in range(
             len(piece_list))]
         manifest_key: int = get_manifest_hash(manifest_list)
-        print(len(manifest_list), manifest_list)
+
         # Store the manifest
         self.store(ID(manifest_key), pickle.dumps(manifest_list).decode(
             Constants.PICKLE_ENCODING))

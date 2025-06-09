@@ -1,8 +1,10 @@
+import logging
 import math
 import os
 import pickle
 import random
 import shutil
+import threading
 import unittest
 
 import tempfile
@@ -27,6 +29,7 @@ if Constants.DEBUG:
 
 
 logger = ui_helpers.create_logger(verbose=True)
+logger.setLevel(logging.DEBUG)
 logger.info("Starting unit tests.")
 
 def setup_split_failure(bucket_list=None):
@@ -720,7 +723,7 @@ class BootstrappingTests(unittest.TestCase):
         sum_of_contacts = len(dht_us._router.node.bucket_list.contacts())
         print(f"sum of contacts: {sum_of_contacts}")
         self.assertTrue(sum_of_contacts == 11,
-                        "Expected our peer to get 11 contacts.")
+                        f"Expected our peer to get 11 contacts, got {sum_of_contacts}")
 
     def test_bootstrap_outside_bootstrapping_bucket(self):
         """
@@ -917,7 +920,7 @@ class BucketManagementTests(unittest.TestCase):
         # Verify can_split -> Evict happened.
 
         self.assertTrue(len(dht.pending_contacts) == 1,
-                        "Expected one pending contact.")
+                        f"Expected one pending contact, got {len(dht.pending_contacts)}")
         self.assertTrue(next_new_contact in dht.pending_contacts,
                         "Expected pending contact to be the 21st contact.")
         self.assertTrue(len(dht.eviction_count) == 1,
@@ -1834,6 +1837,26 @@ class TestDHTFileSystem(unittest.TestCase):
         for fn in filenames:
             os.unlink(fn)
 
+class TestLocking(unittest.TestCase):
+    def test_concurrent_bucket_access(self):
+        bucket = KBucket(k=200)
+        contacts = [Contact(ID(i), None) for i in range(100)]
+
+        def add_contacts(start, end):
+            for i in range(start, end):
+                bucket.add_contact(contacts[i])
+
+        # Spawn 10 threads adding contacts concurrently
+        threads = []
+        for i in range(0, 100, 10):
+            t = threading.Thread(target=add_contacts, args=(i, i + 10))
+            threads.append(t)
+            t.start()
+
+        for t in threads:
+            t.join()
+
+        assert len(bucket.contacts) == 100  # No lost updates
 
 if __name__ == '__main__':
     unittest.main()

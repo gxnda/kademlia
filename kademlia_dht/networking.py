@@ -273,7 +273,7 @@ class HTTPSubnetRequestHandler(HTTPRequestHandler):
             self.server: TCPSubnetServer
             node = self.server.subnets.get(subnet)
             if node:
-                logger.debug("[Server] Request called:", node.bucket_list.buckets)
+                logger.debug(f"[Server] Request called: {node.bucket_list.buckets}")
                 self._common_request_handler(method_name, common_request, node)
 
             else:
