@@ -2,6 +2,7 @@ import logging
 import os
 import pickle
 from datetime import datetime, timedelta
+from threading import RLock
 from typing import Callable, Optional
 
 import dill
@@ -11,8 +12,7 @@ from kademlia_dht.buckets import KBucket
 from kademlia_dht.constants import Constants
 from kademlia_dht.contact import Contact
 from kademlia_dht.dictionaries import FindResult
-from kademlia_dht.errors import BucketDoesNotContainContactToEvictError, \
-    RPCError, IDMismatchError
+from kademlia_dht.errors import RPCError, IDMismatchError
 from kademlia_dht.helpers import get_sha1_hash, get_manifest_hash
 from kademlia_dht.id import ID
 from kademlia_dht.interfaces import IProtocol, IStorage
@@ -132,6 +132,7 @@ class DHT:
         self._router.node = self.node
         self._router.dht = self
         self.eviction_count: dict[int, int] = {}
+        self.lock = RLock()
 
     def __repr__(self):
         return str({
@@ -179,10 +180,31 @@ class DHT:
 
     def store(self, key: ID, val: str) -> None:
         logger.info(f"[Client] Storing value at {key}.")
-        self.touch_bucket_with_key(key)
-        # We're storing to K closer contacts
-        self._originator_storage.set(key, val)
-        self.store_on_closer_contacts(key, val)
+        with self.lock:
+            self.touch_bucket_with_key(key)
+            # We're storing to K closer contacts
+            self._originator_storage.set(key, val)
+            self.store_on_closer_contacts(key, val)
+
+    def _check_all_storages(self, key: ID) -> tuple[bool, str | None]:
+        found, our_val = self._originator_storage.try_get_value(key)
+        # There has to be a better way to do this.
+        val = our_val
+        if our_val:
+            found = True
+            val = our_val
+        else:
+            found, our_val = self._republish_storage.try_get_value(key)
+            if our_val:
+                found = True
+                val = our_val
+            else:
+                found, our_val = self._cache_storage.try_get_value(key)
+                if our_val:
+                    found = True
+                    val = our_val
+
+        return found, val
 
     def find_value(self, key: ID) -> tuple[bool, list[Contact] | None, str | None]:
         """
@@ -199,46 +221,32 @@ class DHT:
 
         # ret (found: False, contacts: None, val: None)
         contacts: list[Contact] | None = None
-        # - Add to docstring when finished
-        val: str | None = None
+        found = False
 
-        found, our_val = self._originator_storage.try_get_value(key)
-        # There has to be a better way to do this.
-        if our_val:
-            found = True
-            val = our_val
-        else:
-            found, our_val = self._republish_storage.try_get_value(key)
-            if our_val:
+        with self.lock:
+            found, val = self._check_all_storages(key)
+        if not val:
+            lookup: FindResult = self._router.lookup(
+                key, self._router.rpc_find_value)
+            if lookup["found"]:
                 found = True
-                val = our_val
-            else:
-                found, our_val = self._cache_storage.try_get_value(key)
-                if our_val:
-                    found = True
-                    val = our_val
-                else:
-                    lookup: FindResult = self._router.lookup(
-                        key, self._router.rpc_find_value)
-                    if lookup["found"]:
-                        found = True
-                        contacts = None
-                        val = lookup["val"]
-                        # Find the closest contact (other than the one the value was found by)
-                        # in which to "cache" the key-value.
+                contacts = None
+                val = lookup["val"]
+                # Find the closest contact (other than the one the value was found by)
+                # in which to "cache" the key-value.
 
-                        store_to: Contact | None = None
-                        for c in lookup["contacts"]:
-                            if c.id.value != lookup["found_by"].id.value:
-                                store_to: Contact | None = c
-                                break
-                        if store_to:
-                            separating_nodes: int = self._get_separating_nodes_count(self.our_contact, store_to)
-                            exp_time_sec: int = Constants.EXPIRATION_TIME_SEC // (2 ** separating_nodes)
-                            error: RPCError = store_to.protocol.store(self.node.our_contact, key, lookup["val"],
-                                                                      is_cached=True,
-                                                                      exp_time_sec=exp_time_sec)
-                            self.handle_error(error, store_to)
+                store_to: Contact | None = None
+                for c in lookup["contacts"]:
+                    if c.id.value != lookup["found_by"].id.value:
+                        store_to: Contact | None = c
+                        break
+                if store_to:
+                    separating_nodes: int = self._get_separating_nodes_count(self.our_contact, store_to)
+                    exp_time_sec: int = Constants.EXPIRATION_TIME_SEC // (2 ** separating_nodes)
+                    error: RPCError = store_to.protocol.store(self.node.our_contact, key, lookup["val"],
+                                                              is_cached=True,
+                                                              exp_time_sec=exp_time_sec)
+                    self.handle_error(error, store_to)
 
         return found, contacts, val
 
@@ -279,38 +287,34 @@ class DHT:
         :return: None
         """
         logger.info("[Client] Bootstrapping from known peer.")
-        self.node.bucket_list.add_contact(known_peer)
+        with self.lock:
+            self.node.bucket_list.add_contact(known_peer)
 
-        # UNITTEST NOTES: This should return something in test_bootstrap_outside_bootstrapping_bucket,
-        # it isn't at the moment.
-        # find_node() should return the bucket list with the contact who knows 10 other contacts
-        # it does.
+            # finds K close contacts to self.our_id, excluding self.our_contact
+            contacts, error = known_peer.protocol.find_node(
+                sender=self.our_contact, key=self.our_id)
+            self.handle_error(error, known_peer)
+            if not error.has_error():
 
-        # finds K close contacts to self.our_id, excluding self.our_contact
-        contacts, error = known_peer.protocol.find_node(
-            sender=self.our_contact, key=self.our_id)
-        self.handle_error(error, known_peer)
-        if not error.has_error():
+                # add all contacts the known peer DIRECTLY knows
+                for contact in contacts:
+                    self.node.bucket_list.add_contact(contact)
 
-            # add all contacts the known peer DIRECTLY knows
-            for contact in contacts:
-                self.node.bucket_list.add_contact(contact)
+                known_peers_bucket: KBucket = self.node.bucket_list.get_kbucket(
+                    known_peer.id)
 
-            known_peers_bucket: KBucket = self.node.bucket_list.get_kbucket(
-                known_peer.id)
-
-            # Resolve the list now, so we don't include additional contacts
-            # as we add to our bucket additional contacts.
-            other_buckets: list[KBucket] = [
-                i for i in self.node.bucket_list.buckets
-                if i != known_peers_bucket
-            ]
-            for other_bucket in other_buckets:
-                self._refresh_bucket(
-                    other_bucket
-                )  # UNITTEST Notes: one of these should contain the correct contact
-        else:
-            raise error
+                # Resolve the list now, so we don't include additional contacts
+                # as we add to our bucket additional contacts.
+                other_buckets: list[KBucket] = [
+                    i for i in self.node.bucket_list.buckets
+                    if i != known_peers_bucket
+                ]
+                for other_bucket in other_buckets:
+                    self._refresh_bucket(
+                        other_bucket
+                    )  # UNITTEST Notes: one of these should contain the correct contact
+            else:
+                raise error
 
     def _refresh_bucket(self, bucket: KBucket) -> None:
         """
@@ -331,17 +335,18 @@ class DHT:
         :returns: Nothing.
         """
         bucket.touch()
-        random_id: ID = ID.random_id_within_bucket_range(bucket)
+        with self.lock:
+            random_id: ID = ID.random_id_within_bucket_range(bucket)
 
-        # put in a separate list as contacts collection for this bucket might change.
-        contacts: list[Contact] = bucket.contacts
-        for contact in contacts:
-            new_contacts, timeout_error = contact.protocol.find_node(
-                self.our_contact, random_id)
-            self.handle_error(timeout_error, contact)
-            if new_contacts:
-                for other_contact in new_contacts:
-                    self.node.bucket_list.add_contact(other_contact)
+            # put in a separate list as contacts collection for this bucket might change.
+            contacts: list[Contact] = bucket.contacts
+            for contact in contacts:
+                new_contacts, timeout_error = contact.protocol.find_node(
+                    self.our_contact, random_id)
+                self.handle_error(timeout_error, contact)
+                if new_contacts:
+                    for other_contact in new_contacts:
+                        self.node.bucket_list.add_contact(other_contact)
 
     def _setup_bucket_refresh_timer(self) -> None:
         """
@@ -377,17 +382,18 @@ class DHT:
         """
         now: datetime = datetime.now()
 
-        rep_keys = [
-            k for k in self._republish_storage.get_keys()
-            if now - self._republish_storage.get_timestamp(k) >=
-            Constants.KEY_VALUE_REPUBLISH_INTERVAL_MS
-        ]
+        with self.lock:
+            rep_keys = [
+                k for k in self._republish_storage.get_keys()
+                if now - self._republish_storage.get_timestamp(k) >=
+                Constants.KEY_VALUE_REPUBLISH_INTERVAL_MS
+            ]
 
-        for k in rep_keys:
-            key: ID = ID(k)
-            self.store_on_closer_contacts(key,
-                                          self._republish_storage.get(key))
-            self._republish_storage.touch(k)
+            for k in rep_keys:
+                key: ID = ID(k)
+                self.store_on_closer_contacts(key,
+                                              self._republish_storage.get(key))
+                self._republish_storage.touch(k)
 
     def _expire_keys_elapsed(self) -> None:
         """
@@ -396,19 +402,19 @@ class DHT:
         self._remove_expired_data(self._cache_storage)
         self._remove_expired_data(self._republish_storage)
 
-    @staticmethod
-    def _remove_expired_data(store: IStorage) -> None:
+    def _remove_expired_data(self, store: IStorage) -> None:
         now: datetime = datetime.now()
         # to list so our key list is resolved now as we remove keys
-        expired: list[int] = [
-            key for key in store.get_keys()
-            if (now - store.get_timestamp(key)) >= timedelta(
-                seconds=store.get_expiration_time_sec(key))
-        ]
+        with self.lock:
+            expired: list[int] = [
+                key for key in store.get_keys()
+                if (now - store.get_timestamp(key)) >= timedelta(
+                    seconds=store.get_expiration_time_sec(key))
+            ]
 
-        # expired is a list of all expired keys in the given storage.
-        for key in expired:
-            store.remove(key)
+            # expired is a list of all expired keys in the given storage.
+            for key in expired:
+                store.remove(key)
 
     def _originator_republish_elapsed(self) -> None:
         """
@@ -424,29 +430,30 @@ class DHT:
         longer expiration times may be appropriate.”
         """
         now: datetime = datetime.now()
-
-        keys_pending_republish = [
-            key for key in self._originator_storage.get_keys()
-            if (now -
-                self._originator_storage.get_timestamp(key.value)) >= timedelta(
-                milliseconds=Constants.ORIGINATOR_REPUBLISH_INTERVAL_MS)
-        ]
+        with self.lock:
+            keys_pending_republish = [
+                key for key in self._originator_storage.get_keys()
+                if (now -
+                    self._originator_storage.get_timestamp(key.value)) >= timedelta(
+                    milliseconds=Constants.ORIGINATOR_REPUBLISH_INTERVAL_MS)
+            ]
 
         for k in keys_pending_republish:
             key: ID = k
             # Just use close contacts, don't do a lookup
-            contacts = self.node.bucket_list.get_close_contacts(
-                key, self.node.our_contact.id)
+            with self.lock:
+                contacts = self.node.bucket_list.get_close_contacts(
+                    key, self.node.our_contact.id)
 
-            for c in contacts:
-                error: RPCError | None = c.protocol.store(
-                    sender=self.our_contact,
-                    key=key,
-                    val=self._originator_storage.get(key)
-                )
-                self.handle_error(error, c)
+                for c in contacts:
+                    error: RPCError | None = c.protocol.store(
+                        sender=self.our_contact,
+                        key=key,
+                        val=self._originator_storage.get(key)
+                    )
+                    self.handle_error(error, c)
 
-            self._originator_storage.touch(k.value)
+                self._originator_storage.touch(k.value)
 
     def _get_separating_nodes_count(self, contact_a: Contact, contact_b: Contact) -> int:
         """
@@ -456,7 +463,8 @@ class DHT:
         :return:
         """
         # get all the contacts, ordered by ID
-        all_contacts: list[Contact] = sorted(self.node.bucket_list.contacts(), key=lambda c: c.id.value)
+        with self.lock:
+            all_contacts: list[Contact] = sorted(self.node.bucket_list.contacts(), key=lambda c: c.id.value)
         index_a = helpers.get_closest_number_index([i.id.value for i in all_contacts], contact_a.id.value)
         index_b = helpers.get_closest_number_index([i.id.value for i in all_contacts], contact_b.id.value)
         count = abs(index_a - index_b)
@@ -473,13 +481,15 @@ class DHT:
         """
         if error:
             if error.has_error():
-                count = self._add_contact_to_evict(contact.id.value)
-                if count >= Constants.EVICTION_LIMIT:
-                    self._replace_contact(contact)
+                with self.lock:
+                    count = self._add_contact_to_evict(contact.id.value)
+                    if count >= Constants.EVICTION_LIMIT:
+                        self._replace_contact(contact)
 
     def add_to_pending(self, contact: Contact) -> None:
-        if contact.id not in [c.id for c in self.pending_contacts]:
-            self.pending_contacts.append(contact)
+        with self.lock:
+            if contact.id not in [c.id for c in self.pending_contacts]:
+                self.pending_contacts.append(contact)
 
     def delay_eviction(self,
                        to_evict: Contact,
@@ -497,14 +507,14 @@ class DHT:
         # Non-concurrent list needs locking
         # lock(pending_contacts)
         # add only if it's a new pending contact.
-        if to_replace.id not in [c.id for c in self.pending_contacts]:
-            self.pending_contacts.append(to_replace)
-
-        key: int = to_evict.id.value
-        number_of_eviction_attempts_on_to_evict = self._add_contact_to_evict(key)
-        # if the eviction attempts on key reach the eviction limit
-        if number_of_eviction_attempts_on_to_evict == Constants.EVICTION_LIMIT:
-            self._replace_contact(to_evict)
+        with self.lock:
+            if to_replace.id not in [c.id for c in self.pending_contacts]:
+                self.pending_contacts.append(to_replace)
+            key: int = to_evict.id.value
+            number_of_eviction_attempts_on_to_evict = self._add_contact_to_evict(key)
+            # if the eviction attempts on key reach the eviction limit
+            if number_of_eviction_attempts_on_to_evict == Constants.EVICTION_LIMIT:
+                self._replace_contact(to_evict)
 
     def _add_contact_to_evict(self, key_to_evict: int) -> int:
         """
@@ -514,11 +524,12 @@ class DHT:
         """
         # self.eviction_count is a dictionary of ID keys ->
         # how many times they have been considered for eviction.
-        if key_to_evict not in self.eviction_count:
-            self.eviction_count[key_to_evict] = 0
-        self.eviction_count[key_to_evict] += 1
+        with self.lock:
+            if key_to_evict not in self.eviction_count:
+                self.eviction_count[key_to_evict] = 0
+            self.eviction_count[key_to_evict] += 1
 
-        return self.eviction_count[key_to_evict]
+            return self.eviction_count[key_to_evict]
 
     def _replace_contact(self, to_evict: Contact) -> None:
         """
@@ -528,9 +539,9 @@ class DHT:
         """
         bucket = self.node.bucket_list.get_kbucket(to_evict.id)
         # Prevent other threads from manipulating the bucket list or buckets
-        # lock(self.node.bucket_list)
-        self._evict_contact(bucket, to_evict)
-        self._replace_with_pending_contact(bucket)
+        with self.node.bucket_list.lock:
+            self._evict_contact(bucket, to_evict)
+            self._replace_with_pending_contact(bucket)
 
     def _evict_contact(self, bucket: KBucket, to_evict: Contact) -> None:
         """
@@ -542,16 +553,10 @@ class DHT:
         """
 
         logger.debug("[Client] Evicting contact from bucket.")
-
         if to_evict.id.value in self.eviction_count:
             self.eviction_count.pop(to_evict.id.value)
 
-        if not bucket.contains(to_evict.id):
-            raise BucketDoesNotContainContactToEvictError(
-                "Bucket does not contain the contact to be evicted."
-            )
-        else:
-            bucket.evict_contact(to_evict)
+        bucket.evict_contact(to_evict)
 
     def save(self, filename: str) -> None:
         """
@@ -581,44 +586,45 @@ class DHT:
         :param bucket:
         :return:
         """
-        # lock(self.pending_contacts)
-        contact: Optional[Contact] = sorted([c for c in self.pending_contacts if
-                                             self.node.bucket_list.get_kbucket(c.id) == bucket],
-                                            key=lambda c: c.last_seen)[-1]
-        if contact is not None:
-            self.pending_contacts.remove(contact)
-            bucket.add_contact(contact)
+        with self.lock:
+            contact: Optional[Contact] = sorted([c for c in self.pending_contacts if
+                                                 self.node.bucket_list.get_kbucket(c.id) == bucket],
+                                                key=lambda c: c.last_seen)[-1]
+            if contact is not None:
+                self.pending_contacts.remove(contact)
+                bucket.add_contact(contact)
 
 
     def store_file(self, file_to_upload: str) -> ID:
-        filename = os.path.basename(file_to_upload)
-        piece_size = Constants.PIECE_LENGTH  # in bytes
-        encoded_filename = filename.encode(Constants.PICKLE_ENCODING)
-        piece_list: list[list] = [[
-            get_sha1_hash(encoded_filename), encoded_filename]]
-        with open(file_to_upload, "rb") as f:
-            file_read = False
-            while not file_read:
-                file_piece: bytes = f.read(piece_size)
-                if file_piece:
-                    piece_key: int = get_sha1_hash(file_piece)
-                    piece_list.append([piece_key, file_piece])
-                else:
-                    file_read = True
+        with self.lock:
+            filename = os.path.basename(file_to_upload)
+            piece_size = Constants.PIECE_LENGTH  # in bytes
+            encoded_filename = filename.encode(Constants.PICKLE_ENCODING)
+            piece_list: list[list] = [[
+                get_sha1_hash(encoded_filename), encoded_filename]]
+            with open(file_to_upload, "rb") as f:
+                file_read = False
+                while not file_read:
+                    file_piece: bytes = f.read(piece_size)
+                    if file_piece:
+                        piece_key: int = get_sha1_hash(file_piece)
+                        piece_list.append([piece_key, file_piece])
+                    else:
+                        file_read = True
 
-        manifest_list: list[int] = [piece_list[i][0] for i in range(
-            len(piece_list))]
-        manifest_key: int = get_manifest_hash(manifest_list)
+            manifest_list: list[int] = [piece_list[i][0] for i in range(
+                len(piece_list))]
+            manifest_key: int = get_manifest_hash(manifest_list)
 
-        # Store the manifest
-        self.store(ID(manifest_key), pickle.dumps(manifest_list).decode(
-            Constants.PICKLE_ENCODING))
+            # Store the manifest
+            self.store(ID(manifest_key), pickle.dumps(manifest_list).decode(
+                Constants.PICKLE_ENCODING))
 
-        # Store each of the pieces
-        for i in range(len(piece_list)):
-            self.store(ID(piece_list[i][0]), piece_list[i][1].decode(Constants.PICKLE_ENCODING))
+            # Store each of the pieces
+            for i in range(len(piece_list)):
+                self.store(ID(piece_list[i][0]), piece_list[i][1].decode(Constants.PICKLE_ENCODING))
 
-        return ID(manifest_key)
+            return ID(manifest_key)
 
 
     def download_file(self, manifest_id: ID) -> str:

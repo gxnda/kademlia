@@ -150,7 +150,7 @@ class BucketList:
         """
         self.k = k
         self.lock = RLock()
-        self.dht: "DHT" = None
+        self.dht = None
         self.buckets: list[KBucket] = [KBucket(k=self.k)]
         # first k-bucket has max range
         self.our_id: ID = our_contact.id
