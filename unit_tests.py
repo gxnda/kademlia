@@ -5,6 +5,7 @@ import pickle
 import random
 import shutil
 import threading
+import time
 import unittest
 
 import tempfile
@@ -1837,7 +1838,7 @@ class TestDHTFileSystem(unittest.TestCase):
         for fn in filenames:
             os.unlink(fn)
 
-class TestLocking(unittest.TestCase):
+class TestKBucketLocking(unittest.TestCase):
     def test_concurrent_bucket_access(self):
         bucket = KBucket(k=200)
         contacts = [Contact(ID(i), None) for i in range(100)]
@@ -1857,6 +1858,148 @@ class TestLocking(unittest.TestCase):
             t.join()
 
         assert len(bucket.contacts) == 100  # No lost updates
+
+
+class TestBucketListThreadSafety(unittest.TestCase):
+    def setUp(self):
+        # Create our node's contact
+        self.our_contact = Contact(ID(0), None)
+        # Create bucket list with small K for testing splits
+        self.big_bucket_list = BucketList(self.our_contact, k=200)
+        self.bucket_list = BucketList(self.our_contact, k=2)
+
+    def test_concurrent_add_contacts(self):
+        """Test that adding contacts from multiple threads doesn't cause data loss"""
+        # Create 100 unique contacts
+
+        contacts = []
+        for i in range(1, 101):
+            contact = Contact(ID(i), VirtualProtocol())
+            dummy_node = Node(contact, VirtualStorage())
+            contact.protocol.node = dummy_node
+            contacts.append(contact)
+
+        # Worker function for threads
+        def add_contacts(start, end):
+            for i in range(start, end):
+                try:
+                    self.big_bucket_list.add_contact(contacts[i])
+                except Exception as e:
+                    errors.append(e)
+
+        # Split work among 10 threads
+        threads = []
+        errors = []
+        chunk_size = len(contacts) // 10
+
+        for i in range(10):
+            start = i * chunk_size
+            end = start + chunk_size if i < 9 else len(contacts)
+            print("Start, end",start,end)
+            t = threading.Thread(target=add_contacts, args=(start, end))
+            threads.append(t)
+            t.start()
+
+        # Wait for all threads to complete
+        for t in threads:
+            t.join()
+
+        # Verify no errors occurred
+        self.assertEqual(len(errors), 0, f"Errors during adds: {errors}")
+
+        # Verify all contacts were added
+        all_contacts = self.big_bucket_list.contacts()
+        contact_ids = [c.id.value for c in all_contacts]
+
+        # Check for missing contacts
+        missing = [c.id.value for c in contacts if c.id.value not in
+                   contact_ids]
+        self.assertEqual(len(missing), 0, f"Missing contacts: {missing}")
+
+        # Check for duplicates
+        self.assertEqual(len(all_contacts), len(set(all_contacts)),
+                         "Duplicate contacts found")
+
+        # Verify bucket list integrity
+        total_contacts = 0
+        for bucket in self.big_bucket_list.buckets:
+            total_contacts += len(bucket.contacts)
+            self.assertLessEqual(len(bucket.contacts), self.big_bucket_list.k,
+                                 f"Bucket over capacity, bucket list is as "
+                                 f"follows: "
+                                 f"{[len(b.contacts) for b in self.big_bucket_list.buckets]}")
+
+        self.assertEqual(total_contacts, len(contacts),
+                         "Contact count mismatch")
+
+    def test_recursive_add_during_split(self):
+        """Test that recursive add during split doesn't cause deadlock"""
+        # Create bucket list with tiny range that will split immediately
+        bucket_list = BucketList(self.our_contact, k=1)
+        bucket_list.buckets = [KBucket(low=0, high=10, k=1)]
+
+        # Add contacts that will force splits
+        contacts = [Contact(ID(i), None) for i in range(1, 11)]
+
+        for contact in contacts:
+            try:
+                bucket_list.add_contact(contact)
+            except RuntimeError as e:
+                if "recursion" in str(e):
+                    self.fail("Recursion depth exceeded during split")
+
+        # Verify all contacts were added
+        all_contacts = bucket_list.contacts()
+        self.assertEqual(len(all_contacts), len(contacts),
+                         "Contacts missing after split")
+
+    def test_concurrent_get_contacts(self):
+        """Test that read operations don't block writes"""
+        # Add initial contacts
+        for i in range(1, 6):
+            self.bucket_list.add_contact(Contact(ID(i), None))
+
+        read_barrier = threading.Barrier(2)
+        write_done = False
+
+        def reader():
+            """Read contacts while writes are happening"""
+            nonlocal write_done
+            while not write_done:
+                # This should never block significantly
+                start = time.perf_counter()
+                contacts = self.bucket_list.get_close_contacts(ID(0), ID(0))
+                duration = time.perf_counter() - start
+                self.assertLess(duration, 0.001,
+                                "Read operation blocked too long")
+                # Ensure we yield to writer
+                time.sleep(0.001)
+
+        def writer():
+            """Add contacts while reads are happening"""
+            nonlocal write_done
+            for i in range(6, 11):
+                self.bucket_list.add_contact(Contact(ID(i), None))
+                time.sleep(0.001)  # Yield to reader
+            write_done = True
+
+        # Start threads
+        reader_thread = threading.Thread(target=reader)
+        writer_thread = threading.Thread(target=writer)
+
+        reader_thread.start()
+        writer_thread.start()
+
+        # Wait for completion
+        writer_thread.join(timeout=1)
+        reader_thread.join(timeout=1)
+
+        self.assertTrue(write_done, "Writer didn't complete")
+
+        # Verify final state
+        all_contacts = self.bucket_list.contacts()
+        self.assertEqual(len(all_contacts), 10, "Not all contacts added")
+
 
 if __name__ == '__main__':
     unittest.main()

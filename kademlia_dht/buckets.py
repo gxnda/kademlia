@@ -171,8 +171,9 @@ class BucketList:
         the number of bits shared in the prefix of the contacts in the bucket
         reaches the threshold b, which the spec says should be 5.
         """
-        return (kbucket.is_in_range(self.our_id)
-                or (kbucket.depth() % Constants.B != 0))
+        with self.lock:
+            return (kbucket.is_in_range(self.our_id)
+                    or (kbucket.depth() % Constants.B != 0))
 
     def _get_kbucket_index(self, other_id: ID) -> int:
         """
@@ -232,7 +233,7 @@ class BucketList:
         logger.debug("[Client] Add contact called.")
         needs_ping = False
         with self.lock:
-            kbucket: KBucket = self.get_kbucket(contact.id)
+            kbucket: KBucket = self._get_kbucket_unlocked(contact.id)
             if kbucket.contains(contact.id):
                 logger.debug("[Client] Contact already in KBucket.")
                 # replace contact, then touch it
@@ -266,18 +267,16 @@ class BucketList:
         """
         if needs_ping:
             logger.info("[Client] Pinging last seen contact.")
-            print("pinging last seen contact")
             error = last_seen_contact.protocol.ping(self.our_contact)
+
             with self.lock:
                 # Verify state hasn't changed
                 if (kbucket.contains(last_seen_contact.id) and
                         kbucket.is_full() and
                         not self.can_split(kbucket)):
-                    print("nothings changed")
                     if error.has_error():
                         print(error)
                         if self.dht:
-                            print("delaying eviction")
                             self.dht.delay_eviction(last_seen_contact, contact)
                     else:
                         if self.dht:
