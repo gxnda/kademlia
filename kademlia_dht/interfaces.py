@@ -7,7 +7,6 @@ from kademlia_dht.id import ID
 
 class IStorage:
     """Interface which 'abstracts the storage mechanism for key-value pairs.''"""
-
     @abstractmethod
     def contains(self, key: ID) -> bool:
         """

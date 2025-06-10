@@ -1,4 +1,5 @@
 import logging
+from threading import RLock
 
 from kademlia_dht.buckets import BucketList
 from kademlia_dht.constants import Constants
@@ -38,6 +39,7 @@ class Node:
         self.cache_storage: IStorage = cache_storage if cache_storage else VirtualStorage()
         self.dht = None  # This should never be None
         self.bucket_list = BucketList(contact)
+        self.lock = RLock()
 
     def __repr__(self):
         return str({
@@ -57,7 +59,7 @@ class Node:
             raise SendingQueryToSelfError(
                 "Sender of ping RPC cannot be ourself."
             )
-        self.send_key_values_if_new_contact(sender)
+        self.send_key_values_to_contact_if_new_contact(sender)
         self.bucket_list.add_contact(sender)
 
         return self.our_contact
@@ -90,7 +92,7 @@ class Node:
         if is_cached:
             self.cache_storage.set(key, val, expiration_time_sec)
         else:
-            self.send_key_values_if_new_contact(sender)
+            self.send_key_values_to_contact_if_new_contact(sender)
             self.storage.set(key, val, Constants.EXPIRATION_TIME_SEC)
 
     def find_node(self, key: ID,
@@ -107,7 +109,7 @@ class Node:
         if sender.id == self.our_contact.id:
             raise SendingQueryToSelfError("Sender cannot be ourselves.")
 
-        self.send_key_values_if_new_contact(sender)
+        self.send_key_values_to_contact_if_new_contact(sender)
         self.bucket_list.add_contact(sender)
 
         # actually finding nodes
@@ -125,21 +127,23 @@ class Node:
         if sender.id == self.our_contact.id:
             raise SendingQueryToSelfError("Sender cannot be ourselves.")
 
-        self.send_key_values_if_new_contact(sender)
+        self.send_key_values_to_contact_if_new_contact(sender)
+        with self.storage.lock:
+            with self.cache_storage.lock:
+                if self.storage.contains(key):
+                    logger.debug(f" Value in self.storage of {self.our_contact.id}.")
+                    return None, self.storage.get(key)
+                elif self.cache_storage.contains(key):
+                    if Constants.DEBUG:
+                        logger.debug(f"Value in self.cache_storage of {self.our_contact.id}.")
+                    return None, self.cache_storage.get(key)
 
-        if self.storage.contains(key):
-            logger.debug(f" Value in self.storage of {self.our_contact.id}.")
-            return None, self.storage.get(key)
-        elif self.cache_storage.contains(key):
-            if Constants.DEBUG:
-                logger.debug(f"Value in self.cache_storage of {self.our_contact.id}.")
-            return None, self.cache_storage.get(key)
-        else:
-            if Constants.DEBUG:
-                logger.debug("Value not in storage, getting close contacts.")
-            return self.bucket_list.get_close_contacts(key, sender.id), None
+        if Constants.DEBUG:
+            logger.debug("Value not in storage, getting close contacts.")
+        return self.bucket_list.get_close_contacts(key, sender.id), None
 
-    def send_key_values_if_new_contact(self, sender: Contact) -> None:
+    def send_key_values_to_contact_if_new_contact(self, sender: Contact) -> \
+            None:
         """
         Spec: "When a new node joins the system, it must store any
         key-value pair to which it is one of the k closest. Existing
@@ -155,9 +159,10 @@ class Node:
         XOR our_contact are less than the stored keys XOR other_contacts.
         """
         if self._is_new_contact(sender):
-            # with self.bucket_list.lock:
-            # Clone, so we can release the lock.
-            contacts: list[Contact] = self.bucket_list.contacts()
+            with self.bucket_list.lock:
+                # Clone, so we can release the lock.
+                contacts: list[Contact] = self.bucket_list.contacts()
+
             if len(contacts) > 0:
                 # and our distance to the key < any other contact's distance
                 # to the key
@@ -168,13 +173,15 @@ class Node:
                     # node.
                     if (self.our_contact.id ^ k) < distance:
                         logger.debug(f"Protocol used by sender: {sender.protocol}")
-                        error: RPCError | None = sender.protocol.store(
-                            sender=self.our_contact,
-                            key=ID(k),
-                            val=self.storage.get(k)
-                        )
-                        if self.dht:
-                            self.dht.handle_error(error, sender)
+                        val: str | None = self.storage.get(k)
+                        if val: # To prevent race conditions
+                            error: RPCError | None = sender.protocol.store(
+                                sender=self.our_contact,
+                                key=ID(k),
+                                val=self.storage.get(k)
+                            )
+                            if self.dht:
+                                self.dht.handle_error(error, sender)
 
     def _is_new_contact(self, sender: Contact) -> bool:
         """
@@ -183,12 +190,12 @@ class Node:
         :return:
         """
         ret: bool
-        # with self.bucket_list.lock:
-        ret: bool = self.bucket_list.contact_exists(sender)
-        # end lock
+        with self.bucket_list.lock:
+            ret: bool = self.bucket_list.contact_exists(sender)
+
         if self.dht:  # might be None in unit testing
-            # with self.DHT.pending_contacts.lock:
-            ret |= (sender.id in [c.id for c in self.dht.pending_contacts])
+            with self.dht.lock:
+                ret |= (sender.id in [c.id for c in self.dht.pending_contacts])
             # end lock
 
         return not ret

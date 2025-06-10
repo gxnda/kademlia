@@ -2,10 +2,9 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Optional
+from threading import RLock
 
 from kademlia_dht import pickler
-from kademlia_dht.constants import Constants
 from kademlia_dht.dictionaries import StoreValue
 from kademlia_dht.id import ID
 from kademlia_dht.interfaces import IStorage
@@ -15,106 +14,60 @@ logger = logging.getLogger("__main__")
 
 
 class VirtualStorage(IStorage):
-    """
-    Simple storage mechanism that stores things in memory.
-    """
-
     def __init__(self):
         self._store: dict[int, StoreValue] = {}
+        self.lock = RLock()
 
-    def __repr__(self):
-        return str({
-            "type": "VirtualStorage",
-            "store": self._store
-        })
-
+    # --- Locked Methods ---
     def contains(self, key: ID) -> bool:
-        """
-        Returns a Boolean stating whether a key-value pair exists, given key.
-        """
-        return key.value in self.get_keys()
+        with self.lock:
+            return key.value in self._store
 
     def get(self, key: ID | int) -> str:
-        """
-        Returns stored value, associated with given key value.
-        :param key: Type ID or Integer, key value to be searched.
-        :return:
-        """
-        if isinstance(key, ID):
-            return self._store[key.value]["value"]
-        elif isinstance(key, int):
-            return self._store[key]["value"]
-        else:
-            raise TypeError("'get()' parameter 'key' must be type ID or int.")
+        with self.lock:
+            if isinstance(key, ID):
+                return self._store[key.value]["value"]
+            elif isinstance(key, int):
+                return self._store[key]["value"]
+            else:
+                raise TypeError("Key must be ID or int.")
 
     def get_timestamp(self, key: int) -> datetime:
-        """
-        Returns when the key was last republished as a datetime object.
-        :param key:
-        :return:
-        """
-        return datetime.fromisoformat(self._store[key]["republish_timestamp"])
+        with self.lock:
+            return datetime.fromisoformat(self._store[key]["republish_timestamp"])
 
     def set(self, key: ID, value: str, expiration_time_sec: int = 0) -> None:
-        """
-        Stores a key value pair, along with the expiration time and timestamp.
-        :param key:
-        :param value:
-        :param expiration_time_sec:
-        :return:
-        """
-        self._store[key.value] = StoreValue(value=value,
-                                            expiration_time=expiration_time_sec,
-                                            republish_timestamp=datetime.now().isoformat()
-                                            )
-        self.touch(key.value)
+        with self.lock:
+            self._store[key.value] = {
+                "value": value,
+                "expiration_time": expiration_time_sec,
+                "republish_timestamp": datetime.now().isoformat()
+            }
 
     def get_expiration_time_sec(self, key: int) -> int:
-        """
-        Returns how long it takes for the given key-value pair to expire, given key.
-        :param key:
-        :return:
-        """
-        return self._store[key]["expiration_time"]
+        with self.lock:
+            return self._store[key]["expiration_time"]
 
     def remove(self, key: int) -> None:
-        """
-        Removes a given key-value pair, given key.
-        :param key:
-        :return:
-        """
-        if key in self._store:
+        with self.lock:
             self._store.pop(key, None)
 
     def get_keys(self) -> list[int]:
-        """
-        Returns all keys of key-value pairs that are stored.
-        :return:
-        """
-        return list(self._store.keys())
+        with self.lock:
+            return list(self._store.keys())
 
     def touch(self, key: int) -> None:
-        """
-        “touches” a given key-value pair, this is done by updating the timestamp to the current time.
-        :param key:
-        :return:
-        """
-        self._store[key]["republish_timestamp"] = datetime.now().isoformat()
+        with self.lock:
+            self._store[key]["republish_timestamp"] = datetime.now().isoformat()
 
     def try_get_value(self, key: ID) -> tuple[bool, str | None]:
-        """
-        Tries to get a given value from a key-value pair, given the key. Returns True | False,
-        and the value if it was found.
-        :param key:
-        :return:
-        """
-        val: Optional[str] = None
-        ret = False
-        if key.value in self._store:
-            val = self._store[key.value]["value"]
-            ret = True
+        with self.lock:
+            val = self._store.get(key.value)
+            return val is not None, val["value"] if val else None
 
-        return ret, val
+    # --- Unlocked Methods ---
+    def __repr__(self) -> str:
+        return f"VirtualStorage(keys={list(self._store.keys())})"
 
 
 class SecondaryJSONStorage(IStorage):
@@ -132,12 +85,14 @@ class SecondaryJSONStorage(IStorage):
         :param filename: Filename to save values to - must end in .json!
         """
         self.filename = filename
-        if not os.path.exists(self.filename):
-            cwd = os.getcwd()
-            if not os.path.exists(os.path.join(cwd, os.path.dirname(self.filename))):
-                os.mkdir(os.path.join(cwd, os.path.dirname(self.filename)))
-            with open(self.filename, "w"):
-                pass  # Makes file.
+        self.lock = RLock()
+        with self.lock:
+            if not os.path.exists(self.filename):
+                cwd = os.getcwd()
+                if not os.path.exists(os.path.join(cwd, os.path.dirname(self.filename))):
+                    os.mkdir(os.path.join(cwd, os.path.dirname(self.filename)))
+                with open(self.filename, "w"):
+                    pass  # Makes file.
 
     def __repr__(self):
         return str({
@@ -162,29 +117,31 @@ class SecondaryJSONStorage(IStorage):
         :param expiration_time_sec:
         :return:
         """
-        os.makedirs(os.path.dirname(self.filename), exist_ok=True)
-        with open(self.filename, "r") as f:
-            logger.info(f"Set at {self.filename}.")
-            try:
-                json_data: dict = json.load(f)
-            except json.JSONDecodeError:
-                json_data = {}
-
         to_store: StoreValue = StoreValue(
             value=value,
             expiration_time=expiration_time_sec,
             republish_timestamp=datetime.now().isoformat()
         )
-        if key.value in json_data:
-            json_data.pop(key.value)
 
-        if str(key.value) in json_data:
-            json_data.pop(str(key.value))
+        with self.lock:
+            os.makedirs(os.path.dirname(self.filename), exist_ok=True)
+            with open(self.filename, "r") as f:
+                logger.info(f"Set at {self.filename}.")
+                try:
+                    json_data: dict = json.load(f)
+                except json.JSONDecodeError:
+                    json_data = {}
 
-        json_data[key.value] = to_store
+            if key.value in json_data:
+                json_data.pop(key.value)
 
-        with open(self.filename, "w") as f:
-            json.dump(json_data, f)
+            if str(key.value) in json_data:
+                json_data.pop(str(key.value))
+
+            json_data[key.value] = to_store
+
+            with open(self.filename, "w") as f:
+                json.dump(json_data, f)
 
     def contains(self, key: ID | int) -> bool:
         """
@@ -192,14 +149,15 @@ class SecondaryJSONStorage(IStorage):
         :param key:
         :return:
         """
-        with open(self.filename, "r") as f:
-            logger.debug(f"Contains key \"{key}\" at {self.filename}")
-            f.seek(0)
-            try:
-                json_data: dict[int, StoreValue] = json.load(f)
-            except json.JSONDecodeError as e:
-                logger.error(f"JSON decoding error in 'contains' for {self.filename}: {e}")
-                json_data = {}
+        with self.lock:
+            with open(self.filename, "r") as f:
+                logger.debug(f"Contains key \"{key}\" at {self.filename}")
+                f.seek(0)
+                try:
+                    json_data: dict[int, StoreValue] = json.load(f)
+                except json.JSONDecodeError as e:
+                    logger.error(f"JSON decoding error in 'contains' for {self.filename}: {e}")
+                    json_data = {}
 
         if isinstance(key, ID):
             return str(key.value) in list(json_data.keys())
@@ -212,13 +170,15 @@ class SecondaryJSONStorage(IStorage):
         :param key:
         :return:
         """
-        with open(self.filename, "r") as f:
-            logger.debug(f"Get timestamp at {self.filename}")
-            try:
-                json_data: dict[int, StoreValue] = json.load(f)
-            except json.JSONDecodeError as e:
-                logger.error(f"JSON decoding error in 'get_timestamp' for {self.filename}: {e}")
-                json_data = {}
+        with self.lock:
+            with open(self.filename, "r") as f:
+                logger.debug(f"Get timestamp at {self.filename}")
+                try:
+                    json_data: dict[int, StoreValue] = json.load(f)
+                except json.JSONDecodeError as e:
+                    logger.error(f"JSON decoding error in 'get_timestamp' for {self.filename}: {e}")
+                    json_data = {}
+
         if isinstance(key, ID):
             return datetime.fromisoformat(json_data[key.value]["republish_timestamp"])
         else:
@@ -230,11 +190,13 @@ class SecondaryJSONStorage(IStorage):
         :param key:
         :return:
         """
-        with open(self.filename, "r") as f:
-            f.seek(0)
-            logger.debug(f"Get at {self.filename}")
-            json_data: dict = json.load(f)
-            logger.debug("fdata", json_data)
+        with self.lock:
+            with open(self.filename, "r") as f:
+                f.seek(0)
+                logger.debug(f"Get at {self.filename}")
+                json_data: dict = json.load(f)
+                logger.debug("fdata", json_data)
+
         if isinstance(key, ID):
             return json_data[str(key.value)]["value"]
         elif isinstance(key, int):
@@ -248,12 +210,13 @@ class SecondaryJSONStorage(IStorage):
         :param key:
         :return:
         """
-        with open(self.filename, "r") as f:
-            logger.debug(f"Get expiration time at {self.filename}")
-            try:
-                json_data: dict[int, StoreValue] = json.load(f)
-            except json.JSONDecodeError:
-                json_data = {}
+        with self.lock:
+            with open(self.filename, "r") as f:
+                logger.debug(f"Get expiration time at {self.filename}")
+                try:
+                    json_data: dict[int, StoreValue] = json.load(f)
+                except json.JSONDecodeError:
+                    json_data = {}
         return json_data[key]["expiration_time"]
 
     def remove(self, key: int) -> None:
@@ -262,12 +225,13 @@ class SecondaryJSONStorage(IStorage):
         :param key:
         :return:
         """
-        with open(self.filename, "r") as f:
-            logger.debug(f"Remove at {self.filename}")
-            try:
-                json_data: dict[str, StoreValue] = json.load(f)
-            except json.JSONDecodeError:
-                json_data = {}
+        with self.lock:
+            with open(self.filename, "r") as f:
+                logger.debug(f"Remove at {self.filename}")
+                try:
+                    json_data: dict[str, StoreValue] = json.load(f)
+                except json.JSONDecodeError:
+                    json_data = {}
 
         if str(key) in json_data:
             json_data.pop(str(key), None)
@@ -280,13 +244,14 @@ class SecondaryJSONStorage(IStorage):
         Returns all keys stored by the storage file as a list of integers.
         :return:
         """
-        with open(self.filename, "r") as f:
-            logger.debug(f"Get keys at {self.filename}")
-            try:
-                json_data: dict[int, StoreValue] = json.load(f)
-            except json.JSONDecodeError:
-                json_data = {}
-            return list(json_data.keys())
+        with self.lock:
+            with open(self.filename, "r") as f:
+                logger.debug(f"Get keys at {self.filename}")
+                try:
+                    json_data: dict[int, StoreValue] = json.load(f)
+                except json.JSONDecodeError:
+                    json_data = {}
+                return list(json_data.keys())
 
     def touch(self, key: int | ID) -> None:
         """
@@ -294,42 +259,39 @@ class SecondaryJSONStorage(IStorage):
         :param key:
         :return:
         """
-        with open(self.filename, "r") as f:
-            logger.debug(f"Touch at {self.filename}")
-            try:
-                json_data: dict[int, StoreValue] = json.load(f)
-            except json.JSONDecodeError:
-                json_data = {}
+        with self.lock:
+            with open(self.filename, "r") as f:
+                logger.debug(f"Touch at {self.filename}")
+                try:
+                    json_data: dict[int, StoreValue] = json.load(f)
+                except json.JSONDecodeError:
+                    json_data = {}
+
             if isinstance(key, ID):
                 json_data[key.value]["republish_timestamp"] = datetime.now().isoformat()
             else:
                 json_data[key]["republish_timestamp"] = datetime.now().isoformat()
-        with open(self.filename, "w") as f:
-            json.dump(json_data, f)
+
+            with open(self.filename, "w") as f:
+                json.dump(json_data, f)
 
     def try_get_value(self, key: ID) -> tuple[bool, int | str]:
-
-        with open(self.filename, "r") as f:
-            if Constants.DEBUG:
+        with self.lock:
+            with open(self.filename, "r") as f:
                 logger.debug(f"Try get value at {self.filename}")
-            try:
-                f.seek(0)
-                logger.debug(f"File at {self.filename}: {f.read()}")
-                f.seek(0)
-                # Key is a string because JSON library stores integers at strings
-                json_data: dict[str, StoreValue] = json.load(f)
-                logger.debug(json_data)
-            except json.JSONDecodeError as e:
-                logger.error(f"JSON decoding error in 'try_get_value' for {self.filename}: {e}")
-                json_data = {}
+                try:
+                    f.seek(0)
+                    # Key is a string because JSON library stores integers at strings
+                    json_data: dict[str, StoreValue] = json.load(f)
+                except json.JSONDecodeError as e:
+                    logger.error(f"JSON decoding error in 'try_get_value' for {self.filename}: {e}")
+                    json_data = {}
+
         val = None
         ret = False
         if str(key.value) in json_data:
             val = json_data[str(key.value)]["value"]
             ret = True
-        if json_data != {}:
-            with open(self.filename, "w") as f:
-                json.dump(json_data, f)
 
         return ret, val
 

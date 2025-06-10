@@ -1,4 +1,4 @@
-from typing import Callable, TypedDict
+from typing import Callable, TypedDict, Any
 
 from kademlia_dht.contact import Contact
 from kademlia_dht.id import ID
@@ -30,7 +30,7 @@ class GetCloserNodesReturn(TypedDict):
 
 
 class BaseRequest(TypedDict):
-    protocol: dict
+    protocol: Any
     sender: int
     random_id: int
 
@@ -81,7 +81,7 @@ class CommonRequest(TypedDict):
     """
     This includes all possible headers that could be passed.
     """
-    protocol: dict  # IProtocol
+    protocol: Any  # IProtocol
     random_id: int
     sender: int
     key: int
@@ -103,7 +103,7 @@ class ErrorResponse(BaseResponse, TypedDict):
 
 class ContactResponse(TypedDict):
     contact: int
-    protocol: dict  # Or object?
+    protocol: Any
 
 
 class FindNodeResponse(BaseResponse, TypedDict):

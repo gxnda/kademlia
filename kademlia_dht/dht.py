@@ -4,7 +4,6 @@ import pickle
 from datetime import datetime, timedelta
 from threading import RLock
 from typing import Callable, Optional
-
 import dill
 
 from kademlia_dht import helpers
