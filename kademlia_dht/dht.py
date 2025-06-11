@@ -656,8 +656,6 @@ class DHT:
                         raise IDMismatchError(str(ID(piece_key)))
 
                     byte_piece: bytes = val.encode(Constants.PICKLE_ENCODING)
-                    print("writing piece", piece_key, "which has length",
-                          len(val.encode(Constants.PICKLE_ENCODING)))
                     f.write(byte_piece)
 
             return str(install_path)

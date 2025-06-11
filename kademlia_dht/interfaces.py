@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from datetime import datetime
+from typing import Any
 
 from kademlia_dht.errors import RPCError
 from kademlia_dht.id import ID
@@ -96,11 +97,8 @@ class IProtocol:
     Interface for all protocols to follow.
     """
 
-    def __init__(self):
-        pass
-
     @abstractmethod
-    def encode(self) -> dict[str, any]:
+    def encode(self) -> dict[str, Any]:
         pass
 
     @abstractmethod

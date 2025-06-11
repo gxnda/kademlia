@@ -254,7 +254,6 @@ class BucketList:
                     )  # Unless k <= 0, This should never cause a recursive loop
                 else:
                     logger.debug("[Client] Cannot split")
-                    print("Can't split")
                     last_seen_contact: Contact = sorted(
                         kbucket.contacts, key=lambda c: c.last_seen)[0]
                     needs_ping = True
@@ -275,14 +274,14 @@ class BucketList:
                         kbucket.is_full() and
                         not self.can_split(kbucket)):
                     if error.has_error():
-                        print(error)
                         if self.dht:
                             self.dht.delay_eviction(last_seen_contact, contact)
                     else:
                         if self.dht:
                             self.dht.add_to_pending(contact)
                 else:
-                    print("Somethings changed?")
+                    logger.debug("[Client] Race condition prevented in "
+                                 "add_contact.")
 
     def get_close_contacts(self, key: ID, exclude: ID) -> list[Contact]:
         """

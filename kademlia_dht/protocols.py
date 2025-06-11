@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Any
 
 import requests
 
@@ -131,7 +132,7 @@ class TCPSubnetProtocol(IProtocol):
     def __repr__(self):
         return f"{self.type}({self.url}:{self.port}, subnet={self.subnet})"
 
-    def encode(self) -> dict[str, any]:
+    def encode(self) -> dict[str, Any]:
         return {
             "type": self.type,
             "url": self.url,
@@ -190,7 +191,7 @@ class TCPSubnetProtocol(IProtocol):
 
         if ret:
             encoded_data = ret.content
-            ret_decoded = pickler.decode_data(encoded_data)
+            ret_decoded: dict | None = pickler.decode_data(encoded_data)
         else:
             ret_decoded = None
         try:
@@ -208,6 +209,8 @@ class TCPSubnetProtocol(IProtocol):
                     if contacts:
                         ret_contacts = [c for c in contacts if c.protocol is not None]
                         return ret_contacts, rpc_error
+                    else:
+                        return [], rpc_error
             else:
                 rpc_error = get_rpc_error(id,
                                           ret_decoded,
@@ -219,6 +222,8 @@ class TCPSubnetProtocol(IProtocol):
             error.protocol_error = True
             logger.error(f"[Client] Exception thrown: {e}")
             return None, error
+
+        return [], RPCError.no_error()
 
     def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, str | None, RPCError | None]:
         """
@@ -345,10 +350,10 @@ class TCPSubnetProtocol(IProtocol):
 
         timeout_error = False
         error = None
-        ret = None
+        ret: requests.Response | None = None
         try:
             logger.info("[Client] Sending Ping RPC...")
-            ret: requests.Response = requests.post(
+            ret = requests.post(
                 url=f"http://{self.url}:{self.port}/ping",
                 data=encoded_data,
                 timeout=Constants.REQUEST_TIMEOUT_SEC
