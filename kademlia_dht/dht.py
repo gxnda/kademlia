@@ -639,6 +639,8 @@ class DHT:
         found, contacts, val = self.find_value(key=manifest_id)
         # val will be a 'latin1' pickled dictionary {filename: str, file: bytes}
         if not found:
+            logger.error(f"[Client] Manifest not found on network: "
+                         f"{manifest_id=}, {contacts=}, {val=}")
             raise IDMismatchError(str(manifest_id))
         else:
             manifest_list: list[int] = pickle.loads(val.encode(

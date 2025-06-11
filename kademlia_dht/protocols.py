@@ -179,7 +179,8 @@ class TCPSubnetProtocol(IProtocol):
             logger.info(f"[Client] Received HTTP Response from {ret.url} with code {ret.status_code}")
 
         except (requests.Timeout, requests.ConnectionError) as t:
-            logger.error("[Client] Timeout error when contacting node.\n", t)
+            logger.error(f"[Client] Timeout error when contacting node.\n "
+                         f"{t}")
             timeout_error = True
             error = t
 

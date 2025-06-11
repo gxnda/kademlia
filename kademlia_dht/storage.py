@@ -88,11 +88,10 @@ class SecondaryJSONStorage(IStorage):
         self.lock = RLock()
         with self.lock:
             if not os.path.exists(self.filename):
-                cwd = os.getcwd()
-                if not os.path.exists(os.path.join(cwd, os.path.dirname(self.filename))):
-                    os.mkdir(os.path.join(cwd, os.path.dirname(self.filename)))
-                with open(self.filename, "w"):
-                    pass  # Makes file.
+                if not os.path.exists(os.path.dirname(self.filename)):
+                    os.makedirs(os.path.dirname(self.filename))
+                with open(self.filename, "w") as f:
+                    f.write("{}")
 
     def __repr__(self):
         return str({

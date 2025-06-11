@@ -1,27 +1,108 @@
+import os
+import random
+from tempfile import TemporaryFile, NamedTemporaryFile
+from threading import Lock
+
 from locust import HttpUser, task, between
+
+from kademlia_dht.constants import Constants
 from kademlia_dht.dht import DHT
 from kademlia_dht.id import ID
-from kademlia_dht.contact import Contact
-from kademlia_dht.protocols import VirtualProtocol
+from kademlia_dht.protocols import TCPSubnetProtocol
 from kademlia_dht.routers import Router
-from kademlia_dht.storage import VirtualStorage
+from kademlia_dht.storage import VirtualStorage, SecondaryJSONStorage
 
+valid_manifest_ids = []
+local_ip = "127.0.0.1"
+port = 7125
+
+installed_file_paths = []
+
+known_peer = DHT(
+    id=ID.random_id(),
+    protocol=TCPSubnetProtocol(local_ip, port, 1),
+    originator_storage=SecondaryJSONStorage(
+        f"files/{0}/originator_storage.json"),
+    republish_storage=SecondaryJSONStorage(
+        f"files/{0}/republish_storage.json"),
+    cache_storage=VirtualStorage(),
+    router=Router()
+)
 
 class KademliaUser(HttpUser):
-    wait_time = between(0.1, 0.5)
+    wait_time = between(1, 5)
     host = "http://localhost"
+    counter = 1
+    counter_lock = Lock()
 
     def on_start(self):
-        self.dht = DHT(ID.random_id(), VirtualProtocol(), storage_factory=VirtualStorage, router=Router()) # Initialize node
+        with KademliaUser.counter_lock:
+            self.user_id = KademliaUser.counter
+            KademliaUser.counter += 1
+
+        self.subnet = self.user_id
+        self.dht = DHT(
+            id=ID.random_id(),
+            protocol=TCPSubnetProtocol(local_ip, port, self.subnet),
+            originator_storage=SecondaryJSONStorage(
+                f"files/{self.user_id}/originator_storage.json"),
+            republish_storage=SecondaryJSONStorage(
+                f"files/{self.user_id}/republish_storage.json"),
+            cache_storage=VirtualStorage(),
+            router=Router()
+        )
+        self.dht.bootstrap(known_peer._router.node.our_contact)
+
+        self.files_to_store = []
+        for _ in range(5):  # Create 5 sample files per user
+            with NamedTemporaryFile(delete=False) as temp_file:
+                temp_file.write(os.urandom(1024))  # Write 1KB of random data
+                self.files_to_store.append(temp_file.name)
+
+        if self.files_to_store:
+            with self.counter_lock:
+                manifest_id = self.dht.store_file(self.files_to_store[0])
+                valid_manifest_ids.append(manifest_id)
+
+        with NamedTemporaryFile(delete=False) as temp_file:
+            temp_file.write(os.urandom(100 * Constants.PIECE_LENGTH))
+            self.big_file = temp_file.name
+
         self.manifest_id = None
 
+    def on_stop(self):
+        # Clean up temporary files
+        try:
+            os.unlink(self.big_file)
+        except:
+            pass
+
+        for file_path in self.files_to_store:
+            try:
+                os.unlink(file_path)
+            except:
+                pass
+
     @task
-    def store_file(self):
+    def store_small_file(self):
         # Implement file storage operation
-        self.manifest_id = self.dht.store_file("test_file.txt")
+        random_small_file = random.choice(self.files_to_store)
+        self.dht.store_file(random_small_file)
+
+    def store_big_file(self):
+        # Implement file storage operation
+        self.dht.store_file(self.big_file)
 
     @task(3)  # 3x more frequent than store
-    def retrieve_file(self):
+    def retrieve_real_file(self):
         # Implement file retrieval
-        if self.manifest_id:
-            self.dht.download_file(self.manifest_id)
+        manifest_id = random.choice(valid_manifest_ids)
+        installed_file_paths.append(self.dht.download_file(manifest_id))
+
+    @task
+    def retrieve_fake_file(self):
+        # Implement file retrieval
+        try:
+            installed_file_paths.append(self.dht.download_file(ID.random_id()))
+        except:
+            logger.info("File not found.")
