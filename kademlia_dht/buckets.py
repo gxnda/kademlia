@@ -156,9 +156,6 @@ class BucketList:
         self.our_id: ID = our_contact.id
         self.our_contact: Contact = our_contact
 
-        # create locking object
-        # self.lock = WithLock(Lock())
-
     def can_split(self, kbucket: KBucket) -> bool:
         # kbucket.HasInRange(ourID) || ((kbucket.Depth() % Constants.B) != 0)
         """
