@@ -25,7 +25,7 @@ class BaseRouter:
         self.further_contacts: list[Contact] = []
         self.node: Node = node
         self.dht = None
-        # self.locker
+        self.lock = threading.RLock()
 
     def __repr__(self):
         return str({
@@ -35,14 +35,15 @@ class BaseRouter:
             "node": self.node
         })
 
-    def find_closest_nonempty_kbucket(self, key: ID) -> KBucket:
+    def find_closest_nonempty_kbucket_to(self, key: ID) -> KBucket:
         """
         Finds the closest non empty Kbucket in our nodes bucket list to a given key.
         :param key:
         :return:
         """
         # gets all non-empty buckets from bucket list
-        closest: KBucket = sorted(self.node.bucket_list.buckets, key=lambda b: b.high() ^ key.value)[0]
+        with self.node.bucket_list.lock:
+            closest: KBucket = sorted(self.node.bucket_list.buckets, key=lambda b: b.high() ^ key.value)[0]
 
         if closest is None:
             raise NoNonEmptyBucketsError("No non-empty buckets exist.  "
@@ -113,6 +114,10 @@ class BaseRouter:
         it is added to a list “peers_nodes”. Checking each contact in peers_nodes, we check if it is closer
         to the key than the node_to_query, if it is, we add it to closer_contacts. We do a similar check to
         check if it is further, and then we add it to further_contacts.
+
+        TODO: This won't always return the closest contacts, if nothing is
+            found then it will return the closest contacts that the last node
+            in the list knows.
 
         :param key:
         :param nodes_to_query:
@@ -188,17 +193,20 @@ class BaseRouter:
 
         nearest_node_distance = node_to_query.id ^ key
 
-        # lock (locker)
-        close_peer_nodes = [p for p in peers_nodes if (p.id ^ node_to_query.id) < nearest_node_distance]
-        for p in close_peer_nodes:
-            if p.id not in [c.id for c in closer_contacts]:
-                closer_contacts.append(p)
+        # These two locks are because closer_contacts and further_contacts
+        # Are often (always?) self.closer_contacts and self.further_contacts
+        # respectively.
+        with self.lock:
+            close_peer_nodes = [p for p in peers_nodes if (p.id ^ node_to_query.id) < nearest_node_distance]
+            for p in close_peer_nodes:
+                if p.id not in [c.id for c in closer_contacts]:
+                    closer_contacts.append(p)
 
-        # lock (locker)
-        far_peer_nodes = [p for p in peers_nodes if (p.id ^ node_to_query.id) >= nearest_node_distance]
-        for p in far_peer_nodes:
-            if p.id not in [c.id for c in further_contacts]:
-                further_contacts.append(p)
+        with self.lock:
+            far_peer_nodes = [p for p in peers_nodes if (p.id ^ node_to_query.id) >= nearest_node_distance]
+            for p in far_peer_nodes:
+                if p.id not in [c.id for c in further_contacts]:
+                    further_contacts.append(p)
 
         return val is not None, val, found_by, closer_contacts, further_contacts
 
@@ -210,7 +218,7 @@ class Router(BaseRouter):
 
     def __init__(self, node: Node = None) -> None:
         super().__init__(node)
-        # self.lock = WithLock(Lock())
+        self.lock = threading.RLock()
 
     def lookup(self,
                key: ID,
@@ -232,13 +240,14 @@ class Router(BaseRouter):
         """
         contacted_nodes = []
 
-        if Constants.DEBUG:
-            all_nodes: list[Contact] = self.node.bucket_list.get_kbucket(key).contacts[0:Constants.K]
-        else:
-            # This is a bad way to get a list of close contacts with virtual nodes because we're always going to
-            # get the closest nodes right at the get go.
-            all_nodes: list[Contact] = self.node.bucket_list.get_close_contacts(
-                key, self.node.our_contact.id)[0:Constants.K]
+        with self.node.bucket_list.lock:
+            if Constants.DEBUG:
+                all_nodes: list[Contact] = self.node.bucket_list.get_kbucket(key).contacts[0:Constants.K]
+            else:
+                # This is a bad way to get a list of close contacts with virtual nodes because we're always going to
+                # get the closest nodes right at the get go.
+                all_nodes: list[Contact] = self.node.bucket_list.get_close_contacts(
+                    key, self.node.our_contact.id)[0:Constants.K]
         nodes_to_query: list[Contact] = all_nodes[:Constants.A]
 
         # Also not explicitly in spec:
@@ -511,13 +520,14 @@ class ParallelRouter(BaseRouter):
         further_contacts: list[Contact] = []
         found_return = FindResult(found=False, found_by=None, val="", contacts=[])
 
-        if Constants.DEBUG:
-            all_nodes: list[Contact] = self.node.bucket_list.get_kbucket(key).contacts[0:Constants.K]
-        else:
-            # For unit testing, this is a bad way to get a list of close contacts with virtual nodes
-            # because we're always going to get the closest nodes right at the get go.
-            all_nodes: list[Contact] = self.node.bucket_list.get_close_contacts(key, self.node.our_contact.id)[
-                                       0:Constants.K]
+        with self.node.bucket_list.lock:
+            if Constants.DEBUG:
+                all_nodes: list[Contact] = self.node.bucket_list.get_kbucket(key).contacts[0:Constants.K]
+            else:
+                # For unit testing, this is a bad way to get a list of close contacts with virtual nodes
+                # because we're always going to get the closest nodes right at the get go.
+                all_nodes: list[Contact] = self.node.bucket_list.get_close_contacts(key, self.node.our_contact.id)[
+                                           0:Constants.K]
 
         nodes_to_query: list[Contact] = all_nodes[0:Constants.A]
         # Also not explicitly in specification:
@@ -563,8 +573,9 @@ class ParallelRouter(BaseRouter):
                 self._stop_remaining_work()
                 return found_return
 
-            closer_uncontacted_nodes = [c for c in closer_contacts if c not in contacted_nodes]
-            further_uncontacted_nodes = [c for c in further_contacts if c not in contacted_nodes]
+            with self.lock:
+                closer_uncontacted_nodes = [c for c in closer_contacts if c not in contacted_nodes]
+                further_uncontacted_nodes = [c for c in further_contacts if c not in contacted_nodes]
 
             have_closer = len(closer_uncontacted_nodes) > 0
             have_further = len(further_uncontacted_nodes) > 0
