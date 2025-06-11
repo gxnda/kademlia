@@ -34,6 +34,8 @@ class BaseServer(ThreadingHTTPServer):
             "/find_node": FindNodeRequest,  # "find_node" should refer to type FindNodeRequest
             "/find_value": FindValueRequest  # "find_value" should refer to type FindValueRequest
         }
+        self.subnets = {}
+        self.subnet_lock = threading.Lock()
 
     def start(self) -> None:
         """
@@ -178,7 +180,6 @@ class HTTPRequestHandler(BaseHTTPRequestHandler2):
 
             node = self.server.node
             if node:
-                logger.debug(f"[Server] Request called: {node.bucket_list.buckets}")
                 self._common_request_handler(method_name, common_request, node)
 
             else:
@@ -209,7 +210,6 @@ class TCPServer(BaseServer):
             raise ValueError("Must provide either a node or a subnet server address.")
 
         if subnet_server_address:
-            self.subnets: dict = {}
             self.routing_methods: dict[str, type] = {
                 "/ping": PingSubnetRequest,  # "ping" should refer to type PingSubnetRequest
                 "/store": StoreSubnetRequest,  # "store" should refer to type StoreSubnetRequest
@@ -234,7 +234,8 @@ class TCPServer(BaseServer):
             )
 
     def register_protocol(self, subnet: int, node):
-        self.subnets[subnet] = node
+        with self.subnet_lock:
+            self.subnets[subnet] = node
 
 
 class HTTPSubnetRequestHandler(HTTPRequestHandler):
@@ -271,9 +272,9 @@ class HTTPSubnetRequestHandler(HTTPRequestHandler):
             # If we know the node on the subnet, this should always happen right?
             # Because this is for testing on the same PC.
             self.server: TCPSubnetServer
-            node = self.server.subnets.get(subnet)
+            with self.server.subnet_lock:
+                node = self.server.subnets.get(subnet)
             if node:
-                logger.debug(f"[Server] Request called: {node.bucket_list.buckets}")
                 self._common_request_handler(method_name, common_request, node)
 
             else:
@@ -294,7 +295,6 @@ class HTTPSubnetRequestHandler(HTTPRequestHandler):
 class TCPSubnetServer(BaseServer):
     def __init__(self, server_address: tuple[str, int]):
 
-        self.subnets: dict = {}
         self.routing_methods: dict[str, type] = {
             "/ping": PingSubnetRequest,  # "ping" should refer to type PingSubnetRequest
             "/store": StoreSubnetRequest,  # "store" should refer to type StoreSubnetRequest

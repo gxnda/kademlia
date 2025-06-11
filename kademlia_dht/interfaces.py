@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from datetime import datetime
 from typing import Any
+from threading import RLock
 
 from kademlia_dht.errors import RPCError
 from kademlia_dht.id import ID
@@ -8,6 +9,8 @@ from kademlia_dht.id import ID
 
 class IStorage:
     """Interface which 'abstracts the storage mechanism for key-value pairs.''"""
+    lock: RLock
+
     @abstractmethod
     def contains(self, key: ID) -> bool:
         """
