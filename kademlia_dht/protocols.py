@@ -7,7 +7,7 @@ import requests
 from kademlia_dht import pickler
 from kademlia_dht.constants import Constants
 from kademlia_dht.contact import Contact
-from kademlia_dht.dictionaries import (BaseResponse, ErrorResponse, FindNodeSubnetRequest,
+from kademlia_dht.dictionaries import (ErrorResponse, FindNodeSubnetRequest,
                                        FindValueSubnetRequest, PingSubnetRequest, StoreSubnetRequest, FindNodeRequest,
                                        FindValueRequest, PingRequest, StoreRequest)
 from kademlia_dht.errors import RPCError
@@ -23,7 +23,7 @@ logger = logging.getLogger("__main__")
 
 
 def get_rpc_error(id: ID,
-                  ret: BaseResponse | None,
+                  ret: dict,
                   timeout_error: bool,
                   peer_error: ErrorResponse) -> RPCError:
     error = RPCError()
