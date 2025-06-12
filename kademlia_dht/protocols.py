@@ -77,7 +77,7 @@ class VirtualProtocol(IProtocol):
         else:
             error = RPCError(
                 "Time out while pinging contact - VirtualProtocol does not respond.",
-                timeout_error=True
+                timeout_error=not self.responds
             )
             return error
 
