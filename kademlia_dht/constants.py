@@ -13,7 +13,7 @@ class Constants:
     else:
         A: int = 20
 
-    REQUEST_TIMEOUT_SEC = 5  # 500ms
+    REQUEST_TIMEOUT_SEC = 10 # 500ms
     ID_LENGTH_BYTES = 20
     ID_LENGTH_BITS = ID_LENGTH_BYTES * 8
     MAX_THREADS = 20
