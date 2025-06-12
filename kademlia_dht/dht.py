@@ -480,6 +480,7 @@ class DHT:
         """
         if error:
             if error.has_error():
+                logger.warning(f"[Client] Handling error {error}")
                 with self.lock:
                     count = self._add_contact_to_evict(contact.id.value)
                     if count >= Constants.EVICTION_LIMIT:
@@ -586,9 +587,14 @@ class DHT:
         :return:
         """
         with self.lock:
-            contact: Optional[Contact] = sorted([c for c in self.pending_contacts if
+            contacts: list[Contact] = sorted([c for c in
+                                              self.pending_contacts if
                                                  self.node.bucket_list.get_kbucket(c.id) == bucket],
-                                                key=lambda c: c.last_seen)[-1]
+                                                key=lambda c: c.last_seen)
+            contact = None
+            if contacts:
+                contact = contacts[-1]
+
             if contact is not None:
                 self.pending_contacts.remove(contact)
                 bucket.add_contact(contact)

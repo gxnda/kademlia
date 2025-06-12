@@ -1,6 +1,8 @@
+import logging
 import os
 import random
-from tempfile import TemporaryFile, NamedTemporaryFile
+from logging import Logger
+from tempfile import NamedTemporaryFile
 from threading import Lock
 
 from locust import HttpUser, task, between
@@ -8,19 +10,22 @@ from locust import HttpUser, task, between
 from kademlia_dht.constants import Constants
 from kademlia_dht.dht import DHT
 from kademlia_dht.id import ID
+from kademlia_dht.networking import TCPSubnetServer
 from kademlia_dht.protocols import TCPSubnetProtocol
 from kademlia_dht.routers import Router
 from kademlia_dht.storage import VirtualStorage, SecondaryJSONStorage
 
+logger = logging.getLogger("__main__")
 valid_manifest_ids = []
 local_ip = "127.0.0.1"
 port = 7125
 
 installed_file_paths = []
 
+
 known_peer = DHT(
-    id=ID.random_id(),
-    protocol=TCPSubnetProtocol(local_ip, port, 1),
+    id=ID(0),
+    protocol=TCPSubnetProtocol(local_ip, port, 0),
     originator_storage=SecondaryJSONStorage(
         f"files/{0}/originator_storage.json"),
     republish_storage=SecondaryJSONStorage(
@@ -28,6 +33,11 @@ known_peer = DHT(
     cache_storage=VirtualStorage(),
     router=Router()
 )
+kp_server = TCPSubnetServer(
+    (local_ip, port)
+)
+kp_server.register_protocol(0, known_peer.node)
+kp_server.thread_start()
 
 class KademliaUser(HttpUser):
     wait_time = between(1, 5)
@@ -51,7 +61,10 @@ class KademliaUser(HttpUser):
             cache_storage=VirtualStorage(),
             router=Router()
         )
-        self.dht.bootstrap(known_peer._router.node.our_contact)
+        print("Setting up locust with ID", self.dht.our_contact.id)
+        kp_server.register_protocol(self.subnet, self.dht.node)
+        print("Bootstrapping from", known_peer.our_contact.id)
+        self.dht.bootstrap(known_peer.our_contact)
 
         self.files_to_store = []
         for _ in range(5):  # Create 5 sample files per user
@@ -95,14 +108,16 @@ class KademliaUser(HttpUser):
 
     @task(3)  # 3x more frequent than store
     def retrieve_real_file(self):
+        logger.info("[Locust] Retrieving real file")
         # Implement file retrieval
         manifest_id = random.choice(valid_manifest_ids)
         installed_file_paths.append(self.dht.download_file(manifest_id))
 
-    @task
+    # @task
     def retrieve_fake_file(self):
+        logger.info("[Locust] Retrieving fake file")
         # Implement file retrieval
         try:
             installed_file_paths.append(self.dht.download_file(ID.random_id()))
         except:
-            logger.info("File not found.")
+            pass

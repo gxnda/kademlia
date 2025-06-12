@@ -107,7 +107,10 @@ class Node:
 
         # managing sender
         if sender.id == self.our_contact.id:
-            raise SendingQueryToSelfError("Sender cannot be ourselves.")
+            raise SendingQueryToSelfError(
+                f"Sender (has ID: {sender.id} cannot be ourselves "
+                f"(has ID {self.our_contact.id}."
+            )
 
         self.send_key_values_to_contact_if_new_contact(sender)
         self.bucket_list.add_contact(sender)
@@ -168,7 +171,7 @@ class Node:
                 # to the key
                 for k in self.storage.get_keys():
                     # our minimum distance to the contact.
-                    distance = min([c.id ^ k for c in contacts])
+                    distance = min([c.id.value ^ int(k) for c in contacts])
                     # If our contact is closer, store the contact on its
                     # node.
                     if (self.our_contact.id ^ k) < distance:

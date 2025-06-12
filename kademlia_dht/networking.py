@@ -112,7 +112,7 @@ class BaseHTTPRequestHandler2(BaseHTTPRequestHandler):
 
             error_response: ErrorResponse = ErrorResponse(
                 error_message=str(e),
-                random_id=ID.random_id()
+                random_id=ID.random_id().value
             )
 
             logger.info("[Server] Sending encoded 400:", error_response)

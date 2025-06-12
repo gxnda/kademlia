@@ -137,7 +137,7 @@ class SecondaryJSONStorage(IStorage):
             if str(key.value) in json_data:
                 json_data.pop(str(key.value))
 
-            json_data[key.value] = to_store
+            json_data[int(key.value)] = to_store
 
             with open(self.filename, "w") as f:
                 json.dump(json_data, f)
@@ -250,7 +250,7 @@ class SecondaryJSONStorage(IStorage):
                     json_data: dict[int, StoreValue] = json.load(f)
                 except json.JSONDecodeError:
                     json_data = {}
-                return list(json_data.keys())
+                return [int(k) for k in list(json_data.keys())]
 
     def touch(self, key: int | ID) -> None:
         """

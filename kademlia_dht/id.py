@@ -20,7 +20,7 @@ class ID:
             raise ValueError(
                 f"ID {value} is out of range - must a positive integer less than 2^160."
             )
-        self.value = value
+        self.value = int(value)
 
     def hex(self) -> str:
         return hex(self.value)
