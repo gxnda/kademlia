@@ -32,7 +32,9 @@ def get_rpc_error(id: ID,
     else:
         error.id_mismatch_error = False
     error.timeout_error = timeout_error
-    error.peer_error = peer_error["error_message"] not in ["", None]
+    # logger.info(f"get_rpc_error: {peer_error["error_message"]},
+    # {type(peer_error['error_message'])}")
+    error.peer_error = peer_error["error_message"] not in ["", None, "None"]
     if peer_error["error_message"]:
         error.peer_error_message = peer_error["error_message"]
 
@@ -179,7 +181,8 @@ class TCPSubnetProtocol(IProtocol):
             logger.info(f"[Client] Received HTTP Response from {ret.url} with code {ret.status_code}")
 
         except (requests.Timeout, requests.ConnectionError) as t:
-            logger.error(f"[Client] Timeout error when contacting node.\n "
+            # Timeout isn't fatal, so we can just log it and move on.
+            logger.warning(f"[Client] Timeout error when contacting node.\n "
                          f"{t}")
             timeout_error = True
             error = t
@@ -413,7 +416,11 @@ class TCPSubnetProtocol(IProtocol):
                 data=encoded_data,
                 timeout=Constants.REQUEST_TIMEOUT_SEC
             )
-            logger.info(f"[Client] Received STORE response from {ret.url} with code {ret.status_code}")
+            logger.info(f"[Client] Received STORE response from {ret.url} on "
+                        f"subnet {self.subnet} with code {ret.status_code}")
+            logger.debug(f"[Client] Received STORE response in "
+                         f"TCPSubnetProtocol with code {ret.status_code}"
+                         f" and data: {ret.content}")
 
         except (requests.Timeout, requests.ConnectionError) as t:
             logger.error("[Client] Timeout error when contacting node.")
@@ -431,6 +438,7 @@ class TCPSubnetProtocol(IProtocol):
             encoded_data = ret.content
             formatted_response = json.loads(encoded_data)
 
+        # logger.info(f"Error info in store: {error}")
         return get_rpc_error(random_id, formatted_response, timeout_error, ErrorResponse(
             error_message=str(error), random_id=ID.random_id()))
 
