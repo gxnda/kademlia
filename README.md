@@ -16,8 +16,8 @@ This mostly serves as an introduction to peer-to-peer systems for me, and to get
 - [x] Make GUI
 - [x] Make CLI
 - [X] Make all unit tests pass
+- [x] Add thread locking
 
-- [ ] Add thread locking
 - [ ] Properly set up locust
 - [ ] Actually test it at scale (1000+ nodes, on different networks)
 - [ ] Make it more efficient
