@@ -622,11 +622,14 @@ class DHT:
             manifest_key: int = get_manifest_hash(manifest_list)
 
             # Store the manifest
+            logger.info("store file: manifest store")
             self.store(ID(manifest_key), pickle.dumps(manifest_list).decode(
                 Constants.PICKLE_ENCODING))
 
             # Store each of the pieces
             for i in range(len(piece_list)):
+                logger.info("store file: piece store: " + str(i + 1) + " of " +
+                            str(len(piece_list)) + " pieces")
                 self.store(ID(piece_list[i][0]), piece_list[i][1].decode(Constants.PICKLE_ENCODING))
 
             return ID(manifest_key)
