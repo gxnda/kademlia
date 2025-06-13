@@ -3,7 +3,7 @@ import logging
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from time import sleep
-from typing import Optional, TypedDict, Callable
+from typing import Optional, Callable
 
 from kademlia_dht.constants import Constants
 from kademlia_dht.dictionaries import (PingRequest, StoreRequest, FindNodeRequest,
@@ -189,9 +189,9 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         # What type is the request?
         try:
             # path is something like /ping or /find_node
-            request_type: Optional[TypedDict] = routing_methods[path]
+            request_type: Optional[type] =  routing_methods[path]
         except KeyError:
-            request_type: Optional[TypedDict] = None
+            request_type: Optional[type] = None
 
         return request_type, request_dict, method_name
 
