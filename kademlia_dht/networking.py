@@ -77,7 +77,42 @@ class BaseServer(ThreadingHTTPServer):
         logger.info("[Server] Server stopped.")
 
 
-class BaseHTTPRequestHandler2(BaseHTTPRequestHandler):
+class HTTPRequestHandler(BaseHTTPRequestHandler):
+
+    def do_POST(self):
+        request_type, request_dict, method_name = self.base_post_handling()
+
+        # if we know what the request wants (if it's a ping/find_node RPC etc.)
+        if request_type:
+            common_request: CommonRequest = CommonRequest(
+                protocol=request_dict.get("protocol"),
+                random_id=request_dict.get("random_id"),
+                sender=request_dict.get("sender"),
+                key=request_dict.get("key"),
+                value=request_dict.get("value"),
+                is_cached=request_dict.get("is_cached"),
+                expiration_time_sec=request_dict.get("expiration_time_sec")
+            )
+
+            node = self.server.node
+            if node:
+                self._common_request_handler(method_name, common_request, node)
+
+            else:
+                logger.error("[Server] Node not found.")
+                encoded_response = bytes(json.dumps({"error_message": "Node not found."}),
+                                         Constants.PICKLE_ENCODING)
+                self.send_header("Content-Type", "application/octet-stream")
+                self.end_headers()
+                self.send_response(400)
+                try:
+                    self.wfile.write(encoded_response)
+                except ConnectionRefusedError:
+                    logger.error("[Server] Connection refused by client - we may have timed out.")
+                except Exception as e:
+                    logger.error(f"[Server] Exception sending response: {e}")
+
+
     def _common_request_handler(self,
                                 method_name: str, common_request: CommonRequest, node):
         old_self_instance = self  # To prevent other threads overwriting it,
@@ -161,55 +196,19 @@ class BaseHTTPRequestHandler2(BaseHTTPRequestHandler):
         return request_type, request_dict, method_name
 
 
-class HTTPRequestHandler(BaseHTTPRequestHandler2):
-
-    def do_POST(self):
-        request_type, request_dict, method_name = self.base_post_handling()
-
-        # if we know what the request wants (if it's a ping/find_node RPC etc.)
-        if request_type:
-            common_request: CommonRequest = CommonRequest(
-                protocol=request_dict.get("protocol"),
-                random_id=request_dict.get("random_id"),
-                sender=request_dict.get("sender"),
-                key=request_dict.get("key"),
-                value=request_dict.get("value"),
-                is_cached=request_dict.get("is_cached"),
-                expiration_time_sec=request_dict.get("expiration_time_sec")
-            )
-
-            node = self.server.node
-            if node:
-                self._common_request_handler(method_name, common_request, node)
-
-            else:
-                logger.error("[Server] Node not found.")
-                encoded_response = bytes(json.dumps({"error_message": "Node not found."}),
-                                         Constants.PICKLE_ENCODING)
-                self.send_header("Content-Type", "application/octet-stream")
-                self.end_headers()
-                self.send_response(400)
-                try:
-                    self.wfile.write(encoded_response)
-                except ConnectionRefusedError:
-                    logger.error("[Server] Connection refused by client - we may have timed out.")
-                except Exception as e:
-                    logger.error(f"[Server] Exception sending response: {e}")
-
-
 class TCPServer(BaseServer):
     def __init__(self, node: Node | None = None,
-                 subnet_server_address: tuple[str, int] | None = None):
+                 server_address: tuple[str, int] | None = None):
         """
         Creates a server using TCP, based on a Threading HTTP Server from http.server, the
         given node provides the IP and port tuple to start the server.
         :param node:
         """
 
-        if (subnet_server_address and node) or (not subnet_server_address and not node):
+        if (server_address and node) or (not server_address and not node):
             raise ValueError("Must provide either a node or a subnet server address.")
 
-        if subnet_server_address:
+        if server_address:
             self.routing_methods: dict[str, type] = {
                 "/ping": PingSubnetRequest,  # "ping" should refer to type PingSubnetRequest
                 "/store": StoreSubnetRequest,  # "store" should refer to type StoreSubnetRequest
@@ -217,8 +216,8 @@ class TCPServer(BaseServer):
                 "/find_value": FindValueSubnetRequest  # "find_value" should refer to type FindValueSubnetRequest
             }
             super().__init__(
-                server_address=subnet_server_address,
-                request_handler_class=HTTPSubnetRequestHandler
+                server_address=server_address,
+                request_handler_class=HTTPRequestHandler
             )
 
         elif node:

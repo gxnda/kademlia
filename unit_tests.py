@@ -17,7 +17,7 @@ from kademlia_dht.dht import DHT
 from kademlia_dht.errors import RPCError, TooManyContactsError
 from kademlia_dht.helpers import get_sha1_hash
 from kademlia_dht.id import ID
-from kademlia_dht.networking import TCPSubnetServer, TCPServer
+from kademlia_dht.networking import TCPSubnetServer
 from kademlia_dht.node import Node
 from kademlia_dht.protocols import TCPSubnetProtocol, VirtualProtocol
 from kademlia_dht.routers import ParallelRouter, Router
@@ -1169,7 +1169,7 @@ class TCPSubnetTests(unittest.TestCase):
         server = None
         while not valid_server:
             port = random.randint(10000, 10500)
-            server = TCPServer(subnet_server_address=(local_ip, port))
+            server = TCPSubnetServer(server_address=(local_ip, port))
             valid_server = True
 
         p1 = TCPSubnetProtocol(url=local_ip, port=port, subnet=1)
@@ -1261,7 +1261,7 @@ class TCPSubnetTests(unittest.TestCase):
         port = 1
         while not valid_server:
             port = random.randint(10000, 10500)
-            server = TCPServer(subnet_server_address=(local_ip, port))
+            server = TCPSubnetServer(server_address=(local_ip, port))
             valid_server = True
 
         p1 = TCPSubnetProtocol(url=local_ip, port=port, subnet=1)
