@@ -249,7 +249,7 @@ class HTTPSubnetRequestHandler(HTTPRequestHandler):
                 if not node.our_contact.protocol.responds:
                     # Exceeds 500ms timeout
                     logger.warning("[Server] Does not respond, sleeping for timeout.")
-                    sleep(1)
+                    sleep(Constants.REQUEST_TIMEOUT_SEC + 1)
 
         HTTPRequestHandler._common_request_handler(self, method_name, common_request, node)
 
