@@ -1,9 +1,12 @@
 import json
 import logging
 import threading
+from asyncio import Lock
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from time import sleep
 from typing import Optional, Callable
+
+from aiohttp.web_request import Request
 
 from kademlia_dht.constants import Constants
 from kademlia_dht.dictionaries import (PingRequest, StoreRequest, FindNodeRequest,
@@ -309,3 +312,52 @@ class TCPSubnetServer(BaseServer):
     def register_protocol(self, subnet: int, node):
         self.subnets[subnet] = node
 
+
+from aiohttp import web
+
+class AsyncServer:
+    routes = web.RouteTableDef()
+
+    def __init__(self, host: str, port: int):
+        self.host, self.port = host, port
+        self.subnets = {}
+        self.subnet_lock = Lock()
+
+        self.app = web.Application()
+        self.app.add_routes(self.routes)
+        self.runner = None
+        self.site = None
+
+    async def start(self):
+        """Starts the server"""
+        self.runner = web.AppRunner(self.app)
+        await self.runner.setup()
+        self.site = web.TCPSite(self.runner, self.host, self.port)
+        await self.site.start()
+        logger.info(f"Server started on {self.host}:{self.port}")
+
+    async def end(self):
+        if self.site:
+            await self.site.stop()
+        if self.runner:
+            await self.runner.cleanup()
+
+    async def register_protocol(self, subnet: int, node):
+        async with self.subnet_lock:
+            self.subnets[subnet] = node
+
+    @routes.get("/ping")
+    async def ping(self, request: web.Request):
+        try:
+            data = await request.json()
+            print("Received ping request:", data)
+            return web.json_response({
+                "status": "success",
+                "random_id": data.get("random_id", ""),
+                "error_message": None
+            })
+        except Exception as e:
+            return web.json_response({
+                "status": "error",
+                "error_message": str(e)
+            }, status=500)

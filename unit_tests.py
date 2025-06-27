@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import math
 import os
@@ -17,7 +18,7 @@ from kademlia_dht.dht import DHT
 from kademlia_dht.errors import RPCError, TooManyContactsError
 from kademlia_dht.helpers import get_sha1_hash
 from kademlia_dht.id import ID
-from kademlia_dht.networking import TCPSubnetServer
+from kademlia_dht.networking import TCPSubnetServer, AsyncServer
 from kademlia_dht.node import Node
 from kademlia_dht.protocols import TCPSubnetProtocol, VirtualProtocol
 from kademlia_dht.routers import ParallelRouter, Router
@@ -1290,7 +1291,54 @@ class TCPSubnetTests(unittest.TestCase):
             "Expected timeout when contacting unresponsive node."
         )
 
+import aiohttp
 
+class AsyncServerTests(unittest.TestCase):
+    async def async_setup(self):
+        local_ip = "127.0.0.1"
+        valid_server = False
+        server = None
+        port = 10_000
+        while not valid_server:
+            port = random.randint(10000, 10500)
+            server = AsyncServer(local_ip, port)
+            valid_server = True
+
+        p1 = TCPSubnetProtocol(url=local_ip, port=port, subnet=1)
+        p2 = TCPSubnetProtocol(url=local_ip, port=port, subnet=2)
+
+        our_id = ID.random_id()
+
+        c1 = Contact(id=our_id, protocol=p1)
+        c2 = Contact(id=ID.random_id(), protocol=p2)
+
+        n1 = Node(c1, VirtualStorage())
+        n2 = Node(c2, VirtualStorage())
+
+        await server.register_protocol(p1.subnet, n1)
+        await server.register_protocol(p2.subnet, n2)
+        print(server.subnets)
+        await server.start()
+
+        # Small delay to ensure server is ready
+        await asyncio.sleep(1)
+
+        return local_ip, port, server, p1, p2, our_id, c1, c2, n1, n2
+
+    def test_ping_route(self):
+        """
+        Makes sure no exceptions are thrown when pinging a contact.
+        """
+        # Run the async setup synchronously
+        result = asyncio.run(self.async_setup())
+        local_ip, port, server, p1, p2, our_id, c1, c2, n1, n2 = result
+
+        try:
+            # The actual test:
+            self.assertFalse(p2.ping(c1).has_error())
+        finally:
+            # Ensure cleanup happens
+            asyncio.run(server.end())
 
 class JSONStorageTests(unittest.TestCase):
     def test_get_set(self):
