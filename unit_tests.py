@@ -31,7 +31,7 @@ if Constants.DEBUG:
 
 
 logger = ui_helpers.create_logger(verbose=True)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(0)
 logger.info("Starting unit tests.")
 
 def setup_split_failure(bucket_list=None):
@@ -2047,6 +2047,41 @@ class TestBucketListThreadSafety(unittest.TestCase):
         all_contacts = self.bucket_list.contacts()
         self.assertEqual(len(all_contacts), 10, "Not all contacts added")
 
+
+class TestServerThreading(unittest.TestCase):
+    def setUp(self):
+        self.server = TCPSubnetServer(server_address=("127.0.0.1", 7124))
+        self.dht = DHT(ID(0), TCPSubnetProtocol("127.0.0.1", 7124, 0), storage_factory=VirtualStorage, router=Router())
+        self.server.register_protocol(0, self.dht.node)
+        self.server_thread = self.server.thread_start()
+        self.dht.store(ID(123), "store test")
+
+    def test_bootstrap_on_threading(self):
+        total_bootstraps = 25
+        num_attempts = iter(range(1, total_bootstraps + 1))
+        lock = threading.Lock()
+        def worker():
+            # Set up
+            with lock:
+                i = next(num_attempts)
+            dht = DHT(ID(i), TCPSubnetProtocol("127.0.0.1", 7124, i), storage_factory=VirtualStorage, router=Router())
+            self.server.register_protocol(i, dht.node)
+
+            # bootstrapping
+            logger.debug(dht.node.bucket_list)
+            logger.info(f"Starting bootstrap on {i}, bucket list is {dht.node.bucket_list}")
+            dht.bootstrap(self.dht.node.our_contact)
+            logger.info(f"Finished bootstrap on {i}, bucket list is {dht.node.bucket_list}")
+
+        threads = []
+        for _ in range(total_bootstraps):
+            threads.append(threading.Thread(target=worker))
+            threads[-1].start()
+
+        for thread in threads:
+            thread.join()
+
+        self.server.thread_stop(self.server_thread)
 
 if __name__ == '__main__':
     unittest.main()

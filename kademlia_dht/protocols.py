@@ -42,6 +42,11 @@ def get_rpc_error(id: ID,
 
 
 def decode_protocol(protocol: dict) -> IProtocol:
+    if not protocol:
+        raise Exception("Protocol cannot be None.")
+    elif not protocol.get("type"):
+        raise Exception("Protocol type cannot be None.")
+
     if protocol["type"] == "TCPProtocol":
         return TCPProtocol(protocol["url"], protocol["port"])
     elif protocol["type"] == "TCPSubnetProtocol":
@@ -201,10 +206,10 @@ class TCPSubnetProtocol(IProtocol):
         try:
             if ret_decoded:
                 if ret_decoded["contacts"]:
-                    contacts = [
-                        Contact(ID(val["contact"]), val["protocol"])
-                        for val in ret_decoded["contacts"]
-                    ]
+                    contacts = []
+                    for val in ret_decoded["contacts"]:
+                        new_c = Contact(ID(val["contact"]), decode_protocol(val["protocol"]))
+                        contacts.append(new_c)
                     # Return only contacts with supported protocols.
                     rpc_error = get_rpc_error(id,
                                               ret_decoded,
@@ -304,24 +309,22 @@ class TCPSubnetProtocol(IProtocol):
             contacts = []
             if ret_decoded:
                 if ret_decoded["contacts"]:
-                    contacts = [
-                        Contact(
-                            c["protocol"],  # instantiate_protocol
-                            ID(c["contact"])
+                    for c in ret_decoded["contacts"]:
+                        new_contact = Contact(
+                            ID(c["contact"]),
+                            decode_protocol(c["protocol"]),
                         )
-                        for c in ret_decoded["contacts"]
-                        if c.protocol is not None
-                    ]
+                        contacts.append(new_contact)
 
-                return contacts, \
+                return [c for c in contacts if c.protocol is not None], \
                     ret_decoded["value"], \
                     get_rpc_error(
                         random_id, ret_decoded, timeout_error, ErrorResponse(
                             random_id=random_id.value,
                             error_message=str(error))
                     )
-            else:  # [c for c in contacts if c.protocol is not None] is useless as contacts is defined as [] and not touched
-                return [], "", get_rpc_error(
+            else:
+                return [c for c in contacts if c.protocol is not None], "", get_rpc_error(
                     random_id, ret_decoded, timeout_error, ErrorResponse(
                         random_id=random_id.value,
                         error_message=str(error))
@@ -376,6 +379,8 @@ class TCPSubnetProtocol(IProtocol):
             # request timed out.
             timeout_error = False
             error = e
+
+        ret_base_response = None
 
         formatted_response = None
         if ret:
@@ -523,12 +528,10 @@ class TCPProtocol(IProtocol):
         try:
             if ret_decoded:
                 if ret_decoded["contacts"]:
-                    contacts = [
-                        Contact(ID(val["contact"]), val["protocol"])
-                        for val in ret_decoded["contacts"]
-                        if val["protocol"] is not None
-                    ]
-
+                    contacts = []
+                    for val in ret_decoded["contacts"]:
+                        new_c = Contact(ID(val["contact"]), decode_protocol(val["protocol"]))
+                        contacts.append(new_c)
                     # Return only contacts with supported protocols.
                     rpc_error = get_rpc_error(id,
                                               ret_decoded,
@@ -536,8 +539,7 @@ class TCPProtocol(IProtocol):
                                               ErrorResponse(error_message=str(error), random_id=ID.random_id()))
                     if contacts:
                         ret_contacts = [c for c in contacts if c.protocol is not None]
-                        return contacts, rpc_error
-
+                        return ret_contacts, rpc_error
             rpc_error = get_rpc_error(id,
                                       ret_decoded,
                                       timeout_error,
@@ -616,15 +618,14 @@ class TCPProtocol(IProtocol):
             contacts = []
             if ret_decoded:
                 if ret_decoded["contacts"]:
-                    contacts = [
-                        Contact(
-                            c["protocol"],  # instantiate_protocol
-                            ID(c["contact"])
-                        ) for c in ret_decoded["contacts"]
-                        if c["contact"] is not None
-                    ]
+                    for c in ret_decoded["contacts"]:
+                        new_contact = Contact(
+                            ID(c["contact"]),
+                            decode_protocol(c["protocol"]),
+                        )
+                        contacts.append(new_contact)
 
-                return contacts, \
+                return [c for c in contacts if c.protocol is not None], \
                     ret_decoded["value"], \
                     get_rpc_error(
                         random_id, ret_decoded, timeout_error, ErrorResponse(
@@ -632,7 +633,7 @@ class TCPProtocol(IProtocol):
                             error_message=str(error))
                     )
             else:
-                return [], "", get_rpc_error(
+                return [c for c in contacts if c.protocol is not None], "", get_rpc_error(
                     random_id, ret_decoded, timeout_error, ErrorResponse(
                         random_id=random_id.value,
                         error_message=str(error))

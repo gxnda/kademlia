@@ -5,10 +5,11 @@ import socket
 import threading
 from hashlib import sha1
 
-from kademlia_dht.constants import Constants
 from kademlia_dht.contact import Contact
 from kademlia_dht.id import ID
+from kademlia_dht.interfaces import IProtocol
 from kademlia_dht.node import Node
+from kademlia_dht.protocols import TCPSubnetProtocol
 from kademlia_dht.storage import VirtualStorage
 
 logger = logging.getLogger("__main__")
@@ -187,7 +188,6 @@ def get_manifest_hash(manifest_key_list: list[int]) -> int:
         sha1_hash.update(el.to_bytes(32, byteorder='big'))
 
     return int.from_bytes(sha1_hash.digest(), byteorder='big')
-
 
 if __name__ == "__main__":
     var = "hello world"

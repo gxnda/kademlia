@@ -1,5 +1,5 @@
 import logging
-from threading import RLock
+from threading import RLock, Thread
 
 from kademlia_dht.buckets import BucketList
 from kademlia_dht.constants import Constants
@@ -95,6 +95,12 @@ class Node:
             self.send_key_values_to_contact_if_new_contact(sender)
             self.storage.set(key, val, Constants.EXPIRATION_TIME_SEC)
 
+    def thread_store(self, key, val, is_cached=False, expiration_time_sec=0):
+        """
+        Thread safe store.
+        """
+        with self.lock:
+            self.store(key, self.our_contact, val, is_cached, expiration_time_sec)
     def find_node(self, key: ID,
                   sender: Contact) -> tuple[list[Contact], str | None]:
         """
@@ -216,28 +222,32 @@ class Node:
 
     def server_ping(self, request: CommonRequest) -> dict:
         logger.info("[Server] Ping called")
-        protocol: IProtocol = request["protocol"]
-        self.ping(
-            Contact(
-                protocol=protocol,
-                id=ID(request["sender"])
+        def worker():
+            protocol: IProtocol = request["protocol"]
+            self.ping(
+                Contact(
+                    protocol=protocol,
+                    id=ID(request["sender"])
+                )
             )
-        )
+        Thread(target=worker).start()
         return {"random_id": request["random_id"]}
 
     def server_store(self, request: CommonRequest) -> dict:
         logger.info("[Server] Server store called.")
-        protocol: IProtocol = request["protocol"]
-        self.store(
-            sender=Contact(
-                id=ID(request["sender"]),
-                protocol=protocol
-            ),
-            key=ID(request["key"]),
-            val=str(request["value"]),
-            is_cached=request["is_cached"],
-            expiration_time_sec=request["expiration_time_sec"]
-        )
+        def worker():
+            protocol: IProtocol = request["protocol"]
+            self.store(
+                sender=Contact(
+                    id=ID(request["sender"]),
+                    protocol=protocol
+                ),
+                key=ID(request["key"]),
+                val=str(request["value"]),
+                is_cached=request["is_cached"],
+                expiration_time_sec=request["expiration_time_sec"]
+            )
+        Thread(target=worker).start()
         return {"random_id": request["random_id"]}
 
     def server_find_node(self, request: CommonRequest) -> dict:

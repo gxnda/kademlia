@@ -11,7 +11,7 @@ from kademlia_dht.buckets import KBucket
 from kademlia_dht.constants import Constants
 from kademlia_dht.contact import Contact
 from kademlia_dht.dictionaries import FindResult
-from kademlia_dht.errors import RPCError, IDMismatchError
+from kademlia_dht.errors import RPCError, IDMismatchError, KademliaError
 from kademlia_dht.helpers import get_sha1_hash, get_manifest_hash
 from kademlia_dht.id import ID
 from kademlia_dht.interfaces import IProtocol, IStorage
@@ -261,6 +261,7 @@ class DHT:
             contacts: list[Contact] = self._router.lookup(
                 key, self._router.rpc_find_nodes)["contacts"]
 
+        logger.debug(f"PROTOCOL TYPES { [type(c.protocol) for c in contacts]}",)
         for c in contacts:
             error: RPCError | None = c.protocol.store(
                 sender=self.node.our_contact, key=key, val=val)
@@ -281,9 +282,11 @@ class DHT:
             self.node.bucket_list.add_contact(known_peer)
 
             # finds K close contacts to self.our_id, excluding self.our_contact
+            logger.info(f"[Client Bootstrap] Finding K close contacts to {self.our_id}.")
             contacts, error = known_peer.protocol.find_node(
                 sender=self.our_contact, key=self.our_id)
             self.handle_error(error, known_peer)
+            logger.info(f"[Client Bootstrap] Found {len(contacts)} close contacts, errors: {error.__dict__}.")
             if not error.has_error():
 
                 # add all contacts the known peer DIRECTLY knows
@@ -331,6 +334,8 @@ class DHT:
             # put in a separate list as contacts collection for this bucket might change.
             contacts: list[Contact] = bucket.contacts
             for contact in contacts:
+                if isinstance(contact.protocol, dict):
+                    raise KademliaError(f"DICTIONARY PROTOCOL!!! {contact.protocol}")
                 new_contacts, timeout_error = contact.protocol.find_node(
                     self.our_contact, random_id)
                 self.handle_error(timeout_error, contact)

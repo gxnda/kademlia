@@ -2,6 +2,7 @@ import json
 import logging
 import threading
 from asyncio import Lock
+from copy import deepcopy
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from time import sleep
 from typing import Optional, Callable
@@ -118,54 +119,46 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
     def _common_request_handler(self,
                                 method_name: str, common_request: CommonRequest, node):
-        old_self_instance = self  # To prevent other threads overwriting it,
-        # lock isn't used because I don't want to make the program wait.
+        # Process the request in the SAME thread (no nested threading)
         try:
             method: Callable = getattr(node, method_name)
             # Calls method, eg: server_store.
             response = method(common_request)
 
-            # Fix up protocols, JSON cannot handle objects.
+            # Fix protocols for JSON serialization
             if response.get("contacts"):
                 for contact in response["contacts"]:
                     contact["protocol"] = contact["protocol"].encode()
 
             encoded_response = bytes(json.dumps(response), Constants.PICKLE_ENCODING)
-            logger.debug("[Server] Sending encoded 200: ", response)
-            old_self_instance.send_response(code=200)
-
-            old_self_instance.send_header("Content-Type", "application/octet-stream")
-            old_self_instance.end_headers()
+            logger.debug(f"[Server] Sending encoded 200: {response}")
+            self.send_response(code=200)
+            self.send_header("Content-Type", "application/octet-stream")
+            self.end_headers()
 
             try:
-                old_self_instance.wfile.write(encoded_response)
+                self.wfile.write(encoded_response)
                 logger.debug("[Server] Writing response success!")
             except ConnectionRefusedError:
-                logger.error("[Server] Connection refused by client - we may have timed out.")
+                logger.error("[Server] Connection refused by client (timeout?)")
             except Exception as e:
-                logger.error(f"[Server] Exception sending response: {e}")
+                logger.error(f"[Server] Write error: {e}")
 
         except Exception as e:
-            logger.error(f"[Server] Exception sending response: {e}")
-
-            error_response: ErrorResponse = ErrorResponse(
+            logger.error(f"[Server] Handler exception: {e}")
+            error_response = ErrorResponse(
                 error_message=str(e),
                 random_id=ID.random_id().value
             )
-
-            logger.info("[Server] Sending encoded 400:", error_response)
-
             encoded_response = bytes(json.dumps(error_response), Constants.PICKLE_ENCODING)
 
-            old_self_instance.send_header("Content-Type", "application/octet-stream")
-            old_self_instance.end_headers()
-            old_self_instance.send_response(code=400)  # , message=encoded_response.decode("latin1"))
+            self.send_header("Content-Type", "application/octet-stream")
+            self.end_headers()
+            self.send_response(code=400)
             try:
-                old_self_instance.wfile.write(encoded_response)
-            except ConnectionRefusedError:
-                logger.error("[Server] Connection refused by client - we may have timed out.")
+                self.wfile.write(encoded_response)
             except Exception as e:
-                logger.error(f"[Server] Exception sending response: {e}")
+                logger.error(f"[Server] Error sending failure response: {e}")
 
     def base_post_handling(self):
         logger.info("[Server] POST Received.")
@@ -246,12 +239,10 @@ class HTTPSubnetRequestHandler(HTTPRequestHandler):
                                 method_name: str, common_request: CommonRequest, node):
 
         # Test what happens if a node does not respond
-        if Constants.DEBUG:
-            if node.our_contact.protocol.type == "TCPSubnetProtocol":
-                if not node.our_contact.protocol.responds:
-                    # Exceeds 500ms timeout
-                    logger.warning("[Server] Does not respond, sleeping for timeout.")
-                    sleep(Constants.REQUEST_TIMEOUT_SEC + 1)
+        if Constants.DEBUG and node.our_contact.protocol.type == "TCPSubnetProtocol" and not node.our_contact.protocol.responds:
+                # Exceeds 500ms timeout
+                logger.warning("[Server] Does not respond, sleeping for timeout.")
+                sleep(Constants.REQUEST_TIMEOUT_SEC)
 
         HTTPRequestHandler._common_request_handler(self, method_name, common_request, node)
 

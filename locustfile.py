@@ -171,8 +171,10 @@ class KademliaUser(HttpUser):
             manifest_id = self.dht.store_file(random_small_file)
             file_size = os.path.getsize(random_small_file)
             track_dht_request("store_small", start_time, file_size)
+            logger.info(f"[Locust {self.user_id}] Stored small file")
             return manifest_id
         except Exception as e:
+            logger.error(f"[Locust {self.user_id}] Error storing small file")
             track_dht_request("store_small", start_time, exception=e)
             raise
 
