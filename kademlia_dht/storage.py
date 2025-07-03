@@ -4,6 +4,7 @@ import os
 import struct
 from datetime import datetime
 from threading import RLock, Lock
+from typing import Optional
 
 from kademlia_dht import pickler
 from kademlia_dht.dictionaries import StoreValue
@@ -326,10 +327,18 @@ class BinaryFileStorage(IStorage):
     Expiration time: number of seconds until expiration
 
     """
-    def __init__(self, directory: str):
+    def __init__(self, directory: str, add_existing=False):
         os.makedirs(directory, exist_ok=True)
         self.directory: str = directory
         self.locks: dict[int, Lock] = {}
+
+        # Add any existing pieces
+        if add_existing:
+            for filename in os.listdir(self.directory):
+                if filename.endswith(".kpiece"):
+                    filename_no_suffix, _, _ = filename.partition(".kpiece")
+                    if filename_no_suffix.isnumeric():
+                        self.locks[int(filename_no_suffix)] = Lock()
 
     @classmethod
     def convert_datetime_to_bytes(cls, dt: datetime) -> bytes:
@@ -337,6 +346,109 @@ class BinaryFileStorage(IStorage):
         Returns datetime (truncated to seconds) as an unsigned long in bytes.
         """
         return struct.pack(">L", int(dt.timestamp()))
+
+    @classmethod
+    def convert_bytes_to_datetime(cls, b: bytes):
+        return datetime.fromtimestamp(*struct.unpack(">L", b))
+
+    def contains(self, key: ID | int) -> bool:
+        if isinstance(key, ID):
+            key = key.value
+        return key in self.locks
+
+    def try_get_value(self, key: ID | int) -> tuple[bool, str]:
+        if isinstance(key, ID):
+            key: int = key.value
+        if not self.contains(key):
+            return False, ""
+
+        with (self.locks[key]):
+            with open(os.path.join(self.directory, str(key)) + ".kpiece", "rb") as f:
+                # republish_timestamp: datetime = self.convert_bytes_to_datetime(f.read(4))
+                # exp_time_sec: int = struct.unpack(">L", f.read(4))[0]
+                f.seek(8) # Skips over republish timestamp and exp_time
+                val_is_bytes: bytes = struct.unpack("?", f.read(1))[0]
+                value_size: int = struct.unpack(">L", f.read(4))[0]
+                if val_is_bytes:
+                    value: bytes = f.read(value_size)
+                else:
+                    value: str = f.read(value_size).decode("utf-8")
+
+                return True, value
+
+    def get(self, key: ID | int) -> Optional[str | bytes]:
+        if isinstance(key, ID):
+            key: int = key.value
+
+        if not self.contains(key):
+            return None
+
+        with (self.locks[key]):
+            with open(os.path.join(self.directory, str(key)) + ".kpiece", "rb") as f:
+                # republish_timestamp: datetime = self.convert_bytes_to_datetime(f.read(4))
+                # exp_time_sec: int = struct.unpack(">L", f.read(4))[0]
+                f.seek(8) # Skips over republish timestamp and exp_time
+                val_is_bytes: bytes = struct.unpack("?", f.read(1))[0]
+                value_size: int = struct.unpack(">L", f.read(4))[0]
+                if val_is_bytes:
+                    value: bytes = f.read(value_size)
+                else:
+                    value: str = f.read(value_size).decode("utf-8")
+
+                return value
+
+    def get_timestamp(self, key: ID | int) -> datetime:
+        if isinstance(key, ID):
+            key: int = key.value
+
+        if not self.contains(key):
+            raise KeyError("Key is not in Binary file storage.")
+
+        with (self.locks[key]):
+            with open(os.path.join(self.directory, str(key)) + ".kpiece", "rb") as f:
+                return self.convert_bytes_to_datetime(f.read(4))
+
+    def get_expiration_time_sec(self, key: ID | int) -> int:
+        if isinstance(key, ID):
+            key: int = key.value
+
+        if not self.contains(key):
+            raise KeyError("Key is not in Binary file storage.")
+
+        with (self.locks[key]):
+            with open(os.path.join(self.directory, str(key)) + ".kpiece", "rb") as f:
+                f.seek(4)
+                return struct.unpack(">L", f.read(4))[0]
+
+    def remove(self, key: ID | int) -> None:
+        if isinstance(key, ID):
+            key: int = key.value
+
+        if not self.contains(key):
+            raise KeyError("Key is not in Binary file storage.")
+
+        with self.locks[key]:
+            os.unlink(os.path.join(self.directory, str(key) + ".kpiece"))
+            self.locks.pop(key)
+
+    def get_keys(self) -> list[int]:
+        return list(self.locks.keys())
+
+    def touch(self, key: ID | int) -> None:
+        if isinstance(key, ID):
+            key: int = key.value
+
+        if not self.contains(key):
+            raise KeyError("Key is not in Binary file storage.")
+
+        republish_timestamp: bytes = self.convert_datetime_to_bytes(
+            datetime.now()
+        )  # 4 bytes
+        with (self.locks[key]):
+            with open(os.path.join(self.directory, str(key)) + ".kpiece", "r+b") as f:
+                # Set republish_timestamp to now
+                f.seek(0)
+                f.write(republish_timestamp)
 
     def set(self, key: ID, value: str | bytes, expiration_time_sec: int = 0):
         if expiration_time_sec < 0:
@@ -354,10 +466,14 @@ class BinaryFileStorage(IStorage):
         with self.locks[key.value]:
             with open(os.path.join(self.directory, str(key.value)) + ".kpiece",
                       "wb") as f:
+                f.seek(0)
                 f.write(republish_timestamp)
                 f.write(struct.pack(">L", expiration_time_sec))
                 f.write(struct.pack("?", val_is_bytes))
                 if val_is_bytes:
+                    f.write(
+                        struct.pack(">L", len(value))
+                    )
                     f.write(value)
                 else: # If val is string
                     encoded = value.encode('utf-8')
@@ -365,16 +481,8 @@ class BinaryFileStorage(IStorage):
                         struct.pack(">L", len(encoded)))
                     f.write(encoded)
 
-    def get(self, key: ID | int) -> bytes:
-        key_val: int = key.value if isinstance(key, ID) else key
-        if not isinstance(key_val, int):
-            raise ValueError(f"Key {key_val} is not an int.")
-
-        if not key_val in self.locks:
-            raise IDMismatchError("Key not found in file system.")
-
-
 
 if __name__ == "__main__":
     storage = BinaryFileStorage("test/testtest")
-    storage.set(ID(1), "woahahahah", expiration_time_sec=1)
+    storage.set(ID(1), b"woahahahah", expiration_time_sec=1)
+    print(storage.try_get_value(ID(1)))

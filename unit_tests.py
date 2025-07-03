@@ -1291,7 +1291,6 @@ class TCPSubnetTests(unittest.TestCase):
             "Expected timeout when contacting unresponsive node."
         )
 
-import aiohttp
 
 class AsyncServerTests(unittest.TestCase):
     async def async_setup(self):

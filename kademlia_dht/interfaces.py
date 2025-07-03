@@ -35,7 +35,7 @@ class IStorage:
         """
         Tries to return value from key-value pair, given key.
         :param key:
-        :return: StoreValue
+        :return: str
         """
         pass
 
