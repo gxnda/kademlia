@@ -13,7 +13,7 @@ from kademlia_dht.id import ID
 from kademlia_dht.networking import TCPSubnetServer
 from kademlia_dht.protocols import TCPSubnetProtocol
 from kademlia_dht.routers import Router
-from kademlia_dht.storage import VirtualStorage, SecondaryJSONStorage
+from kademlia_dht.storage import VirtualStorage, SecondaryJSONStorage, BinaryFileStorage
 
 from locust.runners import STATE_STOPPING, STATE_STOPPED, STATE_CLEANUP
 
@@ -80,17 +80,26 @@ def print_dht_stats(environment, **kwargs):
             print(f"  Avg Time: {avg_time:.2f}ms")
             print("-"*50)
 
+def get_originator_storage_dir(id: ID | int):
+    if isinstance(id, ID):
+        id = id.value
+    return f"files/{id}/originator"
+
+def get_republish_storage_dir(id: ID | int):
+    if isinstance(id, ID):
+        id = id.value
+    return f"files/{id}/republish"
 
 known_peer = DHT(
     id=ID(0),
     protocol=TCPSubnetProtocol(local_ip, port, 0),
-    originator_storage=SecondaryJSONStorage(
-        f"files/{0}/originator_storage.json"),
-    republish_storage=SecondaryJSONStorage(
-        f"files/{0}/republish_storage.json"),
+    originator_storage=BinaryFileStorage(get_originator_storage_dir(0)),
+    republish_storage=BinaryFileStorage(get_republish_storage_dir(0)),
     cache_storage=VirtualStorage(),
     router=Router()
 )
+
+
 kp_server = TCPSubnetServer(
     (local_ip, port)
 )
@@ -115,10 +124,10 @@ class KademliaUser(HttpUser):
         self.dht = DHT(
             id=ID.random_id(),
             protocol=TCPSubnetProtocol(local_ip, port, self.subnet),
-            originator_storage=SecondaryJSONStorage(
-                f"files/{self.user_id}/originator_storage.json"),
-            republish_storage=SecondaryJSONStorage(
-                f"files/{self.user_id}/republish_storage.json"),
+            originator_storage=BinaryFileStorage(get_originator_storage_dir(
+                self.user_id)),
+            republish_storage=BinaryFileStorage(get_republish_storage_dir(
+                self.user_id)),
             cache_storage=VirtualStorage(),
             router=Router()
         )
