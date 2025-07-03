@@ -345,11 +345,11 @@ class BinaryFileStorage(IStorage):
         """
         Returns datetime (truncated to seconds) as an unsigned long in bytes.
         """
-        return struct.pack(">L", int(dt.timestamp()))
+        return struct.pack(">d", dt.timestamp())
 
     @classmethod
     def convert_bytes_to_datetime(cls, b: bytes):
-        return datetime.fromtimestamp(*struct.unpack(">L", b))
+        return datetime.fromtimestamp(*struct.unpack(">d", b))
 
     def contains(self, key: ID | int) -> bool:
         if isinstance(key, ID):
@@ -366,7 +366,7 @@ class BinaryFileStorage(IStorage):
             with open(os.path.join(self.directory, str(key)) + ".kpiece", "rb") as f:
                 # republish_timestamp: datetime = self.convert_bytes_to_datetime(f.read(4))
                 # exp_time_sec: int = struct.unpack(">L", f.read(4))[0]
-                f.seek(8) # Skips over republish timestamp and exp_time
+                f.seek(12) # Skips over republish timestamp and exp_time
                 val_is_bytes: bytes = struct.unpack("?", f.read(1))[0]
                 value_size: int = struct.unpack(">L", f.read(4))[0]
                 if val_is_bytes:
@@ -387,7 +387,7 @@ class BinaryFileStorage(IStorage):
             with open(os.path.join(self.directory, str(key)) + ".kpiece", "rb") as f:
                 # republish_timestamp: datetime = self.convert_bytes_to_datetime(f.read(4))
                 # exp_time_sec: int = struct.unpack(">L", f.read(4))[0]
-                f.seek(8) # Skips over republish timestamp and exp_time
+                f.seek(12) # Skips over republish timestamp and exp_time
                 val_is_bytes: bytes = struct.unpack("?", f.read(1))[0]
                 value_size: int = struct.unpack(">L", f.read(4))[0]
                 if val_is_bytes:
@@ -406,7 +406,8 @@ class BinaryFileStorage(IStorage):
 
         with (self.locks[key]):
             with open(os.path.join(self.directory, str(key)) + ".kpiece", "rb") as f:
-                return self.convert_bytes_to_datetime(f.read(4))
+                f.seek(0)
+                return self.convert_bytes_to_datetime(f.read(8))
 
     def get_expiration_time_sec(self, key: ID | int) -> int:
         if isinstance(key, ID):
@@ -417,7 +418,7 @@ class BinaryFileStorage(IStorage):
 
         with (self.locks[key]):
             with open(os.path.join(self.directory, str(key)) + ".kpiece", "rb") as f:
-                f.seek(4)
+                f.seek(8)
                 return struct.unpack(">L", f.read(4))[0]
 
     def remove(self, key: ID | int) -> None:
@@ -483,6 +484,6 @@ class BinaryFileStorage(IStorage):
 
 
 if __name__ == "__main__":
-    storage = BinaryFileStorage("test/testtest")
-    storage.set(ID(1), b"woahahahah", expiration_time_sec=1)
-    print(storage.try_get_value(ID(1)))
+    dt = datetime.now()
+    flt = struct.pack(">d", dt.timestamp())
+    print(flt, len(flt))

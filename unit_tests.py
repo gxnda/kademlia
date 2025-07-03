@@ -5,11 +5,14 @@ import os
 import pickle
 import random
 import shutil
+import struct
 import threading
 import time
 import unittest
 
 import tempfile
+from datetime import datetime
+
 import ui_helpers
 from kademlia_dht.buckets import BucketList, KBucket
 from kademlia_dht.constants import Constants
@@ -22,7 +25,7 @@ from kademlia_dht.networking import TCPSubnetServer, AsyncServer
 from kademlia_dht.node import Node
 from kademlia_dht.protocols import TCPSubnetProtocol, VirtualProtocol
 from kademlia_dht.routers import ParallelRouter, Router
-from kademlia_dht.storage import VirtualStorage, SecondaryJSONStorage
+from kademlia_dht.storage import VirtualStorage, SecondaryJSONStorage, BinaryFileStorage
 
 Constants.DEBUG = True
 
@@ -2081,6 +2084,150 @@ class TestServerThreading(unittest.TestCase):
             thread.join()
 
         self.server.thread_stop(self.server_thread)
+
+
+class TestBinaryFileStorage(unittest.TestCase):
+    def setUp(self):
+        # Create a temporary directory
+        self.test_dir = tempfile.mkdtemp()
+        self.storage = BinaryFileStorage(self.test_dir)
+
+    def tearDown(self):
+        # Clean up temporary directory
+        for f in os.listdir(self.test_dir):
+            os.remove(os.path.join(self.test_dir, f))
+        os.rmdir(self.test_dir)
+
+    def test_initialization(self):
+        # Test directory creation and add_existing=False
+        self.assertTrue(os.path.exists(self.test_dir))
+        self.assertEqual(len(self.storage.locks), 0)
+
+        # Test add_existing=True with sample files
+        test_file = os.path.join(self.test_dir, "123.kpiece")
+        with open(test_file, 'wb') as f:
+            f.write(b'dummy_data')
+        storage_with_existing = BinaryFileStorage(self.test_dir, add_existing=True)
+        self.assertIn(123, storage_with_existing.locks)
+        self.assertEqual(len(storage_with_existing.locks), 1)
+
+    def test_contains(self):
+        key = ID(456)
+        self.assertFalse(self.storage.contains(key))
+
+        # Add key and verify
+        self.storage.set(key, "test_value")
+        self.assertTrue(self.storage.contains(key))
+        self.assertTrue(self.storage.contains(456))  # Test int key
+
+    def test_set_and_get_string(self):
+        key = ID(789)
+        test_value = "Hello, World!"
+        self.storage.set(key, test_value)
+
+        # Verify get()
+        result = self.storage.get(key)
+        self.assertEqual(result, test_value)
+
+        # Verify try_get_value()
+        exists, value = self.storage.try_get_value(key)
+        self.assertTrue(exists)
+        self.assertEqual(value, test_value)
+
+    def test_set_and_get_bytes(self):
+        key = ID(999)
+        test_value = b'\x00\x01\x02\x03'
+        self.storage.set(key, test_value)
+
+        result = self.storage.get(key)
+        self.assertEqual(result, test_value)
+
+        exists, value = self.storage.try_get_value(key)
+        self.assertTrue(exists)
+        self.assertEqual(value, test_value)
+
+    def test_timestamp_and_expiration(self):
+        key = ID(1000)
+        before_set = datetime.now()
+        self.storage.set(key, "test", expiration_time_sec=3600)
+        after_set = datetime.now()
+
+        # Test timestamp
+        timestamp = self.storage.get_timestamp(key)
+        self.assertGreaterEqual(timestamp, before_set)
+        self.assertLessEqual(timestamp, after_set)
+
+        # Test expiration
+        expiration = self.storage.get_expiration_time_sec(key)
+        self.assertEqual(expiration, 3600)
+
+    def test_touch(self):
+        key = ID(2000)
+        self.storage.set(key, "test")
+        original_timestamp = self.storage.get_timestamp(key)
+
+        # Ensure there's a time difference
+        self.storage.touch(key)
+        new_timestamp = self.storage.get_timestamp(key)
+        self.assertGreater(new_timestamp, original_timestamp)
+
+    def test_remove(self):
+        key = ID(3000)
+        self.storage.set(key, "test")
+        self.assertTrue(self.storage.contains(key))
+
+        self.storage.remove(key)
+        self.assertFalse(self.storage.contains(key))
+        self.assertNotIn(3000, self.storage.locks)
+        self.assertFalse(os.path.exists(os.path.join(self.test_dir, "3000.kpiece")))
+
+    def test_get_keys(self):
+        keys = [ID(i) for i in range(10)]
+        for key in keys:
+            self.storage.set(key, str(key.value))
+
+        stored_keys = self.storage.get_keys()
+        self.assertEqual(len(stored_keys), 10)
+        self.assertListEqual(stored_keys, [k.value for k in keys])
+
+    def test_file_structure(self):
+        key = ID(5000)
+        test_value = "Binary format test"
+        expiration = 7200
+        self.storage.set(key, test_value, expiration_time_sec=expiration)
+
+        file_path = os.path.join(self.test_dir, "5000.kpiece")
+        with open(file_path, 'rb') as f:
+            # Read republish timestamp (4 bytes)
+            timestamp_bytes = f.read(8)
+            timestamp = struct.unpack('>d', timestamp_bytes)[0]
+            self.assertAlmostEqual(timestamp, datetime.now().timestamp(), delta=1)
+
+            # Read expiration (4 bytes)
+            expiration_bytes = f.read(4)
+            self.assertEqual(struct.unpack('>L', expiration_bytes)[0], expiration)
+
+            # Read value type flag (1 byte)
+            is_bytes = struct.unpack('?', f.read(1))[0]
+            self.assertFalse(is_bytes)
+
+            # Read value length (4 bytes)
+            length = struct.unpack('>L', f.read(4))[0]
+            self.assertEqual(length, len(test_value.encode('utf-8')))
+
+            # Read value
+            value = f.read(length).decode('utf-8')
+            self.assertEqual(value, test_value)
+
+    def test_error_handling(self):
+        # Non-existent key access
+        with self.assertRaises(KeyError):
+            self.storage.get_timestamp(ID(9999))
+
+        # Invalid expiration time
+        with self.assertRaises(ValueError):
+            self.storage.set(ID(1), "test", expiration_time_sec=-10)
+
 
 if __name__ == '__main__':
     unittest.main()
