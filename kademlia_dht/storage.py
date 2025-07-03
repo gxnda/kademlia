@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import struct
+from contextlib import nullcontext
 from datetime import datetime
 from threading import RLock, Lock
 from typing import Optional
@@ -331,6 +332,7 @@ class BinaryFileStorage(IStorage):
         os.makedirs(directory, exist_ok=True)
         self.directory: str = directory
         self.locks: dict[int, Lock] = {}
+        self.lock = nullcontext()
 
         # Add any existing pieces
         if add_existing:
