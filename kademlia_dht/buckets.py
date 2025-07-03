@@ -133,12 +133,13 @@ class KBucket:
             self.contacts[index] = contact
 
     def evict_contact(self, contact: Contact) -> None:
-        if self.contains(contact.id):
-            self.contacts.remove(contact)
-        else:
-            raise BucketDoesNotContainContactToEvictError(
-                "Contact not found."
-            )
+        with self.lock:
+            if self.contains(contact.id):
+                self.contacts.remove(contact)
+            else:
+                raise BucketDoesNotContainContactToEvictError(
+                    "Contact not found."
+                )
 
 
 class BucketList:
