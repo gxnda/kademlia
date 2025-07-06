@@ -17,3 +17,5 @@ misc.xml!/.idea/misc.xml
 !/.idea/misc.xml
 !/venv/
 /kademlia.log
+*.pyc
+*.json

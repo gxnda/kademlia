@@ -186,24 +186,12 @@ class DHT:
             self.store_on_closer_contacts(key, val)
 
     def _check_all_storages(self, key: ID) -> tuple[bool, str | None]:
-        found, our_val = self._originator_storage.try_get_value(key)
-        # There has to be a better way to do this.
-        val = our_val
-        if our_val:
-            found = True
-            val = our_val
-        else:
-            found, our_val = self._republish_storage.try_get_value(key)
-            if our_val:
-                found = True
-                val = our_val
-            else:
-                found, our_val = self._cache_storage.try_get_value(key)
-                if our_val:
-                    found = True
-                    val = our_val
+        for storage in [self._originator_storage, self._republish_storage, self._cache_storage]:
+            found, val = storage.try_get_value(key)
+            if val:
+                return True, val
 
-        return found, val
+        return False, None
 
     def find_value(self, key: ID) -> tuple[bool, list[Contact] | None, str | None]:
         """
@@ -224,9 +212,11 @@ class DHT:
 
         with self.lock:
             found, val = self._check_all_storages(key)
+
         if not val:
             lookup: FindResult = self._router.lookup(
                 key, self._router.rpc_find_value)
+
             if lookup["found"]:
                 found = True
                 contacts = None
@@ -239,6 +229,7 @@ class DHT:
                     if c.id.value != lookup["found_by"].id.value:
                         store_to: Contact | None = c
                         break
+
                 if store_to:
                     separating_nodes: int = self._get_separating_nodes_count(self.our_contact, store_to)
                     exp_time_sec: int = Constants.EXPIRATION_TIME_SEC // (2 ** separating_nodes)
@@ -343,6 +334,7 @@ class DHT:
                 new_contacts, timeout_error = contact.protocol.find_node(
                     self.our_contact, random_id)
                 self.handle_error(timeout_error, contact)
+
                 if new_contacts:
                     for other_contact in new_contacts:
                         self.node.bucket_list.add_contact(other_contact)
@@ -464,6 +456,7 @@ class DHT:
         # get all the contacts, ordered by ID
         with self.lock:
             all_contacts: list[Contact] = sorted(self.node.bucket_list.contacts(), key=lambda c: c.id.value)
+
         index_a = helpers.get_closest_number_index([i.id.value for i in all_contacts], contact_a.id.value)
         index_b = helpers.get_closest_number_index([i.id.value for i in all_contacts], contact_b.id.value)
         count = abs(index_a - index_b)
@@ -481,6 +474,7 @@ class DHT:
         if error:
             if error.has_error():
                 logger.warning(f"[Client] Handling error {error}")
+
                 with self.lock:
                     count = self._add_contact_to_evict(contact.id.value)
                     if count >= Constants.EVICTION_LIMIT:
@@ -510,6 +504,7 @@ class DHT:
         with self.lock:
             if to_replace.id not in [c.id for c in self.pending_contacts]:
                 self.pending_contacts.append(to_replace)
+
             key: int = to_evict.id.value
             number_of_eviction_attempts_on_to_evict = self._add_contact_to_evict(key)
             # if the eviction attempts on key reach the eviction limit
@@ -566,6 +561,7 @@ class DHT:
         helpers.make_sure_filepath_exists(filename)
         with open(filename, "wb") as output_file:
             dill.dump(self, file=output_file)
+
         logger.info(f"[Client] Saved DHT to {filename}.")
 
     @classmethod
@@ -576,6 +572,7 @@ class DHT:
         logger.info(f"[Client] Loading DHT from file {filename}...")
         with open(filename, "rb") as input_file:
             data = dill.load(file=input_file)
+
         logger.info(f"[Client] Loaded DHT from file {filename}.")
         return data
 
@@ -607,6 +604,7 @@ class DHT:
             encoded_filename = filename.encode(Constants.PICKLE_ENCODING)
             piece_list: list[list] = [[
                 get_sha1_hash(encoded_filename), encoded_filename]]
+
             with open(file_to_upload, "rb") as f:
                 file_read = False
                 while not file_read:
@@ -654,6 +652,7 @@ class DHT:
         else:
             manifest_list: list[int] = pickle.loads(val.encode(
                 Constants.PICKLE_ENCODING))
+
             filename_key: int = manifest_list.pop(0)
             found, contacts, filename = self.find_value(ID(filename_key))
             if not found:
@@ -663,6 +662,7 @@ class DHT:
             with open(install_path, "wb") as f:
                 for piece_key in manifest_list:
                     found, contacts, val = self.find_value(key=ID(piece_key))
+
                     if not found:
                         raise IDMismatchError(str(ID(piece_key)))
 
