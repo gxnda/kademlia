@@ -185,11 +185,12 @@ class BaseRouter:
         :return:
         """
         contacts, found_by, val = rpc_call(key, node_to_query)
-        peers_nodes: list[Contact] = []
-        for contact in contacts:
-            if contact.id.value not in [self.node.our_contact.id.value, node_to_query.id.value]:
-                if contact not in [closer_contacts, further_contacts]:
-                    peers_nodes.append(contact)
+        peers_nodes: list[Contact] = [
+            contact
+            for contact in contacts
+            if contact.id.value not in [self.node.our_contact.id.value, node_to_query.id.value]
+            if contact not in [closer_contacts, further_contacts]
+        ]
 
         nearest_node_distance = node_to_query.id ^ key
 
@@ -213,7 +214,7 @@ class BaseRouter:
 
 class Router(BaseRouter):
     """
-    TODO: Add documentation.
+    TODO: Add documentation. - Nuh Uh
     """
 
     def __init__(self, node: Node = None) -> None:
@@ -278,10 +279,15 @@ class Router(BaseRouter):
             return query_result
 
         # Add any new closer contacts to the list we're going to return.
+
+        # Changed to added seen_ids to a list making it O(n) instead of O(n^2)
         ret: list[Contact] = []
+        seen_ids = set()
+
         for c in self.closer_contacts:
-            if c.id not in [i.id for i in ret]:
+            if c.id not in seen_ids:
                 ret.append(c)
+                seen_ids.add(c.id)
 
         # Spec: The lookup terminates when the initiator has queried and received responses from the k closest nodes
         # it has seen.
@@ -303,6 +309,7 @@ class Router(BaseRouter):
             # it picks the 'a' that it has not yet queried and resends the FIND_NODE RPC to them.
             if have_closer:
                 new_nodes_to_query = closer_uncontacted_nodes[:Constants.A]
+
                 for c in new_nodes_to_query:
                     if c.id not in [i.id for i in contacted_nodes]:
                         contacted_nodes.append(c)
@@ -538,6 +545,7 @@ class ParallelRouter(BaseRouter):
                 closer_contacts.append(c)
             else:
                 further_contacts.append(c)
+
         # the remaining contacts can be put here.
         for c in all_nodes:
             if c not in nodes_to_query:
