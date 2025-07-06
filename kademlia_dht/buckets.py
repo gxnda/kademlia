@@ -15,7 +15,6 @@ logger = logging.getLogger("__main__")
 
 
 class KBucket:
-
     def __init__(self,
                  initial_contacts: list[Contact] | None = None,
                  low: int = 0,
@@ -289,11 +288,13 @@ class BucketList:
         :return: List of K contacts sorted by distance.
         """
         with self.lock:
-            contacts = []
-            for bucket in self.buckets:
-                for contact in bucket.contacts:
-                    if contact.id != exclude:
-                        contacts.append(contact)
+            contacts = [
+                contact
+                for bucket in self.buckets
+                for contact in bucket.contacts
+                if contact.id != exclude
+            ]
+
         contacts = sorted(contacts, key=lambda c: c.id ^ key)[:self.k]
         if len(contacts) > self.k and Constants.DEBUG:
             raise ValueError(
