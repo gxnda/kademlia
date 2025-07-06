@@ -63,9 +63,11 @@ def make_sure_filepath_exists(filename: str) -> None:
         logger.debug(f"Path {filename} is not absolute.")
         path = os.path.join(os.getcwd(), filename)
         logger.debug(f"Absolute version is {path}")
+
     if not os.path.exists(path):
         logger.debug(f"Path does not exist.")
         dirname = os.path.dirname(path)
+
         if dirname:
             if not os.path.exists(dirname):
                 os.mkdir(dirname)
@@ -124,7 +126,9 @@ class Timer:
         while not self._stop_event.is_set():
             if self._stop_event.wait(self.interval_sec):
                 break
+
             self.function(*self.args, **self.kwargs)
+
             if not self.auto_reset:
                 break
 
