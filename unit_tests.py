@@ -1306,7 +1306,8 @@ class TCPSubnetTests(BaseTestCase):
 
 class AsyncServerTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        # Setup code remains the same but store results as instance variables
+        self._original_debug = Constants.DEBUG
+        Constants.DEBUG = True
         result = await self._async_setup()
         (self.local_ip, self.port, self.server,
          self.p1, self.p2, self.our_id,
@@ -1343,6 +1344,7 @@ class AsyncServerTests(unittest.IsolatedAsyncioTestCase):
         return local_ip, port, server, p1, p2, our_id, c1, c2, n1, n2
 
     async def asyncTearDown(self):
+        Constants.DEBUG = self._original_debug
         await self.server.end()
 
     async def test_ping_route(self):
@@ -1911,6 +1913,7 @@ class TestKBucketLocking(BaseTestCase):
 
 class TestBucketListThreadSafety(BaseTestCase):
     def setUp(self):
+        super().setUp()
         # Create our node's contact
         self.our_contact = Contact(ID(0), None)
         # Create bucket list with small K for testing splits
@@ -2052,6 +2055,7 @@ class TestBucketListThreadSafety(BaseTestCase):
 
 class TestServerThreading(BaseTestCase):
     def setUp(self):
+        super().setUp()
         self.server = TCPSubnetServer(server_address=("127.0.0.1", 7124))
         self.dht = DHT(ID(0), TCPSubnetProtocol("127.0.0.1", 7124, 0), storage_factory=VirtualStorage, router=Router())
         self.server.register_protocol(0, self.dht.node)
@@ -2088,11 +2092,13 @@ class TestServerThreading(BaseTestCase):
 
 class TestBinaryFileStorage(BaseTestCase):
     def setUp(self):
+        super().setUp()
         # Create a temporary directory
         self.test_dir = tempfile.mkdtemp()
         self.storage = BinaryFileStorage(self.test_dir)
 
     def tearDown(self):
+        super().tearDown()
         # Clean up temporary directory
         for f in os.listdir(self.test_dir):
             os.remove(os.path.join(self.test_dir, f))
