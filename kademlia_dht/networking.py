@@ -239,10 +239,11 @@ class HTTPSubnetRequestHandler(HTTPRequestHandler):
                                 method_name: str, common_request: CommonRequest, node):
 
         # Test what happens if a node does not respond
-        if Constants.DEBUG and node.our_contact.protocol.type == "TCPSubnetProtocol" and not node.our_contact.protocol.responds:
-                # Exceeds 500ms timeout
-                logger.warning("[Server] Does not respond, sleeping for timeout.")
-                sleep(Constants.REQUEST_TIMEOUT_SEC)
+        if Constants.DEBUG and node.our_contact.protocol.type == \
+                "TCPSubnetProtocol" and not node.our_contact.protocol.responds:
+            # Exceeds 500ms timeout
+            logger.warning("[Server] Does not respond, sleeping for timeout.")
+            sleep(Constants.REQUEST_TIMEOUT_SEC + 0.01)
 
         HTTPRequestHandler._common_request_handler(self, method_name, common_request, node)
 
@@ -315,7 +316,9 @@ class AsyncServer:
         self.subnet_lock = Lock()
 
         self.app = web.Application()
-        self.app.add_routes(self.routes)
+        self.app.add_routes([
+            web.post('/ping', self.handle_ping)  # Explicit registration
+        ])
         self.runner = None
         self.site = None
 
@@ -325,20 +328,29 @@ class AsyncServer:
         await self.runner.setup()
         self.site = web.TCPSite(self.runner, self.host, self.port)
         await self.site.start()
+        print("server started")
         logger.info(f"Server started on {self.host}:{self.port}")
 
     async def end(self):
-        if self.site:
-            await self.site.stop()
-        if self.runner:
-            await self.runner.cleanup()
+        try:
+            if self.site:
+                await self.site.stop()
+        except Exception as e:
+            logger.error(f"Error stopping site: {e}")
+
+        try:
+            if self.runner:
+                await self.runner.cleanup()
+        except Exception as e:
+            logger.error(f"Error cleaning up runner: {e}")
 
     async def register_protocol(self, subnet: int, node):
         async with self.subnet_lock:
             self.subnets[subnet] = node
 
-    @routes.get("/ping")
-    async def ping(self, request: web.Request):
+    async def handle_ping(self, request: web.Request):
+        print("Async ping!")
+        print(request)
         try:
             data = await request.json()
             print("Received ping request:", data)
