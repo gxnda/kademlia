@@ -1295,8 +1295,16 @@ class TCPSubnetTests(unittest.TestCase):
         )
 
 
-class AsyncServerTests(unittest.TestCase):
-    async def async_setup(self):
+class AsyncServerTests(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        # Setup code remains the same but store results as instance variables
+        result = await self._async_setup()
+        (self.local_ip, self.port, self.server,
+         self.p1, self.p2, self.our_id,
+         self.c1, self.c2, self.n1, self.n2) = result
+
+    async def _async_setup(self):
+        # Original async_setup code here (renamed)
         local_ip = "127.0.0.1"
         valid_server = False
         server = None
@@ -1323,24 +1331,16 @@ class AsyncServerTests(unittest.TestCase):
         await server.start()
 
         # Small delay to ensure server is ready
-        await asyncio.sleep(1)
-
         return local_ip, port, server, p1, p2, our_id, c1, c2, n1, n2
 
-    def test_ping_route(self):
-        """
-        Makes sure no exceptions are thrown when pinging a contact.
-        """
-        # Run the async setup synchronously
-        result = asyncio.run(self.async_setup())
-        local_ip, port, server, p1, p2, our_id, c1, c2, n1, n2 = result
+    async def asyncTearDown(self):
+        await self.server.end()
 
-        try:
-            # The actual test:
-            self.assertFalse(p2.ping(c1).has_error())
-        finally:
-            # Ensure cleanup happens
-            asyncio.run(server.end())
+    async def test_ping_route(self):
+        # Run blocking ping in a separate thread
+        loop = asyncio.get_running_loop()
+        ping_res = await loop.run_in_executor(None, lambda: self.p2.ping(self.c1))
+        self.assertFalse(ping_res.has_error())
 
 class JSONStorageTests(unittest.TestCase):
     def test_get_set(self):
@@ -1609,16 +1609,14 @@ class NodeLookupTests(unittest.TestCase):
         nodes: list[Node] = []
 
         for n in range(Constants.K):
-            # Create a node with id of a power of 2, up to 2**20.
+            # Create a node with id of a power of 2, up to 2**19.
             node = Node(Contact(id=ID(2 ** n), protocol=None), storage=VirtualStorage())
             nodes.append(node)
 
         # Fixup protocols
         for n in nodes:
             n.our_contact.protocol = VirtualProtocol(n)
-
-        # add all contacts in our node list to the router.
-        for n in nodes:
+            # add all contacts in our node list to the router.
             router.node.bucket_list.add_contact(n.our_contact)
 
         # let all of them know where the others are:
@@ -1730,12 +1728,6 @@ class NodeLookupTests(unittest.TestCase):
             for c in self.closer_contacts_alt_computation:
                 self.assertTrue(c in close_contacts,
                                 "somehow a close contact in the computation is not in the originals?")
-
-
-class LargeFileTests(unittest.TestCase):
-    def test_large_file_splits(self):
-
-        dht = DHT(ID.random_id(), VirtualProtocol(), storage_factory=VirtualStorage, router=Router())
 
 
 class TestDHTFileSystem(unittest.TestCase):
