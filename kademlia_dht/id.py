@@ -99,6 +99,9 @@ class ID:
     def __repr__(self) -> str:
         return str(self.value)
 
+    def __hash__(self):
+        return self.value
+
     @classmethod
     def max(cls):
         """

@@ -1713,7 +1713,6 @@ class NodeLookupTests(unittest.TestCase):
             close_contacts: list[Contact] = self.router.lookup(
                 key=id, rpc_call=self.router.rpc_find_nodes, give_me_all=True)["contacts"]
 
-            contacted_nodes: list[Contact] = close_contacts
             self.get_alt_close_and_far(self.contacts_to_query,
                                        self.closer_contacts_alt_computation,
                                        self.further_contacts_alt_computation,
