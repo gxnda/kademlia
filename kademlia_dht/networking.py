@@ -316,9 +316,7 @@ class AsyncServer:
         self.subnet_lock = Lock()
 
         self.app = web.Application()
-        self.app.add_routes([
-            web.post('/ping', self.handle_ping)  # Explicit registration
-        ])
+        self.app.add_routes(self.routes)
         self.runner = None
         self.site = None
 
@@ -348,6 +346,7 @@ class AsyncServer:
         async with self.subnet_lock:
             self.subnets[subnet] = node
 
+    @routes.post("/post")
     async def handle_ping(self, request: web.Request):
         print("Async ping!")
         print(request)
