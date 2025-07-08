@@ -239,8 +239,8 @@ class HTTPSubnetRequestHandler(HTTPRequestHandler):
                                 method_name: str, common_request: CommonRequest, node):
 
         # Test what happens if a node does not respond
-        if Constants.DEBUG and node.our_contact.protocol.type == \
-                "TCPSubnetProtocol" and not node.our_contact.protocol.responds:
+        if (node.our_contact.protocol.type == "TCPSubnetProtocol"
+                and not node.our_contact.protocol.responds):
             # Exceeds 500ms timeout
             logger.warning("[Server] Does not respond, sleeping for timeout.")
             sleep(Constants.REQUEST_TIMEOUT_SEC + 0.01)
