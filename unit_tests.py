@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import math
 import os
 import pickle
@@ -1313,7 +1312,8 @@ class AsyncServerTests(unittest.IsolatedAsyncioTestCase):
          self.p1, self.p2, self.our_id,
          self.c1, self.c2, self.n1, self.n2) = result
 
-    async def _async_setup(self):
+    @staticmethod
+    async def _async_setup():
         # Original async_setup code here (renamed)
         local_ip = "127.0.0.1"
         valid_server = False
