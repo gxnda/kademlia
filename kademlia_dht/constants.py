@@ -9,9 +9,9 @@ class Constants:
     B = 5  # or 160 according to https://xlattice.sourceforge.net/components/protocol/kademlia/specs.html
 
     if DEBUG:
-        A: int = 3
-    else:
         A: int = 20
+    else:
+        A: int = 3
 
     REQUEST_TIMEOUT_SEC = 0.5 # 500ms
     ID_LENGTH_BYTES = 20
