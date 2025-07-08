@@ -98,7 +98,16 @@ def setup_split_failure(bucket_list=None):
     return bucket_list
 
 
-class KBucketTest(unittest.TestCase):
+class BaseTestCase(unittest.TestCase):
+    def setUp(self):
+        self._original_debug = Constants.DEBUG
+        Constants.DEBUG = True
+
+    def tearDown(self):
+        Constants.DEBUG = self._original_debug
+
+
+class KBucketTest(BaseTestCase):
 
     def test_add_to_kbucket(self):
         """
@@ -157,7 +166,7 @@ class KBucketTest(unittest.TestCase):
         self.assertTrue(k1.contacts == k2.contacts)
 
 
-class AddContactTest(unittest.TestCase):
+class AddContactTest(BaseTestCase):
 
     def test_unique_id_add(self):
         """
@@ -249,7 +258,7 @@ class AddContactTest(unittest.TestCase):
             f"Length of first buckets contacts = {len(bucket_list.buckets[0].contacts)}")
 
 
-class ForceFailedAddTest(unittest.TestCase):
+class ForceFailedAddTest(BaseTestCase):
     def test_force_failed_add(self):
         """
         Description
@@ -303,7 +312,7 @@ class ForceFailedAddTest(unittest.TestCase):
                         "Expected new contact NOT to replace an older contact.")
 
 
-class DHTTest(unittest.TestCase):
+class DHTTest(BaseTestCase):
     def test_local_store_find_value(self):
         vp = VirtualProtocol()
         # Below line should contain VirtualStorage(), which I don't have?
@@ -478,7 +487,7 @@ class DHTTest(unittest.TestCase):
                         "Expected 12 hour expiration.")
 
 
-class DHTParallelTest(unittest.TestCase):
+class DHTParallelTest(BaseTestCase):
     """
     The exact same as DHTTest, but with the asynchronous router instead of the normal router.
     """
@@ -651,7 +660,7 @@ class DHTParallelTest(unittest.TestCase):
     #                     "Expected 12 hour expiration.")
 
 
-class BootstrappingTests(unittest.TestCase):
+class BootstrappingTests(BaseTestCase):
 
     def test_random_within_bucket_tests(self):
 
@@ -826,7 +835,7 @@ class BootstrappingTests(unittest.TestCase):
                         f"Expected our peer to have 31 contacts, {sum_of_contacts} were given.")
 
 
-class BucketManagementTests(unittest.TestCase):
+class BucketManagementTests(BaseTestCase):
     def test_non_responding_contact_evicted(self):
         """
         Tests that a nonresponding contact is evicted after 
@@ -932,7 +941,7 @@ class BucketManagementTests(unittest.TestCase):
                         "Expected one contact to be pending eviction.")
 
 
-class Chapter10Tests(unittest.TestCase):
+class Chapter10Tests(BaseTestCase):
     def test_new_contact_gets_stored_contacts(self):
         """
         Verify that we get stored values whose keys ^ contact ID are less than stored keys ^ other contacts.
@@ -1002,7 +1011,7 @@ class Chapter10Tests(unittest.TestCase):
         )
 
 
-class DHTSerialisationTests(unittest.TestCase):
+class DHTSerialisationTests(BaseTestCase):
     def test_serialisation(self):
         dht: DHT = DHT(
             id=ID.random_id(),
@@ -1107,7 +1116,7 @@ class DHTSerialisationTests(unittest.TestCase):
         )
 
 
-class TCPSubnetTests(unittest.TestCase):
+class TCPSubnetTests(BaseTestCase):
     @staticmethod
     def setup():
         local_ip = "127.0.0.1"
@@ -1342,7 +1351,7 @@ class AsyncServerTests(unittest.IsolatedAsyncioTestCase):
         ping_res = await loop.run_in_executor(None, lambda: self.p2.ping(self.c1))
         self.assertFalse(ping_res.has_error())
 
-class JSONStorageTests(unittest.TestCase):
+class JSONStorageTests(BaseTestCase):
     def test_get_set(self):
         if os.path.exists("1"):
             shutil.rmtree("1")
@@ -1363,7 +1372,7 @@ class JSONStorageTests(unittest.TestCase):
         self.assertFalse(storage.contains(2), "Should have removed the ID.")
 
 
-class IDIntegerTests(unittest.TestCase):
+class IDIntegerTests(BaseTestCase):
     def test_xor(self):
         id_23 = ID(23)
         self.assertTrue(ID(23) ^ 14 == 23 ^ 14)  # Typical
@@ -1403,7 +1412,7 @@ class IDIntegerTests(unittest.TestCase):
         self.assertTrue(ID(2 ** 160 - 1) >= 1)
 
 
-class NodeLookupTests(unittest.TestCase):
+class NodeLookupTests(BaseTestCase):
     def test_get_close_contacts_ordered(self):
         """
         Description
@@ -1729,7 +1738,7 @@ class NodeLookupTests(unittest.TestCase):
                                 "somehow a close contact in the computation is not in the originals?")
 
 
-class TestDHTFileSystem(unittest.TestCase):
+class TestDHTFileSystem(BaseTestCase):
     def setUp(self):
         # Create virtual protocol and storage
         self.protocol = VirtualProtocol()
@@ -1878,7 +1887,7 @@ class TestDHTFileSystem(unittest.TestCase):
         for fn in filenames:
             os.unlink(fn)
 
-class TestKBucketLocking(unittest.TestCase):
+class TestKBucketLocking(BaseTestCase):
     def test_concurrent_bucket_access(self):
         bucket = KBucket(k=200)
         contacts = [Contact(ID(i), None) for i in range(100)]
@@ -1900,7 +1909,7 @@ class TestKBucketLocking(unittest.TestCase):
         assert len(bucket.contacts) == 100  # No lost updates
 
 
-class TestBucketListThreadSafety(unittest.TestCase):
+class TestBucketListThreadSafety(BaseTestCase):
     def setUp(self):
         # Create our node's contact
         self.our_contact = Contact(ID(0), None)
@@ -2041,7 +2050,7 @@ class TestBucketListThreadSafety(unittest.TestCase):
         self.assertEqual(len(all_contacts), 10, "Not all contacts added")
 
 
-class TestServerThreading(unittest.TestCase):
+class TestServerThreading(BaseTestCase):
     def setUp(self):
         self.server = TCPSubnetServer(server_address=("127.0.0.1", 7124))
         self.dht = DHT(ID(0), TCPSubnetProtocol("127.0.0.1", 7124, 0), storage_factory=VirtualStorage, router=Router())
@@ -2077,7 +2086,7 @@ class TestServerThreading(unittest.TestCase):
         self.server.thread_stop(self.server_thread)
 
 
-class TestBinaryFileStorage(unittest.TestCase):
+class TestBinaryFileStorage(BaseTestCase):
     def setUp(self):
         # Create a temporary directory
         self.test_dir = tempfile.mkdtemp()

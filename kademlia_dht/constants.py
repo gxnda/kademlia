@@ -1,17 +1,22 @@
 from dataclasses import dataclass
 
 
-@dataclass
+class classproperty:
+    def __init__(self, fget):
+        self.fget = fget
+    def __get__(self, _, owner):
+        return self.fget(owner)
+
+
 class Constants:
     DEBUG = False
 
     K = 20
     B = 5  # or 160 according to https://xlattice.sourceforge.net/components/protocol/kademlia/specs.html
 
-    if DEBUG:
-        A: int = 20
-    else:
-        A: int = 3
+    @classproperty
+    def A(cls):
+        return 20 if cls.DEBUG else 3
 
     REQUEST_TIMEOUT_SEC = 0.5 # 500ms
     ID_LENGTH_BYTES = 20
