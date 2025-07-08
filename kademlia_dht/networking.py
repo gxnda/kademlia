@@ -2,12 +2,9 @@ import json
 import logging
 import threading
 from asyncio import Lock
-from copy import deepcopy
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from time import sleep
 from typing import Optional, Callable
-
-from aiohttp.web_request import Request
 
 from kademlia_dht.constants import Constants
 from kademlia_dht.dictionaries import (PingRequest, StoreRequest, FindNodeRequest,
