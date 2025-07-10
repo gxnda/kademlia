@@ -396,6 +396,9 @@ class AsyncServer:
                 # this calls method(common_request)
                 response = await loop.run_in_executor(None,
                                                       method, common_request)
+                if response.get("contacts"):
+                    for contact in response["contacts"]:
+                        contact["protocol"] = contact["protocol"].encode()
                 print(f"Response: {response}")
                 return web.json_response(response)
 
