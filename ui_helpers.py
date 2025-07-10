@@ -42,7 +42,7 @@ def handle_terminal() -> tuple[bool, int, bool]:
 
 
 def create_logger(verbose: bool) -> logging.Logger:
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger("__main__")
     handler = logging.StreamHandler(stdout)
 
     # clear the log file
