@@ -313,6 +313,9 @@ class AsyncServer:
         self.subnets: dict[int, Node] = {}
         self.subnet_lock = Lock()
 
+        self.number_of_requests = 0
+        self.counter_lock = Lock()
+
         self.app = web.Application()
         self.app.add_routes([
             web.post('/ping', self.handle_ping),
@@ -329,7 +332,6 @@ class AsyncServer:
         await self.runner.setup()
         self.site = web.TCPSite(self.runner, self.host, self.port)
         await self.site.start()
-        print("Server started on ", self.host, ":", self.port)
         logger.info(f"Server started on {self.host}:{self.port}")
 
     async def end(self):
@@ -362,8 +364,10 @@ class AsyncServer:
         return await self.handle_rpc(request, "find_value")
 
     async def handle_rpc(self, request: web.Request,method_name:str):
-        print(f"Received {method_name} request")
         try:
+            async with self.counter_lock:
+                print(f"Received {method_name} request, current number of requests: {self.number_of_requests}")
+                self.number_of_requests += 1
             request_dict: dict = await request.json()
             common_request: CommonRequest = CommonRequest(
                 protocol=request_dict.get("protocol"),
@@ -377,7 +381,6 @@ class AsyncServer:
             subnet = request_dict.get("subnet")
 
             if common_request["protocol"]:
-                print(f"Protocol: {common_request['protocol']}")
                 common_request["protocol"] = decode_protocol(common_request["protocol"])
 
             async with self.subnet_lock:
@@ -399,11 +402,16 @@ class AsyncServer:
                 if response.get("contacts"):
                     for contact in response["contacts"]:
                         contact["protocol"] = contact["protocol"].encode()
-                print(f"Response: {response}")
-                return web.json_response(response)
+
+                ret = web.json_response(response)
+                async with self.counter_lock:
+                    self.number_of_requests -= 1
+                return ret
 
             else:
                 logger.error("AsyncServer: Subnet node not found.")
+                async with self.counter_lock:
+                    self.number_of_requests -= 1
                 return web.json_response({
                     "status": "error",
                     "error_message": "Subnet node not found."
@@ -411,6 +419,8 @@ class AsyncServer:
 
         except Exception as e:
             logger.error("AsyncServer: Error handling ping request:", e)
+            async with self.counter_lock:
+                self.number_of_requests -= 1
             return web.json_response({
                 "status": "error",
                 "error_message": str(e)

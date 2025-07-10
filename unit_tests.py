@@ -2201,6 +2201,83 @@ class TestServerThreading(BaseTestCase):
         self.server.thread_stop(self.server_thread)
 
 
+class TestServerAsync(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.server = AsyncServer(host="127.0.0.1", port=7124)
+        self.dht = DHT(ID(0), TCPSubnetProtocol("127.0.0.1", 7124, 0),
+                       storage_factory=VirtualStorage, router=Router())
+
+        # Create server thread with its own event loop
+        self.server_loop = asyncio.new_event_loop()
+        self.server_thread = threading.Thread(target=self._run_server)
+        self.server_thread.start()
+
+        # Wait for server to start
+        time.sleep(0.2)
+
+    def _run_server(self):
+        asyncio.set_event_loop(self.server_loop)
+        self.server_loop.run_until_complete(
+            self.server.register_protocol(0, self.dht.node)
+        )
+        self.server_loop.run_until_complete(self.server.start())
+        self.server_loop.run_forever()  # Keep server running
+
+    def tearDown(self):
+        async def _stop():
+            await self.server.end()
+            self.server_loop.stop()
+
+        asyncio.run_coroutine_threadsafe(_stop(), self.server_loop)
+        self.server_thread.join()
+
+
+    def x_async_bootstraps(self, x):
+        total_bootstraps = x
+        num_attempts = iter(range(1, total_bootstraps + 1))
+        lock = threading.Lock()
+        def worker():
+            # Set up
+            with lock:
+                i = next(num_attempts)
+            dht = DHT(ID(i), TCPSubnetProtocol("127.0.0.1", 7124, i), storage_factory=VirtualStorage, router=Router())
+            future = asyncio.run_coroutine_threadsafe(
+                self.server.register_protocol(i, dht.node),
+                self.server_loop
+            )
+            future.result()
+
+            # bootstrapping
+            dht.bootstrap(self.dht.node.our_contact)
+            # logger.info(f"Finished bootstrap on {i}, bucket list is {dht.node.bucket_list}")
+
+        threads = []
+        for _ in range(total_bootstraps):
+            threads.append(threading.Thread(target=worker))
+            threads[-1].start()
+
+        for thread in threads:
+            thread.join()
+
+        asyncio.run(self.server.end())
+
+    def test_10_async_bootstraps(self):
+        return self.x_async_bootstraps(10)
+
+    def test_25_async_bootstraps(self):
+        return self.x_async_bootstraps(25)
+
+    def bootstrap_load_testing(self):
+        x = 50 # To go up to
+        for i in range(1, x + 1):
+            self.tearDown()
+            self.setUp()
+            start = time.perf_counter()
+            self.x_async_bootstraps(i)
+            stop = time.perf_counter()
+            print(f"Bootstrap {i} took {stop - start} seconds")
+
 class TestBinaryFileStorage(BaseTestCase):
     def setUp(self):
         super().setUp()
