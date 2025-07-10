@@ -1353,6 +1353,117 @@ class AsyncServerTests(unittest.IsolatedAsyncioTestCase):
         ping_res = await loop.run_in_executor(None, lambda: self.p2.ping(self.c1))
         self.assertFalse(ping_res.has_error())
 
+    def store_route(self):
+        # The actual test:
+
+        sender = Contact(ID.random_id(), self.p1)
+        test_id: ID = ID.random_id()
+        test_value = "Test"
+        print("Storing!")
+        self.p2.store(sender, test_id, test_value)
+
+        self.assertTrue(self.n2.storage.contains(test_id),
+                        "Expected remote peer to have value.")
+        self.assertTrue(self.n2.storage.get(test_id) == test_value,
+                        "Expected remote peer to contain stored value.")
+
+    def find_nodes_route(self):
+
+        # Node 2 knows about another contact that isn't us
+        # - this is what we are trying to find
+
+        other_peer = ID.random_id()
+
+        self.n2.bucket_list.buckets[0].contacts.append(
+            Contact(
+                other_peer,
+                TCPSubnetProtocol(self.local_ip, self.port, 3)
+            )
+        )
+
+        id = ID.random_id()
+        ret, errors = self.p2.find_node(self.c1, id)
+        print()
+        print("ret", ret)
+        print("errors", errors)
+        if ret:
+            self.assertTrue(
+                len(ret) == 1,
+                f"Expected 1 contact, {len(ret)} were returned."
+            )
+
+            self.assertTrue(
+                ret[0].id == other_peer,
+                "Expected contact to the other peer (not us).")
+        else:
+            self.assertTrue(
+                type(ret) == list[Contact],
+                "Expected find_node to return 1 contact, 0 were returned."
+            )
+
+    def find_value_router(self):
+
+        test_id = ID.random_id()
+        test_value = "Test"
+        print("[Unit test] Store starting...")
+        self.p2.store(sender=self.c1, key=test_id, val=test_value)
+        print("[Unit test] Store done.")
+        self.assertTrue(
+            self.n2.storage.contains(test_id),
+            "Expected remote peer to have value."
+        )
+
+        self.assertTrue(
+            self.n2.storage.get(test_id) == test_value,
+            "Expected node to store the correct value."
+        )
+
+        print("[Unit test] Find value starting...")
+        contacts, val, error = self.p2.find_value(self.c1, test_id)
+        print("[Unit test] Find value received:", contacts, val, error)
+        print("[Unit test] Find value done.")
+
+        self.assertFalse(
+            contacts, "Expected to find value."  # huh?
+        )
+        print(f"We stored '{val}' on the other node, we got back '{test_value}'.")
+        self.assertTrue(
+            val == test_value, "Value does not match expected value from peer."
+        )
+
+    def unresponsive_node(self):
+        self.p2.responds = False
+
+        test_id = ID.random_id()
+        test_value = "Test"
+        error: RPCError = self.p2.store(self.c1, test_id, test_value)
+        # print("[Unit tests] [Error]", error)
+        self.assertTrue(
+            error.timeout_error,
+            "Expected timeout when contacting unresponsive node."
+        )
+
+    async def test_store_route(self):
+        loop = asyncio.get_running_loop()
+        store_res = await loop.run_in_executor(
+            None, lambda: self.store_route())
+
+    async def test_find_nodes_route(self):
+        loop = asyncio.get_running_loop()
+        find_nodes_res = await loop.run_in_executor(
+            None, lambda: self.find_nodes_route())
+
+    async def test_find_value_router(self):
+        loop = asyncio.get_running_loop()
+        find_value_res = await loop.run_in_executor(
+            None, lambda: self.find_value_router())
+
+    async def test_unresponsive_node(self):
+        loop = asyncio.get_running_loop()
+        unresponsive_node_res = await loop.run_in_executor(
+            None, lambda: self.unresponsive_node())
+
+
 class JSONStorageTests(BaseTestCase):
     def test_get_set(self):
         if os.path.exists("1"):

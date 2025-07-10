@@ -99,6 +99,7 @@ class IProtocol:
     """
     Interface for all protocols to follow.
     """
+    type: str
 
     @abstractmethod
     def encode(self) -> dict[str, Any]:

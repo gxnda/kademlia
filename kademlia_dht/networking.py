@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import threading
@@ -15,7 +16,8 @@ from kademlia_dht.dictionaries import (PingRequest, StoreRequest, FindNodeReques
 from kademlia_dht.errors import IncorrectProtocolError
 from kademlia_dht.id import ID
 from kademlia_dht.node import Node
-from kademlia_dht.protocols import TCPProtocol, decode_protocol
+from kademlia_dht.protocols import TCPProtocol, decode_protocol, \
+    TCPSubnetProtocol
 
 logger = logging.getLogger("__main__")
 
@@ -116,7 +118,6 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
     def _common_request_handler(self,
                                 method_name: str, common_request: CommonRequest, node):
-        # Process the request in the SAME thread (no nested threading)
         try:
             method: Callable = getattr(node, method_name)
             # Calls method, eg: server_store.
@@ -313,7 +314,12 @@ class AsyncServer:
         self.subnet_lock = Lock()
 
         self.app = web.Application()
-        self.app.add_routes(self.routes)
+        self.app.add_routes([
+            web.post('/ping', self.handle_ping),
+            web.post('/store', self.handle_store),
+            web.post('/find_node', self.handle_find_node),
+            web.post('/find_value', self.handle_find_value)
+        ])
         self.runner = None
         self.site = None
 
@@ -323,6 +329,7 @@ class AsyncServer:
         await self.runner.setup()
         self.site = web.TCPSite(self.runner, self.host, self.port)
         await self.site.start()
+        print("Server started on ", self.host, ":", self.port)
         logger.info(f"Server started on {self.host}:{self.port}")
 
     async def end(self):
@@ -342,17 +349,63 @@ class AsyncServer:
         async with self.subnet_lock:
             self.subnets[subnet] = node
 
-    @staticmethod
-    @routes.post("/ping")
-    async def handle_ping(request: web.Request):
+    async def handle_ping(self, request: web.Request):
+        return await self.handle_rpc(request, "ping")
+
+    async def handle_store(self, request: web.Request):
+        return await self.handle_rpc(request, "store")
+
+    async def handle_find_node(self, request: web.Request):
+        return await self.handle_rpc(request, "find_node")
+
+    async def handle_find_value(self, request: web.Request):
+        return await self.handle_rpc(request, "find_value")
+
+    async def handle_rpc(self, request: web.Request,method_name:str):
+        print(f"Received {method_name} request")
         try:
-            data = await request.json()
-            print("Received ping request:", data)
-            return web.json_response({
-                "status": "success",
-                "random_id": data.get("random_id", ""),
-                "error_message": None
-            })
+            request_dict: dict = await request.json()
+            common_request: CommonRequest = CommonRequest(
+                protocol=request_dict.get("protocol"),
+                random_id=request_dict.get("random_id"),
+                sender=request_dict.get("sender"),
+                key=request_dict.get("key"),
+                value=request_dict.get("value"),
+                is_cached=request_dict.get("is_cached"),
+                expiration_time_sec=request_dict.get("expiration_time_sec")
+            )
+            subnet = request_dict.get("subnet")
+
+            if common_request["protocol"]:
+                print(f"Protocol: {common_request['protocol']}")
+                common_request["protocol"] = decode_protocol(common_request["protocol"])
+
+            async with self.subnet_lock:
+                node: Node = self.subnets.get(subnet)
+
+            if node:
+                # For unit testing, I don't see why else we'd call this.
+                if Constants.DEBUG and hasattr(node.our_contact.protocol, "responds"):
+                    if not node.our_contact.protocol.responds:
+                        logger.warning(
+                            "[Server] Does not respond, sleeping for timeout.")
+                        await asyncio.sleep(Constants.REQUEST_TIMEOUT_SEC + 0.01)
+
+                method: Callable = getattr(node, "server_" + method_name)
+                loop = asyncio.get_event_loop()
+                # this calls method(common_request)
+                response = await loop.run_in_executor(None,
+                                                      method, common_request)
+                print(f"Response: {response}")
+                return web.json_response(response)
+
+            else:
+                logger.error("AsyncServer: Subnet node not found.")
+                return web.json_response({
+                    "status": "error",
+                    "error_message": "Subnet node not found."
+                }, status=400)
+
         except Exception as e:
             logger.error("AsyncServer: Error handling ping request:", e)
             return web.json_response({
