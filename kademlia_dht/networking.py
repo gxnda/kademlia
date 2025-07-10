@@ -309,7 +309,7 @@ class AsyncServer:
 
     def __init__(self, host: str, port: int):
         self.host, self.port = host, port
-        self.subnets = {}
+        self.subnets: dict[int, Node] = {}
         self.subnet_lock = Lock()
 
         self.app = web.Application()
@@ -323,7 +323,6 @@ class AsyncServer:
         await self.runner.setup()
         self.site = web.TCPSite(self.runner, self.host, self.port)
         await self.site.start()
-        print("server started")
         logger.info(f"Server started on {self.host}:{self.port}")
 
     async def end(self):
@@ -343,10 +342,9 @@ class AsyncServer:
         async with self.subnet_lock:
             self.subnets[subnet] = node
 
-    @routes.post("/post")
-    async def handle_ping(self, request: web.Request):
-        print("Async ping!")
-        print(request)
+    @staticmethod
+    @routes.post("/ping")
+    async def handle_ping(request: web.Request):
         try:
             data = await request.json()
             print("Received ping request:", data)
@@ -356,6 +354,7 @@ class AsyncServer:
                 "error_message": None
             })
         except Exception as e:
+            logger.error("AsyncServer: Error handling ping request:", e)
             return web.json_response({
                 "status": "error",
                 "error_message": str(e)
