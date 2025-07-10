@@ -1116,102 +1116,75 @@ class DHTSerialisationTests(BaseTestCase):
 
 
 class TCPSubnetTests(BaseTestCase):
-    @staticmethod
-    def setup():
-        local_ip = "127.0.0.1"
-        valid_server = False
-        server = None
-        port = 1
-        while not valid_server:
-            port = random.randint(10000, 10500)
-            server = TCPSubnetServer(server_address=(local_ip, port))
-            valid_server = True
+    def setUp(self):
+        super().setUp()
+        self.local_ip = "127.0.0.1"
+        self.valid_server = False
+        self.server = None
+        self.port = 1
+        while not self.valid_server:
+            self.port = random.randint(10000, 10500)
+            self.server = TCPSubnetServer(server_address=(self.local_ip, self.port))
+            self.valid_server = True
 
-        p1: TCPSubnetProtocol = TCPSubnetProtocol(url=local_ip, port=port, subnet=1)
-        p2: TCPSubnetProtocol = TCPSubnetProtocol(url=local_ip, port=port, subnet=2)
+        self.p1: TCPSubnetProtocol = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=1)
+        self.p2: TCPSubnetProtocol = TCPSubnetProtocol(url=self.local_ip, port=self.port, subnet=2)
 
-        our_id = ID.random_id()
+        self.our_id = ID.random_id()
 
-        c1 = Contact(id=our_id, protocol=p1)
-        c2 = Contact(id=ID.random_id(), protocol=p2)
+        self.c1 = Contact(id=self.our_id, protocol=self.p1)
+        self.c2 = Contact(id=ID.random_id(), protocol=self.p2)
 
-        n1 = Node(c1, VirtualStorage())
-        n2 = Node(c2, VirtualStorage())
+        self.n1 = Node(self.c1, VirtualStorage())
+        self.n2 = Node(self.c2, VirtualStorage())
 
-        server.register_protocol(p1.subnet, n1)
-        server.register_protocol(p2.subnet, n2)
+        self.server.register_protocol(self.p1.subnet, self.n1)
+        self.server.register_protocol(self.p2.subnet, self.n2)
         # print(server.subnets)
-        thread = server.thread_start()
+        self.thread = self.server.thread_start()
 
-        return local_ip, port, server, p1, p2, our_id, c1, c2, n1, n2, thread
+    def tearDown(self):
+        super().tearDown()
+        self.server.thread_stop(self.thread)
+        self.thread.join()
 
     def test_ping_route(self):
         """
         Makes sure no exceptions are thrown when pinging a contact.
         """
-        local_ip, port, server, p1, p2, our_id, c1, c2, n1, n2, thread = self.setup()
 
         # The actual test:
-        p2.ping(c1)
-
-        server.thread_stop(thread)
+        self.p2.ping(self.c1)
 
     def test_store_route(self):
-        local_ip, port, server, p1, p2, our_id, c1, c2, n1, n2, thread = self.setup()
 
         # The actual test:
 
-        sender = Contact(ID.random_id(), p1)
+        sender = Contact(ID.random_id(),self.p1)
         test_id: ID = ID.random_id()
         test_value = "Test"
-        p2.store(sender, test_id, test_value)
+        self.p2.store(sender, test_id, test_value)
 
-        self.assertTrue(n2.storage.contains(test_id),
+        self.assertTrue(self.n2.storage.contains(test_id),
                         "Expected remote peer to have value.")
-        self.assertTrue(n2.storage.get(test_id) == test_value,
+        self.assertTrue(self.n2.storage.get(test_id) == test_value,
                         "Expected remote peer to contain stored value.")
 
-        server.thread_stop(thread)
-
     def test_find_nodes_route(self):
-        print()
-        local_ip = "127.0.0.1"
-        valid_server = False
-        port = None
-        server = None
-        while not valid_server:
-            port = random.randint(10000, 10500)
-            server = TCPSubnetServer(server_address=(local_ip, port))
-            valid_server = True
-
-        p1 = TCPSubnetProtocol(url=local_ip, port=port, subnet=1)
-        p2 = TCPSubnetProtocol(url=local_ip, port=port, subnet=2)
-
-        our_id = ID.random_id()
-
-        c1 = Contact(id=our_id, protocol=p1)
-        c2 = Contact(id=ID.random_id(), protocol=p2)
-
-        n1 = Node(c1, VirtualStorage())
-        n2 = Node(c2, VirtualStorage())
-
         # Node 2 knows about another contact that isn't us
         # - this is what we are trying to find
 
         other_peer = ID.random_id()
 
-        n2.bucket_list.buckets[0].contacts.append(
+        self.n2.bucket_list.buckets[0].contacts.append(
             Contact(
                 other_peer,
-                TCPSubnetProtocol(local_ip, port, 3)
+                TCPSubnetProtocol(self.local_ip, self.port, 3)
             )
         )
-        server.register_protocol(p1.subnet, n1)
-        server.register_protocol(p2.subnet, n2)
-        thread = server.thread_start()
 
         id = ID.random_id()
-        ret, errors = p2.find_node(c1, id)
+        ret, errors = self.p2.find_node(self.c1, id)
         print()
         print("ret", ret)
         print("errors", errors)
@@ -1230,31 +1203,27 @@ class TCPSubnetTests(BaseTestCase):
                 "Expected find_node to return 1 contact, 0 were returned."
             )
 
-        server.thread_stop(thread)
-
     def test_find_value_router(self):
-        local_ip, port, server, p1, p2, our_id, c1, c2, n1, n2, thread = self.setup()
-
         # Node 2 knows about another contact that isn't us
         # - this is what we are trying to find
 
         test_id = ID.random_id()
         test_value = "Test"
         print("[Unit test] Store starting...")
-        p2.store(sender=c1, key=test_id, val=test_value)
+        self.p2.store(sender=self.c1, key=test_id, val=test_value)
         print("[Unit test] Store done.")
         self.assertTrue(
-            n2.storage.contains(test_id),
+            self.n2.storage.contains(test_id),
             "Expected remote peer to have value."
         )
 
         self.assertTrue(
-            n2.storage.get(test_id) == test_value,
+            self.n2.storage.get(test_id) == test_value,
             "Expected node to store the correct value."
         )
 
         print("[Unit test] Find value starting...")
-        contacts, val, error = p2.find_value(c1, test_id)
+        contacts, val, error = self.p2.find_value(self.c1, test_id)
         print("[Unit test] Find value received:", contacts, val, error)
         print("[Unit test] Find value done.")
 
@@ -1267,36 +1236,13 @@ class TCPSubnetTests(BaseTestCase):
         )
 
     def test_unresponsive_node(self):
-        local_ip = "127.0.0.1"
-        valid_server = False
-        server = None
-        port = 1
-        while not valid_server:
-            port = random.randint(10000, 10500)
-            server = TCPSubnetServer(server_address=(local_ip, port))
-            valid_server = True
-
-        p1 = TCPSubnetProtocol(url=local_ip, port=port, subnet=1)
-        p2 = TCPSubnetProtocol(url=local_ip, port=port, subnet=2)
-        p2.responds = False
-
-        our_id = ID.random_id()
-
-        c1 = Contact(id=our_id, protocol=p1)
-        c2 = Contact(id=ID.random_id(), protocol=p2)
-
-        n1 = Node(c1, VirtualStorage())
-        n2 = Node(c2, VirtualStorage())
-
-        server.register_protocol(p1.subnet, n1)
-        server.register_protocol(p2.subnet, n2)
-        thread = server.thread_start()
+        self.p2.responds = False
 
         test_id = ID.random_id()
         test_value = "Test"
-        error: RPCError = p2.store(c1, test_id, test_value)
+        error: RPCError = self.p2.store(self.c1, test_id, test_value)
+        print(Constants.DEBUG)
         # print("[Unit tests] [Error]", error)
-        server.thread_stop(thread)
         self.assertTrue(
             error.timeout_error,
             "Expected timeout when contacting unresponsive node."
