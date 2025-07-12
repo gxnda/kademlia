@@ -1,6 +1,5 @@
 import json
 import logging
-import pickle
 
 from kademlia_dht.constants import Constants
 from kademlia_dht.errors import DataDecodingError

@@ -8,16 +8,17 @@ from time import sleep
 from typing import Optional, Callable
 
 from kademlia_dht.constants import Constants
-from kademlia_dht.dictionaries import (PingRequest, StoreRequest, FindNodeRequest,
+from kademlia_dht.dictionaries import (PingRequest, StoreRequest,
+                                       FindNodeRequest,
                                        FindValueRequest, ErrorResponse,
                                        CommonRequest, PingSubnetRequest,
-                                       StoreSubnetRequest, FindNodeSubnetRequest,
+                                       StoreSubnetRequest,
+                                       FindNodeSubnetRequest,
                                        FindValueSubnetRequest)
 from kademlia_dht.errors import IncorrectProtocolError
 from kademlia_dht.id import ID
 from kademlia_dht.node import Node
-from kademlia_dht.protocols import TCPProtocol, decode_protocol, \
-    TCPSubnetProtocol
+from kademlia_dht.protocols import TCPProtocol, decode_protocol
 
 logger = logging.getLogger("__main__")
 
@@ -159,7 +160,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 logger.error(f"[Server] Error sending failure response: {e}")
 
     def base_post_handling(self):
-        logger.info("[Server] POST Received.")
+        logger.debug("[Server] POST Received.")
 
         routing_methods = {
             "/ping": PingRequest,  # "ping" should refer to type PingRequest

@@ -234,7 +234,8 @@ class Node:
         return {"random_id": request["random_id"]}
 
     def server_store(self, request: CommonRequest) -> dict:
-        logger.info("[Server] Server store called.")
+        logger.info(f"[Server] Server store called to store k"
+                    f"ey {request["key"]}.")
         def worker():
             protocol: IProtocol = request["protocol"]
             self.store(

@@ -417,7 +417,9 @@ class TCPSubnetProtocol(IProtocol):
         ret = None
 
         try:
-            logger.info(f"[Client] Sending STORE to http://{self.url}:{self.port}/store")
+            logger.info(f"[Client] Sending STORE to http://{self.url}:"
+                        f"{self.port}@{self.subnet}/store to store "
+                        f"{key}, sender is {sender}")
             ret = requests.post(
                 url=f"http://{self.url}:{self.port}/store",
                 data=encoded_data,

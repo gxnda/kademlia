@@ -653,7 +653,7 @@ class DHT:
         if not found:
             logger.error(f"[Client] Manifest not found on network: "
                          f"{manifest_id=}, {contacts=}, {val=}")
-            raise IDMismatchError(str(manifest_id))
+            raise IDMismatchError("Manifest not found on network: " + str(manifest_id))
         else:
             manifest_list: list[int] = pickle.loads(val.encode(
                 Constants.PICKLE_ENCODING))
