@@ -249,8 +249,10 @@ class DHT:
 
     def store_on_closer_contacts(self, key: ID, val: str) -> None:
         now: datetime = datetime.now()
+        # Get K contacts close to it that we know
         kbucket: KBucket = self.node.bucket_list.get_kbucket(key)
         contacts: list[Contact]
+        # How up to date are the K contacts?
         if (now - kbucket.time_stamp) < timedelta(
                 milliseconds=Constants.BUCKET_REFRESH_INTERVAL_MS):
             # Bucket has been refreshed recently, so don't do a lookup as we
@@ -261,7 +263,8 @@ class DHT:
             contacts: list[Contact] = self._router.lookup(
                 key, self._router.rpc_find_nodes)["contacts"]
 
-        logger.debug(f"PROTOCOL TYPES { [type(c.protocol) for c in contacts]}",)
+        logger.info(f"[STORE DEBUG] Contacts we are going to store to: "
+                    f"{contacts}")
         for c in contacts:
             error: RPCError | None = c.protocol.store(
                 sender=self.node.our_contact, key=key, val=val)

@@ -138,7 +138,8 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             try:
                 self.wfile.write(encoded_response)
                 logger.debug("[Server] Writing response success!")
-            except ConnectionRefusedError:
+            except (ConnectionRefusedError, ConnectionAbortedError,
+                    ConnectionResetError):
                 logger.error("[Server] Connection refused by client (timeout?)")
             except Exception as e:
                 logger.error(f"[Server] Write error: {e}")
@@ -313,6 +314,7 @@ class AsyncServer:
         self.host, self.port = host, port
         self.subnets: dict[int, Node] = {}
         self.subnet_lock = Lock()
+        self.loop = None
 
         self.number_of_requests = 0
         self.counter_lock = Lock()
