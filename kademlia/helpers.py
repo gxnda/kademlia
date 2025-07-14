@@ -5,12 +5,10 @@ import socket
 import threading
 from hashlib import sha1
 
-from kademlia_dht.contact import Contact
-from kademlia_dht.id import ID
-from kademlia_dht.interfaces import IProtocol
-from kademlia_dht.node import Node
-from kademlia_dht.protocols import TCPSubnetProtocol
-from kademlia_dht.storage import VirtualStorage
+from .contact import Contact
+from .id import ID
+from .node import Node
+from .storage import VirtualStorage
 
 logger = logging.getLogger("__main__")
 

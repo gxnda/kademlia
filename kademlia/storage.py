@@ -7,11 +7,10 @@ from datetime import datetime
 from threading import RLock, Lock
 from typing import Optional
 
-from kademlia_dht import pickler
-from kademlia_dht.dictionaries import StoreValue
-from kademlia_dht.errors import IDMismatchError
-from kademlia_dht.id import ID
-from kademlia_dht.interfaces import IStorage
+from . import pickler
+from .dictionaries import StoreValue
+from .id import ID
+from .interfaces import IStorage
 
 
 logger = logging.getLogger("__main__")

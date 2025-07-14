@@ -3,8 +3,8 @@ from contextlib import AbstractContextManager
 from datetime import datetime
 from typing import Any
 
-from kademlia_dht.errors import RPCError
-from kademlia_dht.id import ID
+from .errors import RPCError
+from .id import ID
 
 
 class IStorage:

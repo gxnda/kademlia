@@ -1,14 +1,14 @@
 import logging
-from threading import RLock, Thread
+from threading import RLock
 
-from kademlia_dht.buckets import BucketList
-from kademlia_dht.constants import Constants
-from kademlia_dht.contact import Contact
-from kademlia_dht.dictionaries import CommonRequest
-from kademlia_dht.errors import RPCError, SenderIsSelfError, SendingQueryToSelfError
-from kademlia_dht.id import ID
-from kademlia_dht.interfaces import IProtocol, IStorage
-from kademlia_dht.storage import VirtualStorage
+from .buckets import BucketList
+from .constants import Constants
+from .contact import Contact
+from .dictionaries import CommonRequest
+from .errors import RPCError, SenderIsSelfError, SendingQueryToSelfError
+from .id import ID
+from .interfaces import IProtocol, IStorage
+from .storage import VirtualStorage
 
 logger = logging.getLogger("__main__")
 
@@ -82,16 +82,21 @@ class Node:
         :param expiration_time_sec:
         :return:
         """
+        logger.info(f"node {self.our_contact.protocol} store "
+                     f"called to store {key}")
 
         if sender.id.value == self.our_contact.id.value:
             raise SenderIsSelfError("Sender should not be ourself.")
 
         # add sender to bucket_list (updating bucket list like how it is in spec.)
+        logger.info(f"Adding store sender to our contacts")
         self.bucket_list.add_contact(sender)
 
         if is_cached:
+            logger.info(f"Adding {key} to cache storage")
             self.cache_storage.set(key, val, expiration_time_sec)
         else:
+            logger.info(f"Sending keyval")
             self.send_key_values_to_contact_if_new_contact(sender)
             self.storage.set(key, val, Constants.EXPIRATION_TIME_SEC)
 
@@ -168,6 +173,9 @@ class Node:
         XOR our_contact are less than the stored keys XOR other_contacts.
         """
         if self._is_new_contact(sender):
+            logger.info(f"Checking if we can send key values to a new contact "
+                        f"which has key "
+                        f"{sender}")
             with self.bucket_list.lock:
                 # Clone, so we can release the lock.
                 contacts: list[Contact] = self.bucket_list.contacts()
@@ -181,9 +189,10 @@ class Node:
                     # If our contact is closer, store the contact on its
                     # node.
                     if (self.our_contact.id ^ k) < distance:
-                        logger.debug(f"Protocol used by sender: {sender.protocol}")
                         val: str | None = self.storage.get(k)
                         if val: # To prevent race conditions
+                            logger.debug(f"Sending key-value pair to "
+                                         f"{sender}, key: {k}")
                             error: RPCError | None = sender.protocol.store(
                                 sender=self.our_contact,
                                 key=ID(k),
@@ -222,33 +231,29 @@ class Node:
 
     def server_ping(self, request: CommonRequest) -> dict:
         logger.info("[Server] Ping called")
-        def worker():
-            protocol: IProtocol = request["protocol"]
-            self.ping(
-                Contact(
-                    protocol=protocol,
-                    id=ID(request["sender"])
-                )
+        protocol: IProtocol = request["protocol"]
+        self.ping(
+            Contact(
+                protocol=protocol,
+                id=ID(request["sender"])
             )
-        Thread(target=worker).start()
+        )
         return {"random_id": request["random_id"]}
 
     def server_store(self, request: CommonRequest) -> dict:
         logger.info(f"[Server] Server store called to store k"
                     f"ey {request["key"]}.")
-        def worker():
-            protocol: IProtocol = request["protocol"]
-            self.store(
-                sender=Contact(
-                    id=ID(request["sender"]),
-                    protocol=protocol
-                ),
-                key=ID(request["key"]),
-                val=str(request["value"]),
-                is_cached=request["is_cached"],
-                expiration_time_sec=request["expiration_time_sec"]
-            )
-        Thread(target=worker).start()
+        protocol: IProtocol = request["protocol"]
+        self.store(
+            sender=Contact(
+                id=ID(request["sender"]),
+                protocol=protocol
+            ),
+            key=ID(request["key"]),
+            val=str(request["value"]),
+            is_cached=request["is_cached"],
+            expiration_time_sec=request["expiration_time_sec"]
+        )
         return {"random_id": request["random_id"]}
 
     def server_find_node(self, request: CommonRequest) -> dict:

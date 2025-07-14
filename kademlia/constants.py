@@ -17,7 +17,7 @@ class Constants:
     def A(cls):
         return 20 if cls.DEBUG else 3
 
-    REQUEST_TIMEOUT_SEC = 0.5 # 500ms
+    REQUEST_TIMEOUT_SEC = 2 # 500ms
     ID_LENGTH_BYTES = 20
     ID_LENGTH_BITS = ID_LENGTH_BYTES * 8
     MAX_THREADS = 20

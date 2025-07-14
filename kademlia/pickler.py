@@ -1,8 +1,8 @@
 import json
 import logging
 
-from kademlia_dht.constants import Constants
-from kademlia_dht.errors import DataDecodingError
+from .constants import Constants
+from .errors import DataDecodingError
 
 
 logger = logging.getLogger("__main__")

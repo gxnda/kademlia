@@ -11,14 +11,14 @@ from typing import Optional
 
 from locust import HttpUser, task, between, events, tag
 
-from kademlia_dht.constants import Constants
-from kademlia_dht.contact import Contact
-from kademlia_dht.dht import DHT
-from kademlia_dht.id import ID
-from kademlia_dht.networking import AsyncServer
-from kademlia_dht.protocols import TCPSubnetProtocol
-from kademlia_dht.routers import Router, ParallelRouter
-from kademlia_dht.storage import VirtualStorage, BinaryFileStorage
+from kademlia.constants import Constants
+from kademlia.contact import Contact
+from kademlia.dht import DHT
+from kademlia.id import ID
+from kademlia.networking import AsyncServer
+from kademlia.protocols import TCPSubnetProtocol
+from kademlia.routers import Router, ParallelRouter
+from kademlia.storage import VirtualStorage, BinaryFileStorage
 from ui_helpers import create_logger
 
 logger = create_logger(verbose=False)
@@ -149,19 +149,15 @@ def run_known_peer_server():
 @events.init.add_listener
 def start_async_server_in_multiprocess(environment, **kwargs):
     global server_started
-    print(1, server_started.value)
     with server_started.get_lock():
-        print(2)
         if server_started.value:
-            print(3)
             return
 
         server_started.value = True
-    print(4)
     # Start known peer in a separate process
     kp_process = multiprocessing.Process(target=run_known_peer_server)
     kp_process.start()
-    time.sleep(1)  # Give server time to start
+    time.sleep(3)  # Give server time to start
     logger.info("Known peer server started in separate process")
 
 known_peer_contact = Contact(ID(0), TCPSubnetProtocol(local_ip, port, 0))

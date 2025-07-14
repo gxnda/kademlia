@@ -1,4 +1,3 @@
-import argparse
 import json
 import logging
 import os
@@ -6,16 +5,14 @@ import pickle
 import re
 import threading
 from os.path import exists, isfile
-from sys import stdout
 
 import customtkinter as ctk
 from PIL import Image
-from requests import get
 
 import ui_helpers
-from kademlia_dht import dht, id, networking, protocols, node, contact, storage, routers, errors, helpers, pickler
-from kademlia_dht.constants import Constants
-from kademlia_dht.errors import IDMismatchError
+from kademlia import dht, id, networking, protocols, contact, errors
+from kademlia.constants import Constants
+from kademlia.errors import IDMismatchError
 
 """
 ├── User Interface

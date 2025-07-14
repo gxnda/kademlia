@@ -1,20 +1,21 @@
 import json
 import logging
+import sys
 from typing import Any
 
 import requests
 
-from kademlia_dht import pickler
-from kademlia_dht.constants import Constants
-from kademlia_dht.contact import Contact
-from kademlia_dht.dictionaries import (ErrorResponse, FindNodeSubnetRequest,
+from . import pickler
+from .constants import Constants
+from .contact import Contact
+from .dictionaries import (ErrorResponse, FindNodeSubnetRequest,
                                        FindValueSubnetRequest, PingSubnetRequest, StoreSubnetRequest, FindNodeRequest,
                                        FindValueRequest, PingRequest, StoreRequest)
-from kademlia_dht.errors import RPCError
-from kademlia_dht.id import ID
-from kademlia_dht.interfaces import IProtocol
-from kademlia_dht.node import Node
-from kademlia_dht.pickler import encode_data
+from .errors import RPCError
+from .id import ID
+from .interfaces import IProtocol
+from .node import Node
+from .pickler import encode_data
 
 
 from tqdm import tqdm
@@ -401,6 +402,8 @@ class TCPSubnetProtocol(IProtocol):
               ) -> RPCError:
         random_id = ID.random_id()
 
+        logger.info("store val type" + str(type(val)) +
+                    f", store val size: {sys.getsizeof(val)}")
         encoded_data = encode_data(
             dict(StoreSubnetRequest(
                 protocol=sender.protocol.encode(),
@@ -411,6 +414,11 @@ class TCPSubnetProtocol(IProtocol):
                 is_cached=is_cached,
                 expiration_time_sec=expiration_time_sec,
                 random_id=random_id.value)))
+        logger.info(f"StoreSubnetRequest size: {sys.getsizeof(encoded_data)} "
+                    f"bytes, value size: "
+                    f"{sys.getsizeof(encode_data({"val": val}))}, "
+                    f"protocol size: "
+                    f"{sys.getsizeof(sender.protocol.encode())},")
 
         timeout_error = False
         error = None

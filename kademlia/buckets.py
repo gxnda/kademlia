@@ -2,13 +2,12 @@ import logging
 from datetime import datetime
 from os.path import commonprefix
 from threading import RLock
-from typing import Optional
 
-from kademlia_dht.constants import Constants
-from kademlia_dht.contact import Contact
-from kademlia_dht.errors import (BucketDoesNotContainContactToEvictError, OurNodeCannotBeAContactError,
-                                 OutOfRangeError, RPCError, TooManyContactsError)
-from kademlia_dht.id import ID
+from .constants import Constants
+from .contact import Contact
+from .errors import (BucketDoesNotContainContactToEvictError, OurNodeCannotBeAContactError,
+                                 OutOfRangeError, TooManyContactsError)
+from .id import ID
 
 
 logger = logging.getLogger("__main__")

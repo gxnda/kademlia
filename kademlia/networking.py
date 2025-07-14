@@ -7,18 +7,18 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from time import sleep
 from typing import Optional, Callable
 
-from kademlia_dht.constants import Constants
-from kademlia_dht.dictionaries import (PingRequest, StoreRequest,
+from .constants import Constants
+from .dictionaries import (PingRequest, StoreRequest,
                                        FindNodeRequest,
                                        FindValueRequest, ErrorResponse,
                                        CommonRequest, PingSubnetRequest,
                                        StoreSubnetRequest,
                                        FindNodeSubnetRequest,
                                        FindValueSubnetRequest)
-from kademlia_dht.errors import IncorrectProtocolError
-from kademlia_dht.id import ID
-from kademlia_dht.node import Node
-from kademlia_dht.protocols import TCPProtocol, decode_protocol
+from .errors import IncorrectProtocolError
+from .id import ID
+from .node import Node
+from .protocols import TCPProtocol, decode_protocol
 
 logger = logging.getLogger("__main__")
 
@@ -370,8 +370,8 @@ class AsyncServer:
     async def handle_rpc(self, request: web.Request,method_name:str):
         try:
             async with self.counter_lock:
-                print(f"Received {method_name} request, current number of requests: {self.number_of_requests}")
                 self.number_of_requests += 1
+                print(f"Received {method_name} request, current number of requests: {self.number_of_requests}")
             request_dict: dict = await request.json()
             common_request: CommonRequest = CommonRequest(
                 protocol=request_dict.get("protocol"),
@@ -422,7 +422,8 @@ class AsyncServer:
                 }, status=400)
 
         except Exception as e:
-            logger.error("AsyncServer: Error handling ping request:", e)
+            logger.error(f"AsyncServer: Error handling {method_name} request: "
+                         f"{type(e)}: {e}, {e.__dict__}")
             async with self.counter_lock:
                 self.number_of_requests -= 1
             return web.json_response({

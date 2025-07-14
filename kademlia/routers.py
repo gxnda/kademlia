@@ -6,14 +6,14 @@ from datetime import datetime
 from time import sleep
 from typing import Callable, Optional
 
-import kademlia_dht.my_queues as my_queues
-from kademlia_dht.buckets import KBucket
-from kademlia_dht.constants import Constants
-from kademlia_dht.contact import Contact
-from kademlia_dht.dictionaries import ContactQueueItem, FindResult
-from kademlia_dht.errors import ValueCannotBeNoneError, NoNonEmptyBucketsError
-from kademlia_dht.id import ID
-from kademlia_dht.node import Node
+from . import my_queues
+from .buckets import KBucket
+from .constants import Constants
+from .contact import Contact
+from .dictionaries import ContactQueueItem, FindResult
+from .errors import ValueCannotBeNoneError, NoNonEmptyBucketsError
+from .id import ID
+from .node import Node
 
 
 logger = logging.getLogger("__main__")

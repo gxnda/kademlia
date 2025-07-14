@@ -17,7 +17,13 @@ This mostly serves as an introduction to peer-to-peer systems for me, and to get
 - [x] Make CLI
 - [X] Make all unit tests pass
 - [x] Add thread locking
+- [x] Properly set up locust
 
-- [ ] Properly set up locust
 - [ ] Actually test it at scale (1000+ nodes, on different networks)
 - [ ] Make it more efficient
+
+# Scalability Testing
+
+Scalability testing has been implemented using the Locust framework. This allows testing the DHT implementation with a large number of nodes and operations.
+
+For detailed instructions on how to run the scalability tests, see [SCALABILITY_TESTING.md](SCALABILITY_TESTING.md).

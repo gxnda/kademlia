@@ -1,7 +1,7 @@
 from typing import Callable, TypedDict, Any
 
-from kademlia_dht.contact import Contact
-from kademlia_dht.id import ID
+from .contact import Contact
+from .id import ID
 
 
 class FindResult(TypedDict):

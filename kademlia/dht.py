@@ -3,20 +3,20 @@ import os
 import pickle
 from datetime import datetime, timedelta
 from threading import RLock
-from typing import Callable, Optional
+from typing import Callable
 import dill
 
-from kademlia_dht import helpers
-from kademlia_dht.buckets import KBucket
-from kademlia_dht.constants import Constants
-from kademlia_dht.contact import Contact
-from kademlia_dht.dictionaries import FindResult
-from kademlia_dht.errors import RPCError, IDMismatchError, KademliaError
-from kademlia_dht.helpers import get_sha1_hash, get_manifest_hash
-from kademlia_dht.id import ID
-from kademlia_dht.interfaces import IProtocol, IStorage
-from kademlia_dht.node import Node
-from kademlia_dht.routers import BaseRouter
+from . import helpers
+from .buckets import KBucket
+from .constants import Constants
+from .contact import Contact
+from .dictionaries import FindResult
+from .errors import RPCError, IDMismatchError, KademliaError
+from .helpers import get_sha1_hash, get_manifest_hash
+from .id import ID
+from .interfaces import IProtocol, IStorage
+from .node import Node
+from .routers import BaseRouter
 
 
 logger = logging.getLogger("__main__")
@@ -263,7 +263,7 @@ class DHT:
             contacts: list[Contact] = self._router.lookup(
                 key, self._router.rpc_find_nodes)["contacts"]
 
-        logger.info(f"[STORE DEBUG] Contacts we are going to store to: "
+        logger.info(f"[STORE DEBUG] Contact IDs we are going to store to: "
                     f"{contacts}")
         for c in contacts:
             error: RPCError | None = c.protocol.store(
@@ -289,7 +289,8 @@ class DHT:
             contacts, error = known_peer.protocol.find_node(
                 sender=self.our_contact, key=self.our_id)
             self.handle_error(error, known_peer)
-            logger.info(f"[Client Bootstrap] Found {len(contacts)} close contacts, errors: {error.__dict__}.")
+            logger.debug(f"[Client Bootstrap] Found {len(contacts)} close "
+                        f"contacts, errors: {error.__dict__}.")
             if not error.has_error():
 
                 # add all contacts the known peer DIRECTLY knows

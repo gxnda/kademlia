@@ -1,15 +1,14 @@
 import json
 import logging
 import os
-import pickle
 import re
-from os.path import exists, isfile
+from os.path import isfile
 from typing import Callable
 
 import ui_helpers
-from kademlia_dht import dht, contact, protocols, id
-from kademlia_dht.constants import Constants
-from kademlia_dht.errors import IDMismatchError
+from kademlia import dht, contact, protocols, id
+from kademlia.constants import Constants
+from kademlia.errors import IDMismatchError
 
 USE_GLOBAL_IP, PORT, verbose = ui_helpers.handle_terminal()
 

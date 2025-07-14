@@ -1,7 +1,7 @@
 import random
 from math import ceil, log
 
-from kademlia_dht.constants import Constants
+from .constants import Constants
 
 
 class ID:

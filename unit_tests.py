@@ -13,18 +13,18 @@ import tempfile
 from datetime import datetime
 
 import ui_helpers
-from kademlia_dht.buckets import BucketList, KBucket
-from kademlia_dht.constants import Constants
-from kademlia_dht.contact import Contact
-from kademlia_dht.dht import DHT
-from kademlia_dht.errors import RPCError, TooManyContactsError
-from kademlia_dht.helpers import get_sha1_hash
-from kademlia_dht.id import ID
-from kademlia_dht.networking import TCPSubnetServer, AsyncServer
-from kademlia_dht.node import Node
-from kademlia_dht.protocols import TCPSubnetProtocol, VirtualProtocol
-from kademlia_dht.routers import ParallelRouter, Router
-from kademlia_dht.storage import VirtualStorage, SecondaryJSONStorage, BinaryFileStorage
+from kademlia.buckets import BucketList, KBucket
+from kademlia.constants import Constants
+from kademlia.contact import Contact
+from kademlia.dht import DHT
+from kademlia.errors import RPCError, TooManyContactsError
+from kademlia.helpers import get_sha1_hash
+from kademlia.id import ID
+from kademlia.networking import TCPSubnetServer, AsyncServer
+from kademlia.node import Node
+from kademlia.protocols import TCPSubnetProtocol, VirtualProtocol
+from kademlia.routers import ParallelRouter, Router
+from kademlia.storage import VirtualStorage, SecondaryJSONStorage, BinaryFileStorage
 
 Constants.DEBUG = True
 
@@ -1018,9 +1018,9 @@ class DHTSerialisationTests(BaseTestCase):
             router=Router(),
             storage_factory=VirtualStorage
         )
-        dht.save("kademlia_dht/dht.pickle")
+        dht.save("kademlia/dht.pickle")
 
-        new_dht = DHT.load("kademlia_dht/dht.pickle")
+        new_dht = DHT.load("kademlia/dht.pickle")
 
         self.assertTrue(
             type(dht) == type(new_dht),
@@ -1045,9 +1045,9 @@ class DHTSerialisationTests(BaseTestCase):
         )
         dht._router.node = node
 
-        dht.save("kademlia_dht/dht.pickle")
+        dht.save("kademlia/dht.pickle")
 
-        new_dht = DHT.load("kademlia_dht/dht.pickle")
+        new_dht = DHT.load("kademlia/dht.pickle")
 
         self.assertTrue(
             type(dht) == type(new_dht),
