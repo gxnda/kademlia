@@ -1,26 +1,21 @@
 import argparse
-import json
 import logging
 import os
-import pickle
 from threading import Thread
 from os.path import exists
 
 from requests import get
 from sys import stdout
 
-from kademlia_dht import helpers
-from kademlia_dht.helpers import get_sha1_hash, get_manifest_hash
-from kademlia_dht.node import Node
-from kademlia_dht.protocols import TCPProtocol
-from kademlia_dht.contact import Contact
-from kademlia_dht.routers import ParallelRouter
-from kademlia_dht.storage import SecondaryJSONStorage, VirtualStorage
-from kademlia_dht.networking import TCPServer
-from kademlia_dht.dht import DHT
-from kademlia_dht.constants import Constants
-from kademlia_dht.errors import IDMismatchError
-from kademlia_dht.id import ID
+from kademlia import helpers
+from kademlia.node import Node
+from kademlia.protocols import TCPProtocol
+from kademlia.contact import Contact
+from kademlia.routers import ParallelRouter
+from kademlia.storage import SecondaryJSONStorage, VirtualStorage
+from kademlia.networking import TCPServer
+from kademlia.dht import DHT
+from kademlia.id import ID
 
 
 def handle_terminal() -> tuple[bool, int, bool]:
