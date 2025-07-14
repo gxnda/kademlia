@@ -319,7 +319,8 @@ class AsyncServer:
         self.number_of_requests = 0
         self.counter_lock = Lock()
 
-        self.app = web.Application()
+        self.app = web.Application(
+            client_max_size=Constants.PIECE_LENGTH * 10)
         self.app.add_routes([
             web.post('/ping', self.handle_ping),
             web.post('/store', self.handle_store),
