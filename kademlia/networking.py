@@ -104,9 +104,9 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
             else:
                 logger.error("[Server] Node not found.")
-                encoded_response = bytes(json.dumps({"error_message": "Node not found."}),
-                                         Constants.PICKLE_ENCODING)
-                self.send_header("Content-Type", "application/octet-stream")
+                encoded_response = json.dumps({"error_message": "Node not "
+                                                                "found."}).encode("utf-8")
+                self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.send_response(400)
                 try:
@@ -129,10 +129,11 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 for contact in response["contacts"]:
                     contact["protocol"] = contact["protocol"].encode()
 
-            encoded_response = bytes(json.dumps(response), Constants.PICKLE_ENCODING)
+            encoded_response = json.dumps(
+                response).encode("utf-8")
             logger.debug(f"[Server] Sending encoded 200: {response}")
             self.send_response(code=200)
-            self.send_header("Content-Type", "application/octet-stream")
+            self.send_header("Content-Type", "application/json")
             self.end_headers()
 
             try:
@@ -150,9 +151,9 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 error_message=str(e),
                 random_id=ID.random_id().value
             )
-            encoded_response = bytes(json.dumps(error_response), Constants.PICKLE_ENCODING)
+            encoded_response = json.dumps(error_response).encode("utf-8")
 
-            self.send_header("Content-Type", "application/octet-stream")
+            self.send_header("Content-Type", "application/json")
             self.end_headers()
             self.send_response(code=400)
             try:
@@ -275,7 +276,7 @@ class HTTPSubnetRequestHandler(HTTPRequestHandler):
                 logger.error("[Server] Subnet node not found.")
                 encoded_response = bytes(json.dumps({"error_message": "Subnet node not found."}),
                                          Constants.PICKLE_ENCODING)
-                self.send_header("Content-Type", "application/octet-stream")
+                self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.send_response(400)
                 try:
