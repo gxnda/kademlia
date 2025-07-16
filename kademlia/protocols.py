@@ -1,9 +1,12 @@
+import asyncio
 import json
 import logging
 import sys
 from typing import Any
 
+import aiohttp
 import requests
+from aiohttp import ClientSession
 
 from . import pickler
 from .constants import Constants
@@ -24,12 +27,12 @@ logger = logging.getLogger("__main__")
 
 
 def get_rpc_error(id: ID,
-                  ret: dict,
+                  ret: dict | None,
                   timeout_error: bool,
                   peer_error: ErrorResponse) -> RPCError:
     error = RPCError()
     if ret:
-        error.id_mismatch_error = id != ret["random_id"]
+        error.id_mismatch_error = id != ret.get("random_id")
     else:
         error.id_mismatch_error = False
     error.timeout_error = timeout_error
@@ -136,6 +139,7 @@ class TCPSubnetProtocol(IProtocol):
         self.responds = True
         self.subnet = subnet
         self.type = "TCPSubnetProtocol"
+        self.client_session = None
 
     def __repr__(self):
         return f"{self.type}({self.url}:{self.port}, subnet={self.subnet})"
@@ -148,7 +152,49 @@ class TCPSubnetProtocol(IProtocol):
             "subnet": self.subnet
         }
 
-    def find_node(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, RPCError]:
+    async def _make_rpc_request(self, method: str, data_to_send):
+        error = None
+        timeout_error = False
+        formatted_response = None
+        self.client_session = self.client_session or aiohttp.ClientSession()
+        try:
+            logger.info(f"[Client] Sending {method} RPC...")
+            async with self.client_session.post(
+                    url=f"http://{self.url}:{self.port}/{method}",
+                    data=data_to_send,
+                    headers={'Content-Type': 'application/json'},
+                    timeout=Constants.REQUEST_TIMEOUT_SEC
+            ) as ret:
+                logger.info(f"[Client] Received {method} response from"
+                            f" {ret.url} with code {ret.status}")
+
+                if ret.ok:
+                    try:
+                        formatted_response = await ret.json(
+                            loads=pickler.decode_data)
+                    except json.JSONDecodeError as e:
+                        error = f"JSON decode failed: {e}"
+                        logger.error(f"[Client] Invalid JSON response: "
+                                     f"{await ret.text()}")
+                else:
+                    error = f"HTTP Error {ret.status}"
+                    logger.error(f"[Client] Server error: {error}")
+
+        except asyncio.TimeoutError:
+            logger.error("[Client] Ping timeout error")
+            timeout_error = True
+            error = "Request timed out"
+        except aiohttp.ClientError as e:
+            logger.error(f"[Client] Network error: {e}")
+            error = str(e)
+        except Exception as e:
+            logger.error(f"[Client] Unexpected error: {e}")
+            raise e
+
+        return formatted_response, error, timeout_error
+
+    async def find_node(self, sender: Contact, key: ID) -> (
+            tuple)[list[Contact] | None, RPCError]:
         """
         Encodes all of the data that is needed into a FindNodeSubnetRequest,
         Which is then pickled and posted using the ‘requests’ library to self.url and
@@ -161,74 +207,45 @@ class TCPSubnetProtocol(IProtocol):
         :param key:
         :return:
         """
-        id: ID = ID.random_id()
+        random_id: ID = ID.random_id()
         encoded_data = encode_data(
             dict(FindNodeSubnetRequest(
                 protocol=sender.protocol.encode(),
                 subnet=self.subnet,
                 sender=sender.id.value,
                 key=key.value,
-                random_id=id.value
+                random_id=random_id.value
             ))
         )
-        encoded_data = encoded_data.encode(Constants.PICKLE_ENCODING)
-        logger.debug(f"http://{self.url}:{self.port}/find_node")
 
-        ret = None
-        timeout_error = False
-        error = ""
+        decoded_response, error, timeout_error = await self._make_rpc_request(
+            "find_node", encoded_data)
+
         try:
-            logger.info("[Client] Sending find_node RPC...")
-            ret = requests.post(
-                f"http://{self.url}:{self.port}/find_node",
-                data=encoded_data,
-
-                headers={'Content-Type': 'application/json'},
-                timeout=Constants.REQUEST_TIMEOUT_SEC
-            )
-            logger.info(f"[Client] Received HTTP Response from {ret.url} with code {ret.status_code}")
-
-        except (requests.Timeout, requests.ConnectionError) as t:
-            # Timeout isn't fatal, so we can just log it and move on.
-            logger.warning(f"[Client] Timeout error when contacting node.\n "
-                         f"{t}")
-            timeout_error = True
-            error = t
-
-        except Exception as e:
-            logger.error(f"[Client] {e}")
-            # request timed out.
-            timeout_error = False
-            error = e
-
-        if ret:
-            encoded_data = ret.content
-            ret_decoded: dict | None = pickler.decode_data(encoded_data)
-        else:
-            ret_decoded = None
-        try:
-            if ret_decoded:
-                if ret_decoded["contacts"]:
-                    contacts = []
-                    for val in ret_decoded["contacts"]:
-                        new_c = Contact(ID(val["contact"]), decode_protocol(val["protocol"]))
-                        contacts.append(new_c)
-                    # Return only contacts with supported protocols.
-                    rpc_error = get_rpc_error(id,
-                                              ret_decoded,
-                                              timeout_error,
-                                              ErrorResponse(error_message=str(error), random_id=ID.random_id()))
-                    if contacts:
-                        ret_contacts = [c for c in contacts if c.protocol is not None]
-                        return ret_contacts, rpc_error
-                    else:
-                        return [], rpc_error
-            else:
-                rpc_error = get_rpc_error(id,
-                                          ret_decoded,
+            if decoded_response["contacts"]:
+                contacts = []
+                for val in decoded_response["contacts"]:
+                    new_c = Contact(
+                        ID(val["contact"]),
+                        decode_protocol(val["protocol"])
+                    )
+                    contacts.append(new_c)
+                # Return only contacts with supported protocols.
+                rpc_error = get_rpc_error(random_id,
+                                          decoded_response,
                                           timeout_error,
-                                          ErrorResponse(error_message=str(error), random_id=ID.random_id()))
-                return [], rpc_error
+                                          ErrorResponse(
+                                              error_message=str(
+                                                  error),
+                                              random_id=ID.random_id()))
+                if contacts:
+                    ret_contacts = [c for c in contacts
+                                    if
+                                    c.protocol is not None]
+                    return ret_contacts, rpc_error
+                else:
+                    return [], rpc_error
+
         except Exception as e:
             error = RPCError()
             error.protocol_error = True
@@ -237,7 +254,8 @@ class TCPSubnetProtocol(IProtocol):
 
         return [], RPCError.no_error()
 
-    def find_value(self, sender: Contact, key: ID) -> tuple[list[Contact] | None, str | None, RPCError | None]:
+    async def find_value(self, sender: Contact, key: ID) -> (
+            tuple)[list[Contact] | None, str | None, RPCError | None]:
         """
         Attempt to find the value in the peer network.
 
@@ -270,44 +288,8 @@ class TCPSubnetProtocol(IProtocol):
             ))
         )
 
-        ret = None
-        try:
-            logger.debug("[Client] Sending POST")
-            ret = requests.post(
-                url=f"http://{self.url}:{self.port}/find_value",
-                data=encoded_data,
-                headers={'Content-Type': 'application/json'},
-                timeout=Constants.REQUEST_TIMEOUT_SEC,
-                stream=True
-            )
-            logger.debug("[Client] Completed POST")
-            timeout_error = False
-            error = None
-            if ret:
-                total_size = int(ret.headers.get('Content-Length', 0))
-                block_size = 1024  # 1 Kilobyte
-                progress_bar = tqdm(total=total_size, unit='iB', unit_scale=True)
-
-                encoded_data = b''
-                for chunk in ret.iter_content(chunk_size=block_size):
-                    if chunk:
-                        encoded_data += chunk
-                        progress_bar.update(len(chunk))
-
-        except (requests.Timeout, requests.ConnectionError) as t:
-            logger.error(f"Timeout error:{t}")
-            timeout_error = True
-            error = t
-
-        except Exception as e:
-            logger.error(f"Exception while trying to find_value: {e}")
-            # request timed out.
-            timeout_error = False
-            error = e
-
-        ret_decoded = None
-        if ret:
-            ret_decoded = pickler.decode_data(encoded_data)
+        ret_decoded, error, timeout_error = await self._make_rpc_request(
+            "find_value", encoded_data)
 
         try:
             contacts = []
@@ -339,7 +321,7 @@ class TCPSubnetProtocol(IProtocol):
             logger.error(f"[Client] Error performing find_value: {rpc_error}")
             return None, None, rpc_error
 
-    def ping(self, sender: Contact) -> RPCError:
+    async def ping(self, sender: Contact) -> RPCError:
         """
         Encodes all of the data that is needed into a PingSubnetRequest,
         Which is then pickled and posted using the ‘requests’ library to self.url and
@@ -361,37 +343,13 @@ class TCPSubnetProtocol(IProtocol):
                 sender=sender.id.value,
                 random_id=random_id.value)))
 
-        timeout_error = False
-        error = None
-        ret: requests.Response | None = None
-        try:
-            logger.info("[Client] Sending Ping RPC...")
-            ret = requests.post(
-                url=f"http://{self.url}:{self.port}/ping",
-                data=encoded_data,
-                headers={'Content-Type': 'application/json'},
-                timeout=Constants.REQUEST_TIMEOUT_SEC
-            )
-            logger.info(f"[Client] Received PING response from {ret.url} with code {ret.status_code}")
+        formatted_response, error, timeout_error = await self._make_rpc_request(
+            "ping", encoded_data)
 
-        except (requests.Timeout, requests.ConnectionError) as t:
-            logger.error(f"[Client] Ping timeout error: {t}")
-            timeout_error = True
-            error = t
-
-        except Exception as e:
-            logger.error(f"[Client] Other exception thrown (Ping): {e}")
-            # request timed out.
-            timeout_error = False
-            error = e
-
-        formatted_response = None
-        if ret:
-            encoded_data = ret.content
-            formatted_response = json.loads(encoded_data)
-
-        return get_rpc_error(random_id, formatted_response, timeout_error, ErrorResponse(
-            error_message=str(error), random_id=ID.random_id()))
+        return get_rpc_error(random_id, formatted_response, timeout_error,
+                             ErrorResponse(
+                                 error_message=str(error),
+                                 random_id=ID.random_id()))
 
     def store(self,
               sender: Contact,
