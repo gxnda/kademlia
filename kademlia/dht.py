@@ -269,10 +269,16 @@ class DHT:
 
         logger.info(f"[STORE DEBUG] Contact IDs we are going to store to: "
                     f"{contacts}")
-        for c in contacts:
-            error: RPCError | None = run_async(c.protocol.store(
-                sender=self.node.our_contact, key=key, val=val))
-            self.handle_error(error, c)
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            # runs stores concurrently
+            loop.run_until_complete(asyncio.gather(
+                *[c.protocol.store(sender=self.node.our_contact, key=key, val=val)
+                  for c in contacts]
+            ))
+        finally:
+            loop.close()
 
     def bootstrap(self, known_peer: Contact) -> None:
         """
