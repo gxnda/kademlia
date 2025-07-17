@@ -246,9 +246,9 @@ class BucketList:
                 # replace contact, then touch it
                 kbucket.replace_contact(contact)
             elif kbucket.is_full():
-                logger.info("[Client] Kbucket is full.")
+                logger.debug("[Client] Kbucket is full.")
                 if self.can_split(kbucket):
-                    logger.debug("[Client] Splitting!")
+                    logger.debug("[Client] Splitting bucket.")
                     # Split then try again
                     k1, k2 = kbucket.split()
                     index: int = self._get_kbucket_index(contact.id)
