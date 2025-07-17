@@ -372,7 +372,8 @@ class AsyncServer:
         try:
             async with self.counter_lock:
                 self.number_of_requests += 1
-                print(f"Received {method_name} request, current number of requests: {self.number_of_requests}")
+                logger.debug(f"Received {method_name} request, current number "
+                            f"of requests: {self.number_of_requests}")
             request_dict: dict = await request.json()
             common_request: CommonRequest = CommonRequest(
                 protocol=request_dict.get("protocol"),
