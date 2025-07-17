@@ -3,10 +3,12 @@ from datetime import datetime
 from os.path import commonprefix
 from threading import RLock
 
+from .async_runner import run_async
 from .constants import Constants
 from .contact import Contact
-from .errors import (BucketDoesNotContainContactToEvictError, OurNodeCannotBeAContactError,
-                                 OutOfRangeError, TooManyContactsError)
+from .errors import (BucketDoesNotContainContactToEvictError,
+                     OurNodeCannotBeAContactError,
+                     OutOfRangeError, TooManyContactsError, RPCError)
 from .id import ID
 
 
@@ -271,7 +273,8 @@ class BucketList:
         """
         if needs_ping:
             logger.info("[Client] Pinging last seen contact.")
-            error = last_seen_contact.protocol.ping(self.our_contact)
+            error: RPCError = run_async(last_seen_contact.protocol.ping(
+                self.our_contact))
 
             with self.lock:
                 # Verify state hasn't changed

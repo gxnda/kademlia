@@ -32,7 +32,7 @@ if Constants.DEBUG:
     random.seed(0)
 
 
-logger = ui_helpers.create_logger(verbose=True)
+logger = ui_helpers.create_logger(verbose=False)
 logger.setLevel(0)
 logger.info("Starting unit tests.")
 

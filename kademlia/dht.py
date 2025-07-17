@@ -7,6 +7,7 @@ from typing import Callable
 import dill
 
 from . import helpers
+from .async_runner import run_async
 from .buckets import KBucket
 from .constants import Constants
 from .contact import Contact
@@ -233,9 +234,10 @@ class DHT:
                 if store_to:
                     separating_nodes: int = self._get_separating_nodes_count(self.our_contact, store_to)
                     exp_time_sec: int = Constants.EXPIRATION_TIME_SEC // (2 ** separating_nodes)
-                    error: RPCError = store_to.protocol.store(self.node.our_contact, key, lookup["val"],
+                    error: RPCError = run_async(store_to.protocol.store(
+                        self.node.our_contact, key, lookup["val"],
                                                               is_cached=True,
-                                                              exp_time_sec=exp_time_sec)
+                                                              exp_time_sec=exp_time_sec))
                     self.handle_error(error, store_to)
 
         return found, contacts, val
@@ -266,8 +268,8 @@ class DHT:
         logger.info(f"[STORE DEBUG] Contact IDs we are going to store to: "
                     f"{contacts}")
         for c in contacts:
-            error: RPCError | None = c.protocol.store(
-                sender=self.node.our_contact, key=key, val=val)
+            error: RPCError | None = run_async(c.protocol.store(
+                sender=self.node.our_contact, key=key, val=val))
             self.handle_error(error, c)
 
     def bootstrap(self, known_peer: Contact) -> None:
@@ -286,8 +288,8 @@ class DHT:
 
             # finds K close contacts to self.our_id, excluding self.our_contact
             logger.info(f"[Client Bootstrap] Finding K close contacts to {self.our_id}.")
-            contacts, error = known_peer.protocol.find_node(
-                sender=self.our_contact, key=self.our_id)
+            contacts, error = run_async(known_peer.protocol.find_node(
+                sender=self.our_contact, key=self.our_id))
             self.handle_error(error, known_peer)
             logger.debug(f"[Client Bootstrap] Found {len(contacts)} close "
                         f"contacts, errors: {error.__dict__}.")
@@ -332,7 +334,7 @@ class DHT:
         :returns: Nothing.
         """
         bucket.touch()
-        with self.lock:
+        with (self.lock):
             random_id: ID = ID.random_id_within_bucket_range(bucket)
 
             # put in a separate list as contacts collection for this bucket might change.
@@ -340,8 +342,8 @@ class DHT:
             for contact in contacts:
                 if isinstance(contact.protocol, dict):
                     raise KademliaError(f"DICTIONARY PROTOCOL!!! {contact.protocol}")
-                new_contacts, timeout_error = contact.protocol.find_node(
-                    self.our_contact, random_id)
+                new_contacts, timeout_error = run_async(
+                    contact.protocol.find_node(self.our_contact, random_id))
                 self.handle_error(timeout_error, contact)
 
                 if new_contacts:

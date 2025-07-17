@@ -1,6 +1,7 @@
 import logging
 from threading import RLock
 
+from .async_runner import run_async
 from .buckets import BucketList
 from .constants import Constants
 from .contact import Contact
@@ -106,6 +107,7 @@ class Node:
         """
         with self.lock:
             self.store(key, self.our_contact, val, is_cached, expiration_time_sec)
+
     def find_node(self, key: ID,
                   sender: Contact) -> tuple[list[Contact], str | None]:
         """
@@ -193,11 +195,12 @@ class Node:
                         if val: # To prevent race conditions
                             logger.debug(f"Sending key-value pair to "
                                          f"{sender}, key: {k}")
-                            error: RPCError | None = sender.protocol.store(
+                            error: RPCError | None = (
+                                run_async(sender.protocol.store(
                                 sender=self.our_contact,
                                 key=ID(k),
                                 val=self.storage.get(k)
-                            )
+                            )))
                             if self.dht:
                                 self.dht.handle_error(error, sender)
 

@@ -7,6 +7,7 @@ from time import sleep
 from typing import Callable, Optional
 
 from . import my_queues
+from .async_runner import run_async
 from .buckets import KBucket
 from .constants import Constants
 from .contact import Contact
@@ -58,8 +59,8 @@ class BaseRouter:
         :param contact:
         :return:
         """
-        new_contacts, timeout_error = contact.protocol.find_node(
-            self.node.our_contact, key)
+        new_contacts, timeout_error = run_async(contact.protocol.find_node(
+            self.node.our_contact, key))
 
         if self.dht:
             self.dht.handle_error(timeout_error, contact)
@@ -79,7 +80,8 @@ class BaseRouter:
         ret_val: Optional[str] = None
         found_by: Optional[Contact] = None
 
-        other_contacts, val, error = contact.protocol.find_value(self.node.our_contact, key)
+        other_contacts, val, error = run_async(contact.protocol.find_value(
+            self.node.our_contact, key))
         if self.dht:
             self.dht.handle_error(error, contact)
         else:
