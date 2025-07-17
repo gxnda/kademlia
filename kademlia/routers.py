@@ -366,7 +366,7 @@ class ParallelRouter(BaseRouter):
         :return:
         """
         for _ in range(Constants.MAX_THREADS):
-            thread = threading.Thread(target=self.__rpc_caller)
+            thread = threading.Thread(target=self.__rpc_caller, daemon=True)
             # thread.is_background = True
             self.__threads.append(thread)
             thread.start()
