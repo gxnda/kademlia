@@ -1786,6 +1786,7 @@ class NodeLookupTests(TestCase):
 
 class TestDHTFileSystem(TestCase):
     def setUp(self):
+        super().setUp()
         # Create virtual protocol and storage
         self.protocol = VirtualProtocol()
         self.storage_factory = VirtualStorage
@@ -1806,6 +1807,7 @@ class TestDHTFileSystem(TestCase):
         self.temp_file.close()
 
     def tearDown(self):
+        super().tearDown()
         # Clean up temporary files
         if os.path.exists(self.temp_file.name):
             os.unlink(self.temp_file.name)
@@ -1932,6 +1934,7 @@ class TestDHTFileSystem(TestCase):
         # Cleanup originals
         for fn in filenames:
             os.unlink(fn)
+
 
 class TestKBucketLocking(TestCase):
     def test_concurrent_bucket_access(self):
@@ -2142,6 +2145,7 @@ class TestServerThreading(TestCase):
     def test_50_bootstraps(self):
         return self.do_x_bootstrap(50)
 
+
 class TestServerAsync(TestCase):
     def setUp(self):
         super().setUp()
@@ -2191,6 +2195,8 @@ class TestServerAsync(TestCase):
 
             # bootstrapping
             dht.bootstrap(self.dht.node.our_contact)
+            logger.debug(f"Bootstrap #{i} finished with bucket list"
+              f" {dht.node.bucket_list}")
             # logger.info(f"Finished bootstrap on {i}, bucket list is {dht.node.bucket_list}")
 
         threads = []
@@ -2221,6 +2227,7 @@ class TestServerAsync(TestCase):
             self.x_async_bootstraps(i)
             stop = time.perf_counter()
             print(f"Bootstrap {i} took {stop - start} seconds")
+
 
 class TestBinaryFileStorage(TestCase):
     def setUp(self):
