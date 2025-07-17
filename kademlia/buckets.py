@@ -327,4 +327,4 @@ class BucketList:
         return contact in self.contacts()
 
     def __repr__(self):
-        return f"{[[c.id for c in b.contacts] for b in self.buckets]}"
+        return f"{[sorted([c.id for c in b.contacts]) for b in self.buckets if b.contacts]}"
