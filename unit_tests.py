@@ -2106,8 +2106,8 @@ class TestServerThreading(TestCase):
         self.server_thread = self.server.thread_start()
         self.dht.store(ID(123), "store test")
 
-    def test_bootstrap_on_threading(self):
-        total_bootstraps = 25
+    def do_x_bootstrap(self, x):
+        total_bootstraps = x
         num_attempts = iter(range(1, total_bootstraps + 1))
         lock = threading.Lock()
         def worker():
@@ -2133,6 +2133,14 @@ class TestServerThreading(TestCase):
 
         self.server.thread_stop(self.server_thread)
 
+    def test_10_bootstraps(self):
+        return self.do_x_bootstrap(10)
+
+    def test_25_bootstraps(self):
+        return self.do_x_bootstrap(25)
+
+    def test_50_bootstraps(self):
+        return self.do_x_bootstrap(50)
 
 class TestServerAsync(TestCase):
     def setUp(self):
@@ -2200,6 +2208,9 @@ class TestServerAsync(TestCase):
 
     def test_25_async_bootstraps(self):
         return self.x_async_bootstraps(25)
+
+    def test_50_async_bootstraps(self):
+        return self.x_async_bootstraps(50)
 
     def bootstrap_load_testing(self):
         x = 50 # To go up to
