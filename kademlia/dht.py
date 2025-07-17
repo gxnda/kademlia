@@ -322,8 +322,10 @@ class DHT:
             asyncio.set_event_loop(loop)
             try:
                 # Run all refreshes sequentially
-                for bucket in other_buckets:
-                    loop.run_until_complete(self._refresh_bucket(bucket))
+                loop.run_until_complete(asyncio.gather(
+                    *[self._refresh_bucket(bucket)
+                      for bucket in other_buckets]
+                ))
             finally:
                 loop.close()
 
