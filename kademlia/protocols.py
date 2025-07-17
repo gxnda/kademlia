@@ -6,7 +6,6 @@ from typing import Any
 
 import aiohttp
 import requests
-from aiohttp import ClientSession
 
 from . import pickler
 from .constants import Constants
@@ -139,7 +138,6 @@ class TCPSubnetProtocol(IProtocol):
         self.responds = True
         self.subnet = subnet
         self.type = "TCPSubnetProtocol"
-        self.client_session = None
 
     def __repr__(self):
         return f"{self.type}({self.url}:{self.port}, subnet={self.subnet})"
@@ -156,40 +154,40 @@ class TCPSubnetProtocol(IProtocol):
         error = None
         timeout_error = False
         formatted_response = None
-        self.client_session = self.client_session or aiohttp.ClientSession()
-        try:
-            logger.info(f"[Client] Sending {method} RPC...")
-            async with self.client_session.post(
-                    url=f"http://{self.url}:{self.port}/{method}",
-                    data=data_to_send,
-                    headers={'Content-Type': 'application/json'},
-                    timeout=Constants.REQUEST_TIMEOUT_SEC
-            ) as ret:
-                logger.info(f"[Client] Received {method} response from"
-                            f" {ret.url} with code {ret.status}")
+        async with aiohttp.ClientSession() as session:
+            try:
+                logger.info(f"[Client] Sending {method} RPC...")
+                async with session.post(
+                        url=f"http://{self.url}:{self.port}/{method}",
+                        data=data_to_send,
+                        headers={'Content-Type': 'application/json'},
+                        timeout=Constants.REQUEST_TIMEOUT_SEC
+                ) as ret:
+                    logger.info(f"[Client] Received {method} response from"
+                                f" {ret.url} with code {ret.status}")
 
-                if ret.ok:
-                    try:
-                        formatted_response = await ret.json(
-                            loads=pickler.decode_data)
-                    except json.JSONDecodeError as e:
-                        error = f"JSON decode failed: {e}"
-                        logger.error(f"[Client] Invalid JSON response: "
-                                     f"{await ret.text()}")
-                else:
-                    error = f"HTTP Error {ret.status}"
-                    logger.error(f"[Client] Server error: {error}")
+                    if ret.ok:
+                        try:
+                            formatted_response = await ret.json(
+                                loads=pickler.decode_data)
+                        except json.JSONDecodeError as e:
+                            error = f"JSON decode failed: {e}"
+                            logger.error(f"[Client] Invalid JSON response: "
+                                         f"{await ret.text()}")
+                    else:
+                        error = f"HTTP Error {ret.status}"
+                        logger.error(f"[Client] Server error: {error}")
 
-        except asyncio.TimeoutError:
-            logger.error("[Client] Ping timeout error")
-            timeout_error = True
-            error = "Request timed out"
-        except aiohttp.ClientError as e:
-            logger.error(f"[Client] Network error: {e}")
-            error = str(e)
-        except Exception as e:
-            logger.error(f"[Client] Unexpected error: {e}")
-            raise e
+            except asyncio.TimeoutError:
+                logger.error("[Client] Ping timeout error")
+                timeout_error = True
+                error = "Request timed out"
+            except aiohttp.ClientError as e:
+                logger.error(f"[Client] Network error: {e}")
+                error = str(e)
+            except Exception as e:
+                logger.error(f"[Client] Unexpected error: {e}")
+                raise e
 
         return formatted_response, error, timeout_error
 
@@ -351,7 +349,7 @@ class TCPSubnetProtocol(IProtocol):
                                  error_message=str(error),
                                  random_id=ID.random_id()))
 
-    def store(self,
+    async def store(self,
               sender: Contact,
               key: ID,
               val: str,
@@ -378,41 +376,8 @@ class TCPSubnetProtocol(IProtocol):
                     f"protocol size: "
                     f"{sys.getsizeof(sender.protocol.encode())},")
 
-        timeout_error = False
-        error = None
-        ret = None
-
-        try:
-            logger.info(f"[Client] Sending STORE to http://{self.url}:"
-                        f"{self.port}@{self.subnet}/store to store "
-                        f"{key}, sender is {sender}")
-            ret = requests.post(
-                url=f"http://{self.url}:{self.port}/store",
-                data=encoded_data,
-                headers={'Content-Type': 'application/json'},
-                timeout=Constants.REQUEST_TIMEOUT_SEC
-            )
-            logger.info(f"[Client] Received STORE response from {ret.url} on "
-                        f"subnet {self.subnet} with code {ret.status_code}")
-            logger.debug(f"[Client] Received STORE response in "
-                         f"TCPSubnetProtocol with code {ret.status_code}"
-                         f" and data: {ret.content}")
-
-        except (requests.Timeout, requests.ConnectionError) as t:
-            logger.error("[Client] Timeout error when contacting node.")
-            timeout_error = True
-            error = t
-
-        except Exception as e:
-            logger.error(f"Exception while trying to store: {e}")
-            # request timed out.
-            timeout_error = False
-            error = e
-
-        formatted_response = None
-        if ret:
-            encoded_data = ret.content
-            formatted_response = json.loads(encoded_data)
+        formatted_response, error, timeout_error = await (
+            self._make_rpc_request("store", encoded_data))
 
         # logger.info(f"Error info in store: {error}")
         return get_rpc_error(random_id, formatted_response, timeout_error, ErrorResponse(
