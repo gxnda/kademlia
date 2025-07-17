@@ -71,7 +71,7 @@ class VirtualProtocol(IProtocol):
     def encode(self):
         raise Exception("VirtualProtocol should not be encoded (only for testing, not for use across HTTP).")
 
-    def ping(self, sender: Contact) -> RPCError:
+    async def ping(self, sender: Contact) -> RPCError:
         """
         Pings sender if we respond.
 
@@ -88,7 +88,7 @@ class VirtualProtocol(IProtocol):
             )
             return error
 
-    def find_node(self, sender: Contact,
+    async def find_node(self, sender: Contact,
                   key: ID) -> tuple[list[Contact], RPCError]:
         """
         Finds K close contacts to a given ID, while excluding the sender.
@@ -99,7 +99,7 @@ class VirtualProtocol(IProtocol):
         """
         return self.node.find_node(sender=sender, key=key)[0], RPCError.no_error()
 
-    def find_value(self, sender: Contact,
+    async def find_value(self, sender: Contact,
                    key: ID) -> tuple[list[Contact] | None, str | None, RPCError]:
         """
         Sends key values if new contact, then attempts to find the value of a key-value pair in
@@ -109,7 +109,7 @@ class VirtualProtocol(IProtocol):
         contacts, val = self.node.find_value(sender=sender, key=key)
         return contacts, val, RPCError.no_error()
 
-    def store(self,
+    async def store(self,
               sender: Contact,
               key: ID,
               val: str,

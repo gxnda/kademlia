@@ -106,7 +106,7 @@ class IProtocol:
         pass
 
     @abstractmethod
-    def ping(self, sender) -> RPCError:
+    async def ping(self, sender) -> RPCError:
         """
         Handles an incoming ping request from “sender”, returns an RPCError object.
         :param sender:
@@ -115,7 +115,7 @@ class IProtocol:
         pass
 
     @abstractmethod
-    def find_node(self, sender, key: ID) -> tuple[list, RPCError]:
+    async def find_node(self, sender, key: ID) -> tuple[list, RPCError]:
         """
         Attempts to find K close nodes to key, returning them and an RPCError object.
         :param sender:
@@ -125,7 +125,7 @@ class IProtocol:
         pass
 
     @abstractmethod
-    def find_value(self, sender, key: ID) -> tuple[list, str, RPCError]:
+    async def find_value(self, sender, key: ID) -> tuple[list, str, RPCError]:
         """
         Attempts to find value from key-value pair, if it cannot be found, a list of K
         closer contacts are returned. An RPCError object is returned as well to indicate
@@ -138,7 +138,9 @@ class IProtocol:
         pass
 
     @abstractmethod
-    def store(self, sender, key: ID, val: str, is_cached: bool = False, exp_time_sec: int = 0) -> RPCError:
+    async def store(
+            self, sender, key: ID, val: str,
+            is_cached: bool = False, exp_time_sec: int = 0) -> RPCError:
         """
         Attempts to save a key-value pair to storage, it caches it instead of
         storing if is_stored, and it expires after exp_time_sec.
