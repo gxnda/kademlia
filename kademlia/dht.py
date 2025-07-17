@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import pickle
@@ -133,6 +134,7 @@ class DHT:
         self._router.dht = self
         self.eviction_count: dict[int, int] = {}
         self.lock = RLock()
+        self.async_lock = asyncio.Lock()
 
     def __repr__(self):
         return str({
@@ -283,39 +285,86 @@ class DHT:
         :return: None
         """
         logger.info("[Client] Bootstrapping from known peer.")
+
         with self.lock:
             self.node.bucket_list.add_contact(known_peer)
 
-            # finds K close contacts to self.our_id, excluding self.our_contact
-            logger.info(f"[Client Bootstrap] Finding K close contacts to {self.our_id}.")
-            contacts, error = run_async(known_peer.protocol.find_node(
-                sender=self.our_contact, key=self.our_id))
-            self.handle_error(error, known_peer)
-            logger.debug(f"[Client Bootstrap] Found {len(contacts)} close "
-                        f"contacts, errors: {error.__dict__}.")
-            if not error.has_error():
+        logger.info(f"[Client Bootstrap] Finding K close contacts to {self.our_id}.")
+        contacts, error = run_async(known_peer.protocol.find_node(
+            sender=self.our_contact, key=self.our_id))
+        self.handle_error(error, known_peer)
+        logger.debug(f"[Client Bootstrap] Found {len(contacts)} close "
+                     f"contacts, errors: {error.__dict__}.")
 
-                # add all contacts the known peer DIRECTLY knows
-                for contact in contacts:
-                    self.node.bucket_list.add_contact(contact)
+        if error.has_error():
+            raise error
 
-                known_peers_bucket: KBucket = self.node.bucket_list.get_kbucket(
-                    known_peer.id)
+        with self.lock:
+            for contact in contacts:
+                self.node.bucket_list.add_contact(contact)
 
-                # Resolve the list now, so we don't include additional contacts
-                # as we add to our bucket additional contacts.
-                other_buckets: list[KBucket] = [
-                    i for i in self.node.bucket_list.buckets
-                    if i != known_peers_bucket
-                ]
-                for other_bucket in other_buckets:
-                    self._refresh_bucket(
-                        other_bucket
-                    )  # UNITTEST Notes: one of these should contain the correct contact
-            else:
-                raise error
+            known_peers_bucket = self.node.bucket_list.get_kbucket(known_peer.id)
+            other_buckets = [
+                i for i in self.node.bucket_list.buckets
+                if i != known_peers_bucket
+            ]
 
-    def _refresh_bucket(self, bucket: KBucket) -> None:
+        if other_buckets:
+            logger.debug(f"Refreshing {len(other_buckets)} buckets")
+            # Create a new event loop for the bucket refreshes
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                # Run all refreshes sequentially
+                for bucket in other_buckets:
+                    loop.run_until_complete(self._refresh_bucket(bucket))
+            finally:
+                loop.close()
+
+    async def async_bootstrap(self, known_peer: Contact) -> None:
+        """
+        This is how we join the network.
+
+        We bootstrap our peer by contacting a known peer in the network, adding its contacts
+        to our list, then getting the contacts for other peers not in the
+        bucket range of our known peer we're joining.
+        :param known_peer: Peer we know / are bootstrapping from.
+        :return: None
+        """
+        logger.info("[Client] Bootstrapping from known peer.")
+
+        with self.async_lock:
+            self.node.bucket_list.add_contact(known_peer)
+
+        logger.info(f"[Client Bootstrap] Finding K close contacts to {self.our_id}.")
+        contacts, error = await known_peer.protocol.find_node(
+            sender=self.our_contact, key=self.our_id)
+        self.handle_error(error, known_peer)
+        logger.debug(f"[Client Bootstrap] Found {len(contacts)} close "
+                     f"contacts, errors: {error.__dict__}.")
+
+        if error.has_error():
+            raise error
+
+        with self.async_lock:
+            for contact in contacts:
+                self.node.bucket_list.add_contact(contact)
+
+            known_peers_bucket = self.node.bucket_list.get_kbucket(known_peer.id)
+            other_buckets = [
+                i for i in self.node.bucket_list.buckets
+                if i != known_peers_bucket
+            ]
+
+        if other_buckets:
+            logger.debug(f"Refreshing {len(other_buckets)} buckets")
+            await asyncio.gather(*[
+                self._refresh_bucket(bucket)
+                for bucket in other_buckets
+            ])
+
+
+    async def _refresh_bucket(self, bucket: KBucket) -> None:
         """
         Refreshes the given Kademlia KBucket by updating its last-touch timestamp,
         obtaining a random ID within the bucket's range, and attempting to find
@@ -334,21 +383,20 @@ class DHT:
         :returns: Nothing.
         """
         bucket.touch()
-        with (self.lock):
-            random_id: ID = ID.random_id_within_bucket_range(bucket)
+        random_id: ID = ID.random_id_within_bucket_range(bucket)
 
-            # put in a separate list as contacts collection for this bucket might change.
-            contacts: list[Contact] = bucket.contacts
-            for contact in contacts:
-                if isinstance(contact.protocol, dict):
-                    raise KademliaError(f"DICTIONARY PROTOCOL!!! {contact.protocol}")
-                new_contacts, timeout_error = run_async(
-                    contact.protocol.find_node(self.our_contact, random_id))
-                self.handle_error(timeout_error, contact)
+        # put in a separate list as contacts collection for this bucket might change.
+        contacts: list[Contact] = bucket.contacts
+        for contact in contacts:
+            if isinstance(contact.protocol, dict):
+                raise KademliaError(f"DICTIONARY PROTOCOL!!! {contact.protocol}")
+            new_contacts, timeout_error = await contact.protocol.find_node(
+                self.our_contact, random_id)
+            self.handle_error(timeout_error, contact)
 
-                if new_contacts:
-                    for other_contact in new_contacts:
-                        self.node.bucket_list.add_contact(other_contact)
+            if new_contacts:
+                for other_contact in new_contacts:
+                    self.node.bucket_list.add_contact(other_contact)
 
     def _setup_bucket_refresh_timer(self) -> None:
         """
