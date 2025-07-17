@@ -1,6 +1,7 @@
 import asyncio
 import threading
 from concurrent.futures import Future
+from typing import Coroutine
 
 
 class AsyncRunner:
@@ -18,7 +19,7 @@ class AsyncRunner:
         asyncio.set_event_loop(self.loop)
         self.loop.run_forever()
 
-    def run_async(self, coro):
+    def run_async(self, coro: Coroutine, wait_until_finished=True):
         future = Future()
 
         async def wrapper():
@@ -29,9 +30,13 @@ class AsyncRunner:
                 future.set_exception(e)
 
         self.loop.call_soon_threadsafe(
-            lambda: asyncio.create_task(wrapper()),
+            asyncio.create_task, wrapper()
         )
-        return future.result()  # blocks until result
+        if wait_until_finished:
+            return future.result()  # blocks until result
+        else:
+            return future
+
 
     @classmethod
     def get_instance(cls):
@@ -40,5 +45,5 @@ class AsyncRunner:
         return cls._instance
 
 
-def run_async(coro):
-    return AsyncRunner.get_instance().run_async(coro)
+def run_async(coro: Coroutine, wait_until_finished=True):
+    return AsyncRunner.get_instance().run_async(coro, wait_until_finished)
