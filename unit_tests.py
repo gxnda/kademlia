@@ -97,7 +97,7 @@ def setup_split_failure(bucket_list=None):
     return bucket_list
 
 
-class BaseTestCase(unittest.TestCase):
+class TestCase(unittest.TestCase):
     def setUp(self):
         self._original_debug = Constants.DEBUG
         Constants.DEBUG = True
@@ -106,7 +106,16 @@ class BaseTestCase(unittest.TestCase):
         Constants.DEBUG = self._original_debug
 
 
-class KBucketTest(BaseTestCase):
+class AsyncTestCase(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        self._original_debug = Constants.DEBUG
+        Constants.DEBUG = True
+
+    async def asyncTearDown(self):
+        Constants.DEBUG = self._original_debug
+
+
+class KBucketTest(TestCase):
 
     def test_add_to_kbucket(self):
         """
@@ -165,7 +174,7 @@ class KBucketTest(BaseTestCase):
         self.assertTrue(k1.contacts == k2.contacts)
 
 
-class AddContactTest(BaseTestCase):
+class AddContactTest(TestCase):
 
     def test_unique_id_add(self):
         """
@@ -257,7 +266,7 @@ class AddContactTest(BaseTestCase):
             f"Length of first buckets contacts = {len(bucket_list.buckets[0].contacts)}")
 
 
-class ForceFailedAddTest(BaseTestCase):
+class ForceFailedAddTest(TestCase):
     def test_force_failed_add(self):
         """
         Description
@@ -311,7 +320,7 @@ class ForceFailedAddTest(BaseTestCase):
                         "Expected new contact NOT to replace an older contact.")
 
 
-class DHTTest(BaseTestCase):
+class DHTTest(TestCase):
     def test_local_store_find_value(self):
         vp = VirtualProtocol()
         # Below line should contain VirtualStorage(), which I don't have?
@@ -486,7 +495,7 @@ class DHTTest(BaseTestCase):
                         "Expected 12 hour expiration.")
 
 
-class DHTParallelTest(BaseTestCase):
+class DHTParallelTest(TestCase):
     """
     The exact same as DHTTest, but with the asynchronous router instead of the normal router.
     """
@@ -659,7 +668,7 @@ class DHTParallelTest(BaseTestCase):
     #                     "Expected 12 hour expiration.")
 
 
-class BootstrappingTests(BaseTestCase):
+class BootstrappingTests(TestCase):
 
     def test_random_within_bucket_tests(self):
 
@@ -834,7 +843,7 @@ class BootstrappingTests(BaseTestCase):
                         f"Expected our peer to have 31 contacts, {sum_of_contacts} were given.")
 
 
-class BucketManagementTests(BaseTestCase):
+class BucketManagementTests(TestCase):
     def test_non_responding_contact_evicted(self):
         """
         Tests that a nonresponding contact is evicted after 
@@ -940,7 +949,7 @@ class BucketManagementTests(BaseTestCase):
                         "Expected one contact to be pending eviction.")
 
 
-class Chapter10Tests(BaseTestCase):
+class Chapter10Tests(TestCase):
     def test_new_contact_gets_stored_contacts(self):
         """
         Verify that we get stored values whose keys ^ contact ID are less than stored keys ^ other contacts.
@@ -1010,7 +1019,7 @@ class Chapter10Tests(BaseTestCase):
         )
 
 
-class DHTSerialisationTests(BaseTestCase):
+class DHTSerialisationTests(TestCase):
     def test_serialisation(self):
         dht: DHT = DHT(
             id=ID.random_id(),
@@ -1115,9 +1124,9 @@ class DHTSerialisationTests(BaseTestCase):
         )
 
 
-class TCPSubnetTests(BaseTestCase):
-    def setUp(self):
-        super().setUp()
+class TCPSubnetTests(AsyncTestCase):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.local_ip = "127.0.0.1"
         self.valid_server = False
         self.server = None
@@ -1143,34 +1152,34 @@ class TCPSubnetTests(BaseTestCase):
         # print(server.subnets)
         self.thread = self.server.thread_start()
 
-    def tearDown(self):
-        super().tearDown()
+    async def asyncTearDown(self):
         self.server.thread_stop(self.thread)
         self.thread.join()
+        await super().asyncTearDown()
 
-    def test_ping_route(self):
+    async def test_ping_route(self):
         """
         Makes sure no exceptions are thrown when pinging a contact.
         """
 
         # The actual test:
-        self.p2.ping(self.c1)
+        await self.p2.ping(self.c1)
 
-    def test_store_route(self):
+    async def test_store_route(self):
 
         # The actual test:
 
         sender = Contact(ID.random_id(),self.p1)
         test_id: ID = ID.random_id()
         test_value = "Test"
-        self.p2.store(sender, test_id, test_value)
+        await self.p2.store(sender, test_id, test_value)
 
         self.assertTrue(self.n2.storage.contains(test_id),
                         "Expected remote peer to have value.")
         self.assertTrue(self.n2.storage.get(test_id) == test_value,
                         "Expected remote peer to contain stored value.")
 
-    def test_find_nodes_route(self):
+    async def test_find_nodes_route(self):
         # Node 2 knows about another contact that isn't us
         # - this is what we are trying to find
 
@@ -1184,7 +1193,7 @@ class TCPSubnetTests(BaseTestCase):
         )
 
         id = ID.random_id()
-        ret, errors = self.p2.find_node(self.c1, id)
+        ret, errors = await self.p2.find_node(self.c1, id)
         print()
         print("ret", ret)
         print("errors", errors)
@@ -1203,14 +1212,14 @@ class TCPSubnetTests(BaseTestCase):
                 "Expected find_node to return 1 contact, 0 were returned."
             )
 
-    def test_find_value_router(self):
+    async def test_find_value_router(self):
         # Node 2 knows about another contact that isn't us
         # - this is what we are trying to find
 
         test_id = ID.random_id()
         test_value = "Test"
         print("[Unit test] Store starting...")
-        self.p2.store(sender=self.c1, key=test_id, val=test_value)
+        await self.p2.store(sender=self.c1, key=test_id, val=test_value)
         print("[Unit test] Store done.")
         self.assertTrue(
             self.n2.storage.contains(test_id),
@@ -1223,7 +1232,7 @@ class TCPSubnetTests(BaseTestCase):
         )
 
         print("[Unit test] Find value starting...")
-        contacts, val, error = self.p2.find_value(self.c1, test_id)
+        contacts, val, error = await self.p2.find_value(self.c1, test_id)
         print("[Unit test] Find value received:", contacts, val, error)
         print("[Unit test] Find value done.")
 
@@ -1235,12 +1244,12 @@ class TCPSubnetTests(BaseTestCase):
             val == test_value, "Value does not match expected value from peer."
         )
 
-    def test_unresponsive_node(self):
+    async def test_unresponsive_node(self):
         self.p2.responds = False
 
         test_id = ID.random_id()
         test_value = "Test"
-        error: RPCError = self.p2.store(self.c1, test_id, test_value)
+        error: RPCError = await self.p2.store(self.c1, test_id, test_value)
         print(Constants.DEBUG)
         # print("[Unit tests] [Error]", error)
         self.assertTrue(
@@ -1249,10 +1258,9 @@ class TCPSubnetTests(BaseTestCase):
         )
 
 
-class AsyncServerTests(unittest.IsolatedAsyncioTestCase):
+class AsyncServerTests(AsyncTestCase):
     async def asyncSetUp(self):
-        self._original_debug = Constants.DEBUG
-        Constants.DEBUG = True
+        await super().asyncSetUp()
         result = await self._async_setup()
         (self.local_ip, self.port, self.server,
          self.p1, self.p2, self.our_id,
@@ -1296,24 +1304,24 @@ class AsyncServerTests(unittest.IsolatedAsyncioTestCase):
     async def test_ping_route(self):
         # Run blocking ping in a separate thread
         loop = asyncio.get_running_loop()
-        ping_res = await loop.run_in_executor(None, lambda: self.p2.ping(self.c1))
+        ping_res = await self.p2.ping(self.c1)
         self.assertFalse(ping_res.has_error())
 
-    def store_route(self):
+    async def test_store_route(self):
         # The actual test:
 
         sender = Contact(ID.random_id(), self.p1)
         test_id: ID = ID.random_id()
         test_value = "Test"
         print("Storing!")
-        self.p2.store(sender, test_id, test_value)
+        await self.p2.store(sender, test_id, test_value)
 
         self.assertTrue(self.n2.storage.contains(test_id),
                         "Expected remote peer to have value.")
         self.assertTrue(self.n2.storage.get(test_id) == test_value,
                         "Expected remote peer to contain stored value.")
 
-    def find_nodes_route(self):
+    async def test_find_nodes_route(self):
 
         # Node 2 knows about another contact that isn't us
         # - this is what we are trying to find
@@ -1328,7 +1336,7 @@ class AsyncServerTests(unittest.IsolatedAsyncioTestCase):
         )
 
         id = ID.random_id()
-        ret, errors = self.p2.find_node(self.c1, id)
+        ret, errors = await self.p2.find_node(self.c1, id)
         print()
         print("ret", ret)
         print("errors", errors)
@@ -1347,12 +1355,12 @@ class AsyncServerTests(unittest.IsolatedAsyncioTestCase):
                 "Expected find_node to return 1 contact, 0 were returned."
             )
 
-    def find_value_router(self):
+    async def test_find_value_router(self):
 
         test_id = ID.random_id()
         test_value = "Test"
         print("[Unit test] Store starting...")
-        self.p2.store(sender=self.c1, key=test_id, val=test_value)
+        await self.p2.store(sender=self.c1, key=test_id, val=test_value)
         print("[Unit test] Store done.")
         self.assertTrue(
             self.n2.storage.contains(test_id),
@@ -1365,7 +1373,7 @@ class AsyncServerTests(unittest.IsolatedAsyncioTestCase):
         )
 
         print("[Unit test] Find value starting...")
-        contacts, val, error = self.p2.find_value(self.c1, test_id)
+        contacts, val, error = await self.p2.find_value(self.c1, test_id)
         print("[Unit test] Find value received:", contacts, val, error)
         print("[Unit test] Find value done.")
 
@@ -1377,40 +1385,20 @@ class AsyncServerTests(unittest.IsolatedAsyncioTestCase):
             val == test_value, "Value does not match expected value from peer."
         )
 
-    def unresponsive_node(self):
+    async def test_unresponsive_node(self):
         self.p2.responds = False
 
         test_id = ID.random_id()
         test_value = "Test"
-        error: RPCError = self.p2.store(self.c1, test_id, test_value)
+        error: RPCError = await self.p2.store(self.c1, test_id, test_value)
         # print("[Unit tests] [Error]", error)
         self.assertTrue(
             error.timeout_error,
             "Expected timeout when contacting unresponsive node."
         )
 
-    async def test_store_route(self):
-        loop = asyncio.get_running_loop()
-        store_res = await loop.run_in_executor(
-            None, lambda: self.store_route())
 
-    async def test_find_nodes_route(self):
-        loop = asyncio.get_running_loop()
-        find_nodes_res = await loop.run_in_executor(
-            None, lambda: self.find_nodes_route())
-
-    async def test_find_value_router(self):
-        loop = asyncio.get_running_loop()
-        find_value_res = await loop.run_in_executor(
-            None, lambda: self.find_value_router())
-
-    async def test_unresponsive_node(self):
-        loop = asyncio.get_running_loop()
-        unresponsive_node_res = await loop.run_in_executor(
-            None, lambda: self.unresponsive_node())
-
-
-class JSONStorageTests(BaseTestCase):
+class JSONStorageTests(TestCase):
     def test_get_set(self):
         if os.path.exists("1"):
             shutil.rmtree("1")
@@ -1431,7 +1419,7 @@ class JSONStorageTests(BaseTestCase):
         self.assertFalse(storage.contains(2), "Should have removed the ID.")
 
 
-class IDIntegerTests(BaseTestCase):
+class IDIntegerTests(TestCase):
     def test_xor(self):
         id_23 = ID(23)
         self.assertTrue(ID(23) ^ 14 == 23 ^ 14)  # Typical
@@ -1471,7 +1459,7 @@ class IDIntegerTests(BaseTestCase):
         self.assertTrue(ID(2 ** 160 - 1) >= 1)
 
 
-class NodeLookupTests(BaseTestCase):
+class NodeLookupTests(TestCase):
     def test_get_close_contacts_ordered(self):
         """
         Description
@@ -1797,7 +1785,7 @@ class NodeLookupTests(BaseTestCase):
                                 "somehow a close contact in the computation is not in the originals?")
 
 
-class TestDHTFileSystem(BaseTestCase):
+class TestDHTFileSystem(TestCase):
     def setUp(self):
         # Create virtual protocol and storage
         self.protocol = VirtualProtocol()
@@ -1946,7 +1934,7 @@ class TestDHTFileSystem(BaseTestCase):
         for fn in filenames:
             os.unlink(fn)
 
-class TestKBucketLocking(BaseTestCase):
+class TestKBucketLocking(TestCase):
     def test_concurrent_bucket_access(self):
         bucket = KBucket(k=200)
         contacts = [Contact(ID(i), None) for i in range(100)]
@@ -1968,7 +1956,7 @@ class TestKBucketLocking(BaseTestCase):
         assert len(bucket.contacts) == 100  # No lost updates
 
 
-class TestBucketListThreadSafety(BaseTestCase):
+class TestBucketListThreadSafety(TestCase):
     def setUp(self):
         super().setUp()
         # Create our node's contact
@@ -2110,7 +2098,7 @@ class TestBucketListThreadSafety(BaseTestCase):
         self.assertEqual(len(all_contacts), 10, "Not all contacts added")
 
 
-class TestServerThreading(BaseTestCase):
+class TestServerThreading(TestCase):
     def setUp(self):
         super().setUp()
         self.server = TCPSubnetServer(server_address=("127.0.0.1", 7124))
@@ -2147,7 +2135,7 @@ class TestServerThreading(BaseTestCase):
         self.server.thread_stop(self.server_thread)
 
 
-class TestServerAsync(BaseTestCase):
+class TestServerAsync(TestCase):
     def setUp(self):
         super().setUp()
         self.server = AsyncServer(host="127.0.0.1", port=7124)
@@ -2224,7 +2212,7 @@ class TestServerAsync(BaseTestCase):
             stop = time.perf_counter()
             print(f"Bootstrap {i} took {stop - start} seconds")
 
-class TestBinaryFileStorage(BaseTestCase):
+class TestBinaryFileStorage(TestCase):
     def setUp(self):
         super().setUp()
         # Create a temporary directory
