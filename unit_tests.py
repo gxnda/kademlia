@@ -1124,7 +1124,7 @@ class DHTSerialisationTests(TestCase):
         )
 
 
-class TCPSubnetTests(AsyncTestCase):
+class TCPSubnetServerTests(AsyncTestCase):
     async def asyncSetUp(self):
         await super().asyncSetUp()
         self.local_ip = "127.0.0.1"
@@ -1303,7 +1303,6 @@ class AsyncServerTests(AsyncTestCase):
 
     async def test_ping_route(self):
         # Run blocking ping in a separate thread
-        loop = asyncio.get_running_loop()
         ping_res = await self.p2.ping(self.c1)
         self.assertFalse(ping_res.has_error())
 
