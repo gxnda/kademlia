@@ -3,5 +3,5 @@ customtkinter>=5.2.2
 pillow>=10.3.0
 dill>=0.3.8
 tqdm>=4.66.2
-locust~=2.34.0
+locust~=2.42.2
 aiohttp~=3.12.15
